@@ -6,7 +6,7 @@ const Navbar = () => {
   const location = useLocation();
 
   const navLinks = [
-    { name: 'নীড়পাতা', path: '/' },
+    { name: 'হোম পেইজ', path: '/' },
     { name: 'কোর্সসমূহ', path: '/courses' },
     { name: 'শিক্ষকমণ্ডলী', path: '/faculty' },
   ];
@@ -15,7 +15,7 @@ const Navbar = () => {
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-gray-100">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link to="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-          রেডিয়েশন টিচিং জোন
+          রেডিয়েশন কোচিং
         </Link>
 
         {/* Desktop Menu */}

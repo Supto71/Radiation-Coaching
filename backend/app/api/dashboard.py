@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+from datetime import date
 
 from ..db.database import get_db
 from ..models import dashboard as db_models
+from ..models.student import Student as StudentModel
 from ..models.user import User
 from ..schemas import dashboard as schemas
 
@@ -16,18 +18,58 @@ def get_notices(db: Session = Depends(get_db)):
 
 @router.post("/notices", response_model=schemas.Notice)
 def create_notice(notice: schemas.NoticeCreate, db: Session = Depends(get_db)):
-    # In a real app, author_id would come from the logged-in admin user
-    # For now we'll hardcode or expect it to be handled
-    db_notice = db_models.Notice(**notice.model_dump(), author_id=1) 
+    from datetime import datetime
+    notice_data = notice.model_dump()
+    custom_date_str = notice_data.pop('custom_date', None)
+    created_at = datetime.utcnow()
+    if custom_date_str:
+        try:
+            created_at = datetime.strptime(custom_date_str, '%Y-%m-%d')
+        except ValueError:
+            pass
+    db_notice = db_models.Notice(**notice_data, author_id=1, created_at=created_at)
     db.add(db_notice)
     db.commit()
     db.refresh(db_notice)
     return db_notice
 
 # --- FEES ---
+@router.get("/fees", response_model=List[schemas.FeeRecordWithStudent])
+def get_all_fees(
+    is_paid: Optional[bool] = None,
+    month: Optional[str] = None,
+    branch: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(db_models.FeeRecord)
+    if is_paid is not None:
+        query = query.filter(db_models.FeeRecord.is_paid == is_paid)
+    if month:
+        query = query.filter(db_models.FeeRecord.month == month)
+    
+    records = query.order_by(db_models.FeeRecord.id.desc()).all()
+    
+    result = []
+    for record in records:
+        student = db.query(StudentModel).filter(StudentModel.id == record.student_id).first()
+        if branch and student and student.branch != branch:
+            continue
+        result.append(schemas.FeeRecordWithStudent(
+            id=record.id,
+            student_id=record.student_id,
+            amount=record.amount,
+            month=record.month,
+            is_paid=record.is_paid,
+            payment_date=record.payment_date,
+            student_name=student.name if student else "অজানা",
+            student_uid=student.student_uid if student else "",
+            student_branch=student.branch if student else "",
+            student_class=student.class_level if student else "",
+        ))
+    return result
+
 @router.get("/fees/me", response_model=List[schemas.FeeRecord])
 def get_my_fees(student_id: int, db: Session = Depends(get_db)):
-    # student_id would normally come from current_user
     return db.query(db_models.FeeRecord).filter(db_models.FeeRecord.student_id == student_id).all()
 
 @router.post("/fees", response_model=schemas.FeeRecord)
@@ -37,6 +79,92 @@ def create_fee_record(fee: schemas.FeeRecordCreate, db: Session = Depends(get_db
     db.commit()
     db.refresh(db_fee)
     return db_fee
+
+@router.patch("/fees/{fee_id}/pay", response_model=schemas.FeeRecord)
+def mark_fee_paid(fee_id: int, db: Session = Depends(get_db)):
+    fee = db.query(db_models.FeeRecord).filter(db_models.FeeRecord.id == fee_id).first()
+    if not fee:
+        raise HTTPException(status_code=404, detail="Fee record not found")
+    fee.is_paid = True
+    fee.payment_date = date.today()
+    db.commit()
+    db.refresh(fee)
+    return fee
+
+@router.patch("/fees/{fee_id}", response_model=schemas.FeeRecord)
+def update_fee_record(fee_id: int, fee_update: schemas.FeeRecordUpdate, db: Session = Depends(get_db)):
+    fee = db.query(db_models.FeeRecord).filter(db_models.FeeRecord.id == fee_id).first()
+    if not fee:
+        raise HTTPException(status_code=404, detail="Fee record not found")
+    fee.amount = fee_update.amount
+    db.commit()
+    db.refresh(fee)
+    return fee
+
+# --- EXAMS ---
+@router.get("/exams", response_model=List[schemas.Exam])
+def get_all_exams(active_only: bool = False, db: Session = Depends(get_db)):
+    query = db.query(db_models.Exam)
+    if active_only:
+        query = query.filter(db_models.Exam.is_active == True)
+    return query.order_by(db_models.Exam.created_at.desc()).all()
+
+@router.post("/exams", response_model=schemas.Exam)
+def create_exam(exam: schemas.ExamCreate, db: Session = Depends(get_db)):
+    db_exam = db_models.Exam(**exam.model_dump())
+    db.add(db_exam)
+    db.commit()
+    db.refresh(db_exam)
+    return db_exam
+
+@router.get("/exams/{exam_id}", response_model=schemas.Exam)
+def get_exam(exam_id: int, db: Session = Depends(get_db)):
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+    questions = db.query(db_models.Question).filter(db_models.Question.exam_id == exam_id).all()
+    exam.questions = questions
+    return exam
+
+@router.patch("/exams/{exam_id}/toggle", response_model=schemas.Exam)
+def toggle_exam_active(exam_id: int, db: Session = Depends(get_db)):
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+    exam.is_active = not exam.is_active
+    db.commit()
+    db.refresh(exam)
+    return exam
+
+@router.delete("/exams/{exam_id}")
+def delete_exam(exam_id: int, db: Session = Depends(get_db)):
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+    db.query(db_models.Question).filter(db_models.Question.exam_id == exam_id).delete()
+    db.delete(exam)
+    db.commit()
+    return {"message": "Exam deleted"}
+
+@router.post("/exams/{exam_id}/questions", response_model=schemas.Question)
+def add_question(exam_id: int, question: schemas.QuestionCreate, db: Session = Depends(get_db)):
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+    db_q = db_models.Question(**question.model_dump(), exam_id=exam_id)
+    db.add(db_q)
+    db.commit()
+    db.refresh(db_q)
+    return db_q
+
+@router.delete("/questions/{question_id}")
+def delete_question(question_id: int, db: Session = Depends(get_db)):
+    q = db.query(db_models.Question).filter(db_models.Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Question not found")
+    db.delete(q)
+    db.commit()
+    return {"message": "Question deleted"}
 
 # --- EXAM RESULTS (Performance) ---
 @router.get("/results/me", response_model=List[schemas.ExamResult])
@@ -53,19 +181,21 @@ def submit_exam_result(result: schemas.ExamResultCreate, student_id: int, db: Se
 
 # --- ROUTINE ---
 @router.get("/routines", response_model=List[schemas.Routine])
-def get_routines(class_level: str = None, db: Session = Depends(get_db)):
+def get_routines(branch: str = None, class_level: str = None, db: Session = Depends(get_db)):
     query = db.query(db_models.Routine)
+    if branch:
+        query = query.filter(db_models.Routine.branch == branch)
     if class_level:
         query = query.filter(db_models.Routine.class_level == class_level)
     return query.order_by(db_models.Routine.date.asc(), db_models.Routine.start_time.asc()).all()
 
 @router.post("/routines", response_model=schemas.Routine)
 def create_or_update_routine(routine: schemas.RoutineCreate, db: Session = Depends(get_db)):
-    # Check if a routine already exists for this date, time block, and class level
     db_routine = db.query(db_models.Routine).filter(
         db_models.Routine.date == routine.date,
         db_models.Routine.start_time == routine.start_time,
         db_models.Routine.end_time == routine.end_time,
+        db_models.Routine.branch == routine.branch,
         db_models.Routine.class_level == routine.class_level
     ).first()
     

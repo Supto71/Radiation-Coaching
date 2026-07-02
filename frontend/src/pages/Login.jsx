@@ -27,16 +27,26 @@ const Login = () => {
     fetchPublicData();
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Common ID & Password logic as requested by user
     if (role === 'student') {
-      if (userId === 'student' && password === '1234') {
-        navigate('/student/dashboard');
-      } else {
-        setError('স্টুডেন্ট আইডি বা পাসওয়ার্ড ভুল হয়েছে! (Hint: student / 1234)');
+      try {
+        const res = await axios.post('/api/students/login', {
+          student_uid: userId.trim(),
+          phone: password.trim()
+        });
+        if (res.data) {
+          localStorage.setItem('student', JSON.stringify(res.data));
+          navigate('/student/dashboard');
+        }
+      } catch (err) {
+        if (err.response && err.response.status === 401) {
+          setError('স্টুডেন্ট আইডি ভুল অথবা পাসওয়ার্ড ১২৩৪৫ দেওয়া হয়নি!');
+        } else {
+          setError('সার্ভারে সমস্যা হচ্ছে। দয়া করে পরে চেষ্টা করুন।');
+        }
       }
     } else {
       if (userId === 'teacher' && password === '1234') {
@@ -133,19 +143,21 @@ const Login = () => {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
-                  placeholder={role === 'student' ? 'student লিখুন' : 'teacher লিখুন'}
+                  placeholder={role === 'student' ? 'RC-001' : 'teacher লিখুন'}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড</label>
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  {role === 'student' ? 'পাসওয়ার্ড (12345 দিন)' : 'পাসওয়ার্ড'}
+                </label>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
-                  placeholder="1234 লিখুন"
+                  placeholder={role === 'student' ? '12345' : '1234'}
                 />
               </div>
 

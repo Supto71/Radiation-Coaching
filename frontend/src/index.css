@@ -11,4 +11,46 @@ body {
   font-family: 'Hind Siliguri', sans-serif;
   background-color: #F9FAFB; /* gray-50 */
   color: #111827; /* gray-900 */
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+
+/* Bengali text - bolder & bigger for all elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Hind Siliguri', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+p, span, label, td, th, li, a, button, select, option, textarea, input, div {
+  font-family: 'Hind Siliguri', sans-serif;
+}
+
+p {
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.85;
+}
+
+/* Navbar & menu links */
+nav a, nav button {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Buttons */
+button {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Table body */
+td {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+th {
+  font-size: 1.1rem;
+  font-weight: 700;
 }

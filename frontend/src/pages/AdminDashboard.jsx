@@ -1,15 +1,916 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
-const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('notices');
-  
-  // Notice State
-  const [noticeTitle, setNoticeTitle] = useState('');
-  const [noticeContent, setNoticeContent] = useState('');
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [noticeMessage, setNoticeMessage] = useState('');
+// ─── Icons ───────────────────────────────────────────────────────────────────
+const SearchIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+const PlusIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
 
-  // Routine State
+// ─── Reusable Alert ───────────────────────────────────────────────────────────
+const Alert = ({ message, type = 'success' }) => {
+  if (!message) return null;
+  const styles = type === 'success'
+    ? 'bg-green-50 text-green-700 border-green-200'
+    : 'bg-red-50 text-red-700 border-red-200';
+  return <div className={`p-3 rounded-lg text-sm border ${styles} mb-4`}>{message}</div>;
+};
+
+// ─── Class levels definition ─────────────────────────────────────────────────
+const CLASS_LEVELS = [
+  { value: 'Class 1', label: 'প্রথম শ্রেণি' },
+  { value: 'Class 2', label: 'দ্বিতীয় শ্রেণি' },
+  { value: 'Class 3', label: 'তৃতীয় শ্রেণি' },
+  { value: 'Class 4', label: 'চতুর্থ শ্রেণি' },
+  { value: 'Class 5', label: 'পঞ্চম শ্রেণি' },
+  { value: 'Class 6', label: 'ষষ্ঠ শ্রেণি' },
+  { value: 'Class 7', label: 'সপ্তম শ্রেণি' },
+  { value: 'Class 8', label: 'অষ্টম শ্রেণি' },
+  { value: 'Class 9', label: 'নবম শ্রেণি' },
+  { value: 'Class 10', label: 'দশম শ্রেণি' },
+  { value: 'HSC 1st Year', label: 'এইচএসসি — প্রথম বর্ষ' },
+  { value: 'HSC 2nd Year', label: 'এইচএসসি — দ্বিতীয় বর্ষ' },
+];
+
+// ─── Student Database Tab ─────────────────────────────────────────────────────
+const StudentDatabaseTab = () => {
+  const [activeClass, setActiveClass] = useState('Class 1');
+  const [allStudents, setAllStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterBranch, setFilterBranch] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [msg, setMsg] = useState({ text: '', type: 'success' });
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: '', class_level: 'Class 1', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+
+  const fetchStudents = useCallback(async () => {
+    setLoading(true);
+    try {
+      let url = '/api/students/?';
+      if (search) url += `search=${encodeURIComponent(search)}&`;
+      if (filterBranch) url += `branch=${encodeURIComponent(filterBranch)}&`;
+      const res = await fetch(url);
+      if (res.ok) setAllStudents(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [search, filterBranch]);
+
+  // Keep form class_level in sync with active tab
+  useEffect(() => {
+    setForm(f => ({ ...f, class_level: activeClass }));
+  }, [activeClass]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchStudents, 300);
+    return () => clearTimeout(timer);
+  }, [fetchStudents]);
+
+  const handleSave = async () => {
+    if (!form.name || !form.class_level || !form.branch || !form.guardian_phone) {
+      setMsg({ text: 'নাম, ক্লাস, শাখা এবং অভিভাবকের নম্বর আবশ্যিক!', type: 'error' });
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/students/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (res.ok) {
+        setMsg({ text: 'স্টুডেন্ট সফলভাবে যোগ করা হয়েছে!', type: 'success' });
+        setShowForm(false);
+        setForm({ name: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+        fetchStudents();
+      } else {
+        setMsg({ text: 'যোগ করতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
+    finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('আপনি কি নিশ্চিত যে এই স্টুডেন্টকে মুছতে চান?')) return;
+    await fetch(`/api/students/${id}`, { method: 'DELETE' });
+    fetchStudents();
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">শিক্ষার্থী ডেটাবেজ</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm"
+        >
+          <PlusIcon /> নতুন স্টুডেন্ট যোগ করুন
+        </button>
+      </div>
+
+      <Alert message={msg.text} type={msg.type} />
+
+      {/* Add Student Form */}
+      {showForm && (
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
+          <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন শিক্ষার্থীর তথ্য</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">পুরো নাম *</label>
+              <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="স্টুডেন্টের নাম" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">ক্লাস লেভেল *</label>
+              <select value={form.class_level} onChange={e => setForm({ ...form, class_level: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+                {CLASS_LEVELS.map(cl => <option key={cl.value} value={cl.value}>{cl.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">শাখা *</label>
+              <select value={form.branch} onChange={e => setForm({ ...form, branch: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+                <option value="প্রধান শাখা">প্রধান শাখা</option>
+                <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">লিঙ্গ *</label>
+              <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+                <option value="ছেলে">ছেলে</option>
+                <option value="মেয়ে">মেয়ে</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">বাবার নাম</label>
+              <input type="text" value={form.father_name} onChange={e => setForm({ ...form, father_name: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="বাবার নাম (ঐচ্ছিক)" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">মায়ের নাম</label>
+              <input type="text" value={form.mother_name} onChange={e => setForm({ ...form, mother_name: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="মায়ের নাম (ঐচ্ছিক)" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">মোবাইল নম্বর (শিক্ষার্থী)</label>
+              <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="০১XXXXXXXXX (ঐচ্ছিক)" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">অভিভাবকের নম্বর *</label>
+              <input type="tel" value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="০১XXXXXXXXX" />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5">
+            <button onClick={handleSave} disabled={saving}
+              className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+              {saving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
+            </button>
+            <button onClick={() => setShowForm(false)}
+              className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
+              বাতিল
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Class Level Tabs */}
+      <div className="flex overflow-x-auto gap-2 mb-5 pb-1">
+        {CLASS_LEVELS.map(cl => {
+          const count = allStudents.filter(s => s.class_level === cl.value).length;
+          return (
+            <button
+              key={cl.value}
+              onClick={() => setActiveClass(cl.value)}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                activeClass === cl.value
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {cl.label}
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
+                activeClass === cl.value ? 'bg-white/30 text-white' : 'bg-gray-200 text-gray-700'
+              }`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search & Branch Filter */}
+      <div className="flex flex-col md:flex-row gap-3 mb-5">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none bg-white"
+            placeholder="নাম, আইডি বা মোবাইল দিয়ে খুঁজুন..." />
+        </div>
+        <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
+          className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
+          <option value="">সব শাখা</option>
+          <option value="প্রধান শাখা">প্রধান শাখা</option>
+          <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+        </select>
+      </div>
+
+      {/* Active class summary cards */}
+      {(() => {
+        const classStudents = allStudents.filter(s => s.class_level === activeClass);
+        const boysCount = classStudents.filter(s => s.gender === 'ছেলে').length;
+        const girlsCount = classStudents.filter(s => s.gender === 'মেয়ে').length;
+        const classNameStr = CLASS_LEVELS.find(c => c.value === activeClass)?.label || activeClass;
+
+        return (
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">{classNameStr} - এক নজরে</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 font-semibold">মোট শিক্ষার্থী</div>
+                  <div className="text-2xl font-bold text-gray-900">{classStudents.length} জন</div>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xl">
+                  👦
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 font-semibold">ছাত্র (ছেলে)</div>
+                  <div className="text-2xl font-bold text-gray-900">{boysCount} জন</div>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                <div className="w-12 h-12 bg-pink-50 text-pink-600 rounded-full flex items-center justify-center font-bold text-xl">
+                  👧
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 font-semibold">ছাত্রী (মেয়ে)</div>
+                  <div className="text-2xl font-bold text-gray-900">{girlsCount} জন</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Student Table filtered by activeClass */}
+      {(() => {
+        const filteredStudents = allStudents.filter(s => s.class_level === activeClass);
+        return loading ? (
+          <div className="text-center py-12 text-gray-400 animate-pulse font-medium">লোড হচ্ছে...</div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
+            এই ক্লাসে কোনো শিক্ষার্থী নেই।<br />
+            <span className="text-sm">উপরে "নতুন স্টুডেন্ট যোগ করুন" চাপ দিন।</span>
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
+                  <th className="p-4 font-bold">#</th>
+                  <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                  <th className="p-4 font-bold">নাম</th>
+                  <th className="p-4 font-bold">শাখা</th>
+                  <th className="p-4 font-bold">মোবাইল</th>
+                  <th className="p-4 font-bold">অভিভাবক</th>
+                  <th className="p-4 font-bold">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.map((s, idx) => (
+                  <tr key={s.id} className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors">
+                    <td className="p-4 text-gray-400 font-medium">{idx + 1}</td>
+                    <td className="p-4"><span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg text-sm">{s.student_uid}</span></td>
+                    <td className="p-4 font-semibold text-gray-900">{s.name}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${s.branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                        {s.branch}
+                      </span>
+                    </td>
+                    <td className="p-4 text-gray-600">{s.phone}</td>
+                    <td className="p-4 text-gray-500 text-sm">{s.guardian_phone || '—'}</td>
+                    <td className="p-4">
+                      <button onClick={() => handleDelete(s.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                        <TrashIcon />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-500 font-medium">
+              মোট {filteredStudents.length} জন শিক্ষার্থী
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+};
+
+// ─── Attendance Tab ────────────────────────────────────────────────────────
+const AttendanceTab = () => {
+  const [branch, setBranch] = useState('প্রধান শাখা');
+  const [classLevel, setClassLevel] = useState('Class 1');
+  const [attDate, setAttDate] = useState(new Date().toISOString().split('T')[0]);
+  const [students, setStudents] = useState([]);
+  const [attendance, setAttendance] = useState({}); // { student_id: true/false }
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState({ text: '', type: 'success' });
+  const [markedBy, setMarkedBy] = useState('অ্যাডমিন');
+  const [viewMode, setViewMode] = useState('mark'); // 'mark' | 'history'
+  const [historyRecords, setHistoryRecords] = useState([]);
+
+  const fetchStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const res = await fetch(`/api/students/?branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStudents(data);
+        // Load existing attendance for that date if any
+        const attRes = await fetch(`/api/attendance/?att_date=${attDate}&branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
+        const existing = attRes.ok ? await attRes.json() : [];
+        const map = {};
+        data.forEach(s => { map[s.id] = true; }); // default: present
+        existing.forEach(r => { map[r.student_id] = r.is_present; });
+        setAttendance(map);
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoadingStudents(false); }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`/api/attendance/?branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
+      if (res.ok) setHistoryRecords(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const handleToggle = (studentId) => {
+    setAttendance(prev => ({ ...prev, [studentId]: !prev[studentId] }));
+  };
+
+  const handleMarkAll = (value) => {
+    const map = {};
+    students.forEach(s => { map[s.id] = value; });
+    setAttendance(map);
+  };
+
+  const handleSave = async () => {
+    if (students.length === 0) { setMsg({ text: 'প্রথমে শিক্ষার্থীদের তালিকা লোড করুন!', type: 'error' }); return; }
+    setSaving(true);
+    try {
+      const entries = students.map(s => ({ student_id: s.id, is_present: attendance[s.id] ?? true }));
+      const res = await fetch('/api/attendance/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: attDate, branch, class_level: classLevel, marked_by: markedBy, entries })
+      });
+      if (res.ok) {
+        setMsg({ text: 'উপস্থিতি সফলভাবে সেভ হয়েছে!', type: 'success' });
+      } else {
+        setMsg({ text: 'সেভ হয়নি। আবার চেষ্টা করুন।', type: 'error' });
+      }
+    } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
+    finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
+  };
+
+  const presentCount = students.filter(s => attendance[s.id]).length;
+  const absentCount = students.length - presentCount;
+
+  // Group history by date
+  const grouped = historyRecords.reduce((acc, r) => {
+    const d = r.date;
+    if (!acc[d]) acc[d] = { present: [], absent: [] };
+    if (r.is_present) acc[d].present.push(r); else acc[d].absent.push(r);
+    return acc;
+  }, {});
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">শ্রেণি উপস্থিতি</h2>
+        <div className="flex gap-2">
+          <button onClick={() => setViewMode('mark')}
+            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${viewMode === 'mark' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+            মার্ক করুন
+          </button>
+          <button onClick={() => { setViewMode('history'); fetchHistory(); }}
+            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${viewMode === 'history' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+            ইতিহাস দেখুন
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-blue-50 border border-blue-100 rounded-2xl p-5">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">শাখা</label>
+          <select value={branch} onChange={e => setBranch(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+            <option value="প্রধান শাখা">প্রধান শাখা</option>
+            <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">শ্রেণি</label>
+          <select value={classLevel} onChange={e => setClassLevel(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+            {CLASS_LEVELS.map(cl => <option key={cl.value} value={cl.value}>{cl.label}</option>)}
+          </select>
+        </div>
+        {viewMode === 'mark' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">তারিখ</label>
+            <input type="date" value={attDate} onChange={e => setAttDate(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+          </div>
+        )}
+        {viewMode === 'mark' && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">মার্ক করছেন</label>
+            <input type="text" value={markedBy} onChange={e => setMarkedBy(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+              placeholder="শিক্ষকের নাম" />
+          </div>
+        )}
+        <div className="flex items-end">
+          <button onClick={fetchStudents}
+            className="w-full bg-primary text-white py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors">
+            তালিকা লোড করুন
+          </button>
+        </div>
+      </div>
+
+      <Alert message={msg.text} type={msg.type} />
+
+      {/* Mark Attendance View */}
+      {viewMode === 'mark' && (
+        <div>
+          {loadingStudents ? (
+            <div className="text-center py-12 text-gray-400 animate-pulse font-medium">লোড হচ্ছে...</div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
+              উপরে শাখা, শ্রেণি বেছে "তালিকা লোড করুন" চাপুন
+            </div>
+          ) : (
+            <div>
+              {/* Summary + Bulk Actions */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <div className="flex gap-3">
+                  <span className="bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-xl text-sm">✓ উপস্থিত: {presentCount}</span>
+                  <span className="bg-red-100 text-red-700 font-bold px-3 py-1.5 rounded-xl text-sm">✗ অনুপস্থিত: {absentCount}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleMarkAll(true)}
+                    className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg font-semibold hover:bg-green-200 transition-colors">
+                    সবাই উপস্থিত
+                  </button>
+                  <button onClick={() => handleMarkAll(false)}
+                    className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-lg font-semibold hover:bg-red-200 transition-colors">
+                    সবাই অনুপস্থিত
+                  </button>
+                </div>
+              </div>
+
+              {/* Student List */}
+              <div className="space-y-2 mb-6">
+                {students.map((s, idx) => (
+                  <div key={s.id}
+                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                      attendance[s.id]
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-red-200 bg-red-50'
+                    }`}
+                    onClick={() => handleToggle(s.id)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400 font-medium w-6 text-sm">{idx + 1}</span>
+                      <div>
+                        <p className="font-bold text-gray-900">{s.name}</p>
+                        <p className="text-xs text-gray-500">{s.student_uid} &bull; {s.branch}</p>
+                      </div>
+                    </div>
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                      attendance[s.id]
+                        ? 'bg-green-500 text-white'
+                        : 'bg-red-500 text-white'
+                    }`}>
+                      {attendance[s.id] ? <>✓ উপস্থিত</> : <>✗ অনুপস্থিত</>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={handleSave} disabled={saving}
+                className="w-full bg-primary text-white py-3 rounded-xl font-bold text-base hover:bg-secondary transition-colors disabled:bg-gray-400 shadow-md">
+                {saving ? 'সেভ হচ্ছে...' : 'উপস্থিতি সেভ করুন'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* History View */}
+      {viewMode === 'history' && (
+        <div>
+          {Object.keys(grouped).length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
+              কোনো উপস্থিতির রেকর্ড নেই।
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a)).map(([date, data]) => (
+                <div key={date} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="bg-gray-50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                    <h4 className="font-bold text-gray-800">
+                      {new Date(date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </h4>
+                    <div className="flex gap-2 text-sm">
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-lg font-bold">উপস্থিত: {data.present.length}</span>
+                      <span className="bg-red-100 text-red-700 px-2 py-1 rounded-lg font-bold">অনুপস্থিত: {data.absent.length}</span>
+                    </div>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {[...data.present, ...data.absent].sort((a, b) => a.student_name?.localeCompare(b.student_name || '') || 0).map(r => (
+                      <div key={r.id} className={`flex items-center gap-3 p-3 rounded-xl ${
+                        r.is_present ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'
+                      }`}>
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                          r.is_present ? 'bg-green-500' : 'bg-red-500'
+                        }`}>{r.is_present ? '✓' : '✗'}</span>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{r.student_name}</p>
+                          <p className="text-xs text-gray-400">{r.student_uid}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Fee Tracker Tab ──────────────────────────────────────────────────────────
+const FeeTrackerTab = () => {
+  const [fees, setFees] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterPaid, setFilterPaid] = useState('');
+  const [filterBranch, setFilterBranch] = useState('');
+  const [feeViewMode, setFeeViewMode] = useState('all'); // 'all' or 'dues'
+  const [showForm, setShowForm] = useState(false);
+  const [editingFeeId, setEditingFeeId] = useState(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [msg, setMsg] = useState({ text: '', type: 'success' });
+  const [saving, setSaving] = useState(false);
+
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
+
+  const fetchFees = useCallback(async () => {
+    setLoading(true);
+    try {
+      let url = '/api/dashboard/fees?';
+      if (filterPaid !== '') url += `is_paid=${filterPaid}&`;
+      if (filterBranch) url += `branch=${encodeURIComponent(filterBranch)}&`;
+      const res = await fetch(url);
+      if (res.ok) setFees(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [filterPaid, filterBranch]);
+
+  const fetchStudents = async () => {
+    const res = await fetch('/api/students/');
+    if (res.ok) setStudents(await res.json());
+  };
+
+  useEffect(() => { fetchFees(); fetchStudents(); }, [fetchFees]);
+
+  const handleAddFee = async () => {
+    if (!form.student_id || !form.amount || !form.month) {
+      setMsg({ text: 'সকল ফিল্ড পূরণ করুন!', type: 'error' }); return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/dashboard/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, student_id: parseInt(form.student_id), amount: parseFloat(form.amount) })
+      });
+      if (res.ok) {
+        setMsg({ text: 'ফি রেকর্ড সফলভাবে যোগ হয়েছে!', type: 'success' });
+        setShowForm(false);
+        fetchFees();
+      } else {
+        setMsg({ text: 'সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
+    finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
+  };
+
+  const handleMarkPaid = async (feeId) => {
+    await fetch(`/api/dashboard/fees/${feeId}/pay`, { method: 'PATCH' });
+    fetchFees();
+  };
+
+  const handleEditFeeAmount = async (feeId) => {
+    if (!editAmount || isNaN(editAmount)) return;
+    try {
+      const res = await fetch(`/api/dashboard/fees/${feeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseFloat(editAmount) })
+      });
+      if (res.ok) {
+        setEditingFeeId(null);
+        fetchFees();
+        setMsg({ text: 'পরিমাণ আপডেট হয়েছে!', type: 'success' });
+      } else {
+        setMsg({ text: 'আপডেট করতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch {
+      setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' });
+    }
+    setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
+  };
+
+  const totalPaidAmount = fees.filter(f => f.is_paid).reduce((sum, f) => sum + f.amount, 0);
+  const totalUnpaidAmount = fees.filter(f => !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
+
+  const formatMonth = (monthStr) => {
+    if (!monthStr || !monthStr.includes('-')) return monthStr;
+    const [year, month] = monthStr.split('-');
+    const date = new Date(year, parseInt(month) - 1);
+    return date.toLocaleString('bn-BD', { month: 'long', year: 'numeric' });
+  };
+
+  const studentDues = Object.values(fees.reduce((acc, fee) => {
+    if (!fee.is_paid) {
+      if (!acc[fee.student_id]) {
+        acc[fee.student_id] = {
+          student_uid: fee.student_uid,
+          student_name: fee.student_name,
+          student_branch: fee.student_branch,
+          total_due: 0,
+          months: []
+        };
+      }
+      acc[fee.student_id].total_due += fee.amount;
+      acc[fee.student_id].months.push(formatMonth(fee.month));
+    }
+    return acc;
+  }, {})).sort((a, b) => b.total_due - a.total_due);
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">ফি ট্র্যাকার</h2>
+        <button onClick={() => setShowForm(!showForm)}
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm">
+          <PlusIcon /> নতুন ফি এন্ট্রি
+        </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-bold text-blue-700">{fees.length}</p>
+          <p className="text-sm text-blue-600 font-semibold mt-1">মোট রেকর্ড</p>
+        </div>
+        <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-bold text-green-700">৳{totalPaidAmount}</p>
+          <p className="text-sm text-green-600 font-semibold mt-1">মোট আদায় (পরিশোধিত)</p>
+        </div>
+        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
+          <p className="text-2xl font-bold text-red-700">৳{totalUnpaidAmount}</p>
+          <p className="text-sm text-red-600 font-semibold mt-1">মোট বকেয়া</p>
+        </div>
+      </div>
+
+      <Alert message={msg.text} type={msg.type} />
+
+      {/* Add Fee Form */}
+      {showForm && (
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
+          <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন ফি এন্ট্রি</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">স্টুডেন্ট সিলেক্ট করুন *</label>
+              <select value={form.student_id} onChange={e => setForm({ ...form, student_id: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+                <option value="">-- স্টুডেন্ট বেছে নিন --</option>
+                {students.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.student_uid}) — {s.branch}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">মাস *</label>
+              <input type="month" value={form.month} onChange={e => setForm({ ...form, month: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">পরিমাণ (টাকা) *</label>
+              <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="৫০০" />
+            </div>
+            <div className="flex items-center gap-3 mt-6">
+              <input type="checkbox" id="isPaid" checked={form.is_paid} onChange={e => setForm({ ...form, is_paid: e.target.checked })}
+                className="w-5 h-5 accent-primary cursor-pointer" />
+              <label htmlFor="isPaid" className="font-semibold text-gray-700 cursor-pointer">এখনই পরিশোধিত মার্ক করুন</label>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5">
+            <button onClick={handleAddFee} disabled={saving}
+              className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+              {saving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
+            </button>
+            <button onClick={() => setShowForm(false)}
+              className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
+              বাতিল
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Filters & View Toggle */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-max">
+          <button onClick={() => setFeeViewMode('all')}
+            className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${feeViewMode === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            সব রেকর্ড
+          </button>
+          <button onClick={() => setFeeViewMode('dues')}
+            className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${feeViewMode === 'dues' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            স্টুডেন্টদের বকেয়া
+          </button>
+        </div>
+        
+        {feeViewMode === 'all' && (
+          <div className="flex gap-3">
+            <select value={filterPaid} onChange={e => setFilterPaid(e.target.value)}
+              className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
+              <option value="">সব রেকর্ড</option>
+              <option value="false">বকেয়া</option>
+              <option value="true">পরিশোধিত</option>
+            </select>
+            <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
+              className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
+              <option value="">সব শাখা</option>
+              <option value="প্রধান শাখা">প্রধান শাখা</option>
+              <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Fee Table View */}
+      {feeViewMode === 'all' ? (
+        loading ? (
+        <div className="text-center py-12 text-gray-400 animate-pulse font-medium">লোড হচ্ছে...</div>
+      ) : fees.length === 0 ? (
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
+          কোনো ফি রেকর্ড পাওয়া যায়নি।
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
+                <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                <th className="p-4 font-bold">নাম</th>
+                <th className="p-4 font-bold">শাখা</th>
+                <th className="p-4 font-bold">মাস</th>
+                <th className="p-4 font-bold">পরিমাণ</th>
+                <th className="p-4 font-bold">স্ট্যাটাস</th>
+                <th className="p-4 font-bold">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fees.map(f => (
+                <tr key={f.id} className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors">
+                  <td className="p-4"><span className="font-bold text-primary text-sm">{f.student_uid}</span></td>
+                  <td className="p-4 font-semibold text-gray-900">{f.student_name}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${f.student_branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                      {f.student_branch}
+                    </span>
+                  </td>
+                  <td className="p-4 text-gray-600 font-medium">{formatMonth(f.month)}</td>
+                  <td className="p-4 font-bold text-gray-900">
+                    {editingFeeId === f.id ? (
+                      <div className="flex gap-2 items-center">
+                        <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} 
+                          className="border border-gray-300 rounded px-2 py-1 w-20 text-sm font-normal outline-none focus:ring-2 focus:ring-primary" />
+                        <button onClick={() => handleEditFeeAmount(f.id)} className="text-green-600 font-bold hover:bg-green-50 p-1 rounded transition-colors">✓</button>
+                        <button onClick={() => setEditingFeeId(null)} className="text-red-500 font-bold hover:bg-red-50 p-1 rounded transition-colors">✗</button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 items-center">
+                        <span>৳{f.amount}</span>
+                        {!f.is_paid && (
+                          <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="পরিমাণ এডিট করুন">
+                            ✎
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    {f.is_paid ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        ✓ পরিশোধিত
+                        {f.payment_date && <span className="ml-1 opacity-70">({f.payment_date})</span>}
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    {!f.is_paid && (
+                      <button onClick={() => handleMarkPaid(f.id)}
+                        className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors font-semibold">
+                        পরিশোধিত মার্ক করুন
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )) : (
+        /* Dues Summary View */
+        <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+          {studentDues.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 text-gray-500 font-medium">
+              কারো কোনো বকেয়া নেই! 🎉
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-red-50 text-red-800 text-sm border-b border-red-100">
+                  <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                  <th className="p-4 font-bold">নাম</th>
+                  <th className="p-4 font-bold">শাখা</th>
+                  <th className="p-4 font-bold">বকেয়া মাস</th>
+                  <th className="p-4 font-bold text-right">মোট বকেয়া</th>
+                </tr>
+              </thead>
+              <tbody>
+                {studentDues.map((due, idx) => (
+                  <tr key={idx} className="border-b border-gray-50 hover:bg-red-50/30 transition-colors">
+                    <td className="p-4"><span className="font-bold text-primary text-sm">{due.student_uid}</span></td>
+                    <td className="p-4 font-semibold text-gray-900">{due.student_name}</td>
+                    <td className="p-4 text-gray-600 text-sm">{due.student_branch}</td>
+                    <td className="p-4 text-gray-600 text-sm">{due.months.join(', ')}</td>
+                    <td className="p-4 font-bold text-red-600 text-right text-lg">৳{due.total_due}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Routine Tab (unchanged) ──────────────────────────────────────────────────
+const RoutineTab = () => {
+  const [routineBranch, setRoutineBranch] = useState('প্রধান শাখা');
   const [routineDate, setRoutineDate] = useState('');
   const [routineStartTime, setRoutineStartTime] = useState('');
   const [routineEndTime, setRoutineEndTime] = useState('');
@@ -18,127 +919,368 @@ const AdminDashboard = () => {
   const [routineTeacher, setRoutineTeacher] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [routineMessage, setRoutineMessage] = useState('');
-  
-  // Existing Routines State
   const [existingRoutines, setExistingRoutines] = useState([]);
+  const [filterBranch, setFilterBranch] = useState('প্রধান শাখা');
 
-  // Fetch routines on mount
   useEffect(() => {
     const fetchRoutines = async () => {
       try {
-        const response = await fetch('/api/dashboard/routines');
-        if (response.ok) {
-          const data = await response.json();
-          setExistingRoutines(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch routines", err);
-      }
+        const res = await fetch(`/api/dashboard/routines?branch=${encodeURIComponent(filterBranch)}`);
+        if (res.ok) setExistingRoutines(await res.json());
+      } catch (e) { console.error(e); }
     };
     fetchRoutines();
-  }, []);
+  }, [filterBranch]);
 
-  // Pre-fill form when routineDate, startTime, endTime changes
   useEffect(() => {
-    const existing = existingRoutines.find(r => 
-      r.date === routineDate && 
-      r.start_time === routineStartTime &&
-      r.end_time === routineEndTime &&
-      r.class_level === routineLevel
+    const existing = existingRoutines.find(r =>
+      r.branch === routineBranch && r.date === routineDate &&
+      r.start_time === routineStartTime && r.end_time === routineEndTime && r.class_level === routineLevel
     );
-    if (existing) {
-      setRoutineClass(existing.class_name || '');
-      setRoutineTeacher(existing.teacher_name || '');
-    } else {
-      setRoutineClass('');
-      setRoutineTeacher('');
-    }
-  }, [routineDate, routineStartTime, routineEndTime, routineLevel, existingRoutines]);
+    if (existing) { setRoutineClass(existing.class_name || ''); setRoutineTeacher(existing.teacher_name || ''); }
+    else { setRoutineClass(''); setRoutineTeacher(''); }
+  }, [routineBranch, routineDate, routineStartTime, routineEndTime, routineLevel, existingRoutines]);
 
   const handleSaveRoutine = async () => {
-    if (!routineDate || !routineStartTime || !routineEndTime || !routineLevel || !routineClass || !routineTeacher) {
-      setRoutineMessage('দয়া করে সব ফিল্ড পূরণ করুন!');
-      return;
+    if (!routineBranch || !routineDate || !routineStartTime || !routineEndTime || !routineLevel || !routineClass || !routineTeacher) {
+      setRoutineMessage('দয়া করে সব ফিল্ড পূরণ করুন!'); return;
     }
-    
     setIsSaving(true);
     try {
-      const response = await fetch('/api/dashboard/routines', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: routineDate,
-          start_time: routineStartTime,
-          end_time: routineEndTime,
-          class_level: routineLevel,
-          class_name: routineClass,
-          teacher_name: routineTeacher
-        })
+      const res = await fetch('/api/dashboard/routines', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch: routineBranch, date: routineDate, start_time: routineStartTime, end_time: routineEndTime, class_level: routineLevel, class_name: routineClass, teacher_name: routineTeacher })
       });
-      
-      if (response.ok) {
-        const savedRoutine = await response.json();
-        setExistingRoutines(prev => {
-          const filtered = prev.filter(r => !(
-            r.date === savedRoutine.date && 
-            r.start_time === savedRoutine.start_time &&
-            r.end_time === savedRoutine.end_time &&
-            r.class_level === savedRoutine.class_level
-          ));
-          return [...filtered, savedRoutine];
-        });
-        setRoutineMessage('রুটিন সফলভাবে আপডেট হয়েছে!');
+      if (res.ok) {
+        const saved = await res.json();
+        if (saved.branch === filterBranch) {
+          setExistingRoutines(prev => {
+            const filtered = prev.filter(r => !(r.branch === saved.branch && r.date === saved.date && r.start_time === saved.start_time && r.end_time === saved.end_time && r.class_level === saved.class_level));
+            return [...filtered, saved];
+          });
+        }
+        setRoutineMessage('রুটিন সফলভাবে আপডেট হয়েছে!');
         setTimeout(() => setRoutineMessage(''), 3000);
-      } else {
-        setRoutineMessage('রুটিন আপডেট করতে সমস্যা হয়েছে।');
-      }
-    } catch (error) {
-      console.error(error);
-      setRoutineMessage('সার্ভারে কানেক্ট করা যাচ্ছে না।');
-    } finally {
-      setIsSaving(false);
-    }
+      } else { setRoutineMessage('রুটিন আপডেট করতে সমস্যা হয়েছে।'); }
+    } catch { setRoutineMessage('সার্ভারে কানেক্ট করা যাচ্ছে না।'); }
+    finally { setIsSaving(false); }
   };
 
-  const handlePublishNotice = async () => {
-    if (!noticeTitle || !noticeContent) {
-      setNoticeMessage('দয়া করে শিরোনাম এবং বিস্তারিত পূরণ করুন!');
-      return;
-    }
-    
-    setIsPublishing(true);
+  return (
+    <div>
+      {/* Master Routine View */}
+      <div className="mb-12 pb-8 border-b border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h3 className="text-xl font-bold">মাস্টার রুটিন ভিউ</h3>
+          <div className="flex items-center gap-3">
+            <label className="text-gray-600 font-semibold">শাখা:</label>
+            <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)} className="border border-gray-300 rounded-xl p-2 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
+              <option value="প্রধান শাখা">প্রধান শাখা</option>
+              <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+            </select>
+          </div>
+        </div>
+        {existingRoutines.length === 0 ? (
+          <div className="text-gray-500 py-4 bg-gray-50 rounded-xl p-8 text-center border border-dashed border-gray-300 font-medium">এই শাখার জন্য কোনো রুটিন পাওয়া যায়নি।</div>
+        ) : (
+          <div className="space-y-8">
+            {Object.entries(existingRoutines.reduce((acc, r) => {
+              const d = r.date; if (!acc[d]) acc[d] = {};
+              const fmt = (t) => { if (!t) return ''; const [h, m] = t.split(':'); let hr = parseInt(h); const ap = hr >= 12 ? 'PM' : 'AM'; hr = hr % 12 || 12; return `${hr}:${m} ${ap}`; };
+              const tb = `${fmt(r.start_time)} - ${fmt(r.end_time)}`;
+              if (!acc[d][tb]) acc[d][tb] = []; acc[d][tb].push(r); return acc;
+            }, {})).map(([date, timeBlocks]) => (
+              <div key={date} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                  <h4 className="font-bold text-gray-800 text-lg">তারিখ: {new Date(date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</h4>
+                </div>
+                <div className="p-6 space-y-6">
+                  {Object.entries(timeBlocks).map(([time, routines]) => (
+                    <div key={time} className="pl-4 border-l-2 border-primary/30">
+                      <h5 className="font-semibold text-primary mb-3">সময়: {time}</h5>
+                      <div className="space-y-2">
+                        {routines.map((r, idx) => (
+                          <div key={idx} className="flex items-center text-gray-700 bg-gray-50 p-2 rounded-lg">
+                            <span className="font-semibold min-w-[100px]">{r.class_level}</span>
+                            <span className="mx-2">-</span>
+                            <span className="font-bold">{r.class_name}</span>
+                            <span className="ml-2 text-sm text-gray-500">({r.teacher_name})</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Routine Update Form */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">ডেইলি রুটিন আপডেট করুন</h2>
+        <div className="space-y-4 max-w-2xl">
+          {routineMessage && <Alert message={routineMessage} type={routineMessage.includes('সফল') ? 'success' : 'error'} />}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">শাখা</label>
+            <select value={routineBranch} onChange={e => setRoutineBranch(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+              <option value="প্রধান শাখা">প্রধান শাখা</option>
+              <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">তারিখ</label>
+            <input type="date" value={routineDate} onChange={e => setRoutineDate(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">শুরুর সময়</label>
+              <input type="time" value={routineStartTime} onChange={e => setRoutineStartTime(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">শেষ সময়</label>
+              <input type="time" value={routineEndTime} onChange={e => setRoutineEndTime(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">ব্যাচ / ক্লাস লেভেল</label>
+            <select value={routineLevel} onChange={e => setRoutineLevel(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+              <option value="">শ্রেণি নির্বাচন করুন</option>
+              <option value="Class 1">প্রথম শ্রেণি</option>
+              <option value="Class 2">দ্বিতীয় শ্রেণি</option>
+              <option value="Class 3">তৃতীয় শ্রেণি</option>
+              <option value="Class 4">চতুর্থ শ্রেণি</option>
+              <option value="Class 5">পঞ্চম শ্রেণি</option>
+              <option value="Class 6">ষষ্ঠ শ্রেণি</option>
+              <option value="Class 7">সপ্তম শ্রেণি</option>
+              <option value="Class 8">অষ্টম শ্রেণি</option>
+              <option value="Class 9">নবম শ্রেণি</option>
+              <option value="Class 10">দশম শ্রেণি</option>
+              <option value="HSC 1st Year">এইচএসসি — প্রথম বর্ষ</option>
+              <option value="HSC 2nd Year">এইচএসসি — দ্বিতীয় বর্ষ</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">বিষয়ের নাম</label>
+            <input type="text" value={routineClass} onChange={e => setRoutineClass(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="যেমন: English" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">শিক্ষকের নাম</label>
+            <input type="text" value={routineTeacher} onChange={e => setRoutineTeacher(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="যেমন: Irine ma'am" />
+          </div>
+          <button onClick={handleSaveRoutine} disabled={isSaving} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+            {isSaving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Exam Management Tab ────────────────────────────────────────────────────────
+const ExamManagementTab = () => {
+  const [exams, setExams] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [newExam, setNewExam] = useState({ title: '', subject: '', duration_minutes: 30 });
+  const [msg, setMsg] = useState('');
+  const [selectedExamId, setSelectedExamId] = useState(null);
+  const [selectedExam, setSelectedExam] = useState(null);
+  const [newQuestion, setNewQuestion] = useState({ text: '', option1: '', option2: '', option3: '', option4: '', correct_answer: 0 });
+
+  useEffect(() => { fetchExams(); }, []);
+
+  const fetchExams = async () => {
     try {
-      const response = await fetch('/api/dashboard/notices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch('/api/dashboard/exams');
+      if (res.ok) setExams(await res.json());
+    } catch (err) { console.error(err); }
+  };
+
+  const handleCreateExam = async () => {
+    if (!newExam.title || !newExam.subject) return setMsg('শিরোনাম এবং বিষয় পূরণ করুন।');
+    try {
+      const res = await fetch('/api/dashboard/exams', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newExam)
+      });
+      if (res.ok) {
+        setMsg('পরীক্ষা তৈরি হয়েছে!');
+        setShowForm(false);
+        setNewExam({ title: '', subject: '', duration_minutes: 30 });
+        fetchExams();
+      }
+    } catch (err) { console.error(err); setMsg('সমস্যা হয়েছে।'); }
+    setTimeout(() => setMsg(''), 3000);
+  };
+
+  const handleToggleExam = async (id) => {
+    await fetch(`/api/dashboard/exams/${id}/toggle`, { method: 'PATCH' });
+    fetchExams();
+  };
+
+  const handleDeleteExam = async (id) => {
+    if(!window.confirm('পরীক্ষাটি মুছতে চান?')) return;
+    await fetch(`/api/dashboard/exams/${id}`, { method: 'DELETE' });
+    if(selectedExamId === id) setSelectedExamId(null);
+    fetchExams();
+  };
+
+  const loadExamDetails = async (id) => {
+    try {
+      const res = await fetch(`/api/dashboard/exams/${id}`);
+      if (res.ok) {
+        setSelectedExam(await res.json());
+        setSelectedExamId(id);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleAddQuestion = async () => {
+    if (!newQuestion.text || !newQuestion.option1 || !newQuestion.option2) return alert('প্রশ্ন ও অন্তত দুটি অপশন দিন।');
+    try {
+      const optionsArray = [newQuestion.option1, newQuestion.option2, newQuestion.option3, newQuestion.option4].filter(o => o);
+      const res = await fetch(`/api/dashboard/exams/${selectedExamId}/questions`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: noticeTitle,
-          content: noticeContent,
-          is_active: true
+          text: newQuestion.text,
+          options: JSON.stringify(optionsArray),
+          correct_answer: parseInt(newQuestion.correct_answer)
         })
       });
-      
-      if (response.ok) {
-        setNoticeMessage('নোটিশ সফলভাবে পাবলিশ হয়েছে!');
-        setNoticeTitle('');
-        setNoticeContent('');
-        setTimeout(() => setNoticeMessage(''), 3000);
-      } else {
-        setNoticeMessage('নোটিশ পাবলিশ করতে সমস্যা হয়েছে।');
+      if (res.ok) {
+        loadExamDetails(selectedExamId);
+        setNewQuestion({ text: '', option1: '', option2: '', option3: '', option4: '', correct_answer: 0 });
       }
-    } catch (error) {
-      console.error(error);
-      setNoticeMessage('সার্ভারে কানেক্ট করা যাচ্ছে না।');
-    } finally {
-      setIsPublishing(false);
-    }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteQuestion = async (qId) => {
+    if(!window.confirm('প্রশ্নটি মুছতে চান?')) return;
+    await fetch(`/api/dashboard/questions/${qId}`, { method: 'DELETE' });
+    loadExamDetails(selectedExamId);
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-gray-900">পরীক্ষা ম্যানেজমেন্ট</h2>
+        <button onClick={() => setShowForm(!showForm)} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary">
+          + নতুন পরীক্ষা
+        </button>
+      </div>
+
+      {msg && <div className="mb-4 text-green-700 bg-green-100 p-3 rounded">{msg}</div>}
+
+      {showForm && (
+        <div className="bg-blue-50 p-6 rounded-xl mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div><label className="block mb-1 font-bold">শিরোনাম</label><input type="text" value={newExam.title} onChange={e=>setNewExam({...newExam, title: e.target.value})} className="w-full p-2 border rounded" placeholder="মডেল টেস্ট ১" /></div>
+            <div><label className="block mb-1 font-bold">বিষয়</label><input type="text" value={newExam.subject} onChange={e=>setNewExam({...newExam, subject: e.target.value})} className="w-full p-2 border rounded" placeholder="পদার্থবিজ্ঞান" /></div>
+            <div><label className="block mb-1 font-bold">সময় (মিনিট)</label><input type="number" value={newExam.duration_minutes} onChange={e=>setNewExam({...newExam, duration_minutes: e.target.value})} className="w-full p-2 border rounded" /></div>
+          </div>
+          <button onClick={handleCreateExam} className="bg-blue-600 text-white px-4 py-2 rounded font-bold">সেভ করুন</button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 border rounded-xl overflow-hidden">
+          <div className="bg-gray-100 p-3 font-bold border-b">পরীক্ষার তালিকা</div>
+          <div className="max-h-[500px] overflow-y-auto">
+            {exams.map(ex => (
+              <div key={ex.id} className={`p-4 border-b cursor-pointer hover:bg-blue-50 ${selectedExamId === ex.id ? 'bg-blue-50 border-l-4 border-l-primary' : ''}`} onClick={() => loadExamDetails(ex.id)}>
+                <div className="font-bold">{ex.title}</div>
+                <div className="text-sm text-gray-500">{ex.subject} • {ex.duration_minutes} মিনিট</div>
+                <div className="mt-2 flex gap-2">
+                  <button onClick={(e) => { e.stopPropagation(); handleToggleExam(ex.id); }} className={`text-xs px-2 py-1 rounded text-white ${ex.is_active ? 'bg-green-500' : 'bg-gray-400'}`}>
+                    {ex.is_active ? 'Active' : 'Inactive'}
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); handleDeleteExam(ex.id); }} className="text-xs px-2 py-1 rounded bg-red-500 text-white">ডিলিট</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-2 border rounded-xl overflow-hidden p-6 bg-white">
+          {selectedExam ? (
+            <div>
+              <h3 className="text-lg font-bold mb-4">{selectedExam.title} - প্রশ্নসমূহ</h3>
+              <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
+                <h4 className="font-bold mb-3">নতুন প্রশ্ন যোগ করুন</h4>
+                <input type="text" placeholder="প্রশ্ন" value={newQuestion.text} onChange={e=>setNewQuestion({...newQuestion, text: e.target.value})} className="w-full p-2 mb-2 border rounded" />
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <input type="text" placeholder="অপশন ১" value={newQuestion.option1} onChange={e=>setNewQuestion({...newQuestion, option1: e.target.value})} className="p-2 border rounded" />
+                  <input type="text" placeholder="অপশন ২" value={newQuestion.option2} onChange={e=>setNewQuestion({...newQuestion, option2: e.target.value})} className="p-2 border rounded" />
+                  <input type="text" placeholder="অপশন ৩ (ঐচ্ছিক)" value={newQuestion.option3} onChange={e=>setNewQuestion({...newQuestion, option3: e.target.value})} className="p-2 border rounded" />
+                  <input type="text" placeholder="অপশন ৪ (ঐচ্ছিক)" value={newQuestion.option4} onChange={e=>setNewQuestion({...newQuestion, option4: e.target.value})} className="p-2 border rounded" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <select value={newQuestion.correct_answer} onChange={e=>setNewQuestion({...newQuestion, correct_answer: e.target.value})} className="p-2 border rounded">
+                    <option value={0}>সঠিক: অপশন ১</option>
+                    <option value={1}>সঠিক: অপশন ২</option>
+                    <option value={2}>সঠিক: অপশন ৩</option>
+                    <option value={3}>সঠিক: অপশন ৪</option>
+                  </select>
+                  <button onClick={handleAddQuestion} className="bg-primary text-white px-4 py-2 rounded font-bold">+ যোগ করুন</button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {selectedExam.questions?.map((q, idx) => {
+                  const opts = JSON.parse(q.options);
+                  return (
+                    <div key={q.id} className="p-4 border rounded relative">
+                      <button onClick={() => handleDeleteQuestion(q.id)} className="absolute top-4 right-4 text-red-500 font-bold text-sm hover:underline">মুছুন</button>
+                      <div className="font-bold mb-2">{idx + 1}. {q.text}</div>
+                      <ol className="list-decimal pl-5 text-sm">
+                        {opts.map((opt, i) => (
+                          <li key={i} className={q.correct_answer === i ? 'text-green-600 font-bold' : ''}>{opt} {q.correct_answer === i && '✓'}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+             <div className="text-center text-gray-400 py-10">বাম পাশ থেকে একটি পরীক্ষা নির্বাচন করুন</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Main AdminDashboard ──────────────────────────────────────────────────────
+const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('notices');
+  const [noticeTitle, setNoticeTitle] = useState('');
+  const [noticeContent, setNoticeContent] = useState('');
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [noticeMessage, setNoticeMessage] = useState('');
+
+  const handlePublishNotice = async () => {
+    if (!noticeTitle || !noticeContent) { setNoticeMessage('শিরোনাম এবং বিস্তারিত পূরণ করুন!'); return; }
+    setIsPublishing(true);
+    try {
+      const res = await fetch('/api/dashboard/notices', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: noticeTitle, content: noticeContent, is_active: true })
+      });
+      if (res.ok) { setNoticeMessage('নোটিশ সফলভাবে পাবলিশ হয়েছে!'); setNoticeTitle(''); setNoticeContent(''); setTimeout(() => setNoticeMessage(''), 3000); }
+      else { setNoticeMessage('নোটিশ পাবলিশ করতে সমস্যা হয়েছে।'); }
+    } catch { setNoticeMessage('সার্ভারে কানেক্ট করা যাচ্ছে না।'); }
+    finally { setIsPublishing(false); }
   };
 
   const tabs = [
     { id: 'notices', label: 'নোটিশ বোর্ড' },
+    { id: 'attendance', label: 'উপস্থিতি' },
     { id: 'routines', label: 'রুটিন আপডেট' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
-    { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' }
+    { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
+    { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' }
   ];
 
   return (
@@ -146,288 +1288,47 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">অ্যাডমিন ড্যাশবোর্ড</h1>
-          <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-semibold">
-            অ্যাডমিন প্যানেল
-          </div>
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-              <span className="text-xl font-bold text-blue-600">৩২০</span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">মোট শিক্ষার্থী</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-              <span className="text-xl font-bold text-green-600">৳১৫k</span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">আজকের ফি আদায়</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-            <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center mr-4">
-              <span className="text-xl font-bold text-accent">৫</span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">চলমান ব্যাচ</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
-            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
-              <span className="text-xl font-bold text-red-600">১২</span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">বকেয়া ফি (জন)</p>
-            </div>
-          </div>
+          <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold">অ্যাডমিন প্যানেল</div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-100">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-4 text-center font-medium transition-colors ${
-                  activeTab === tab.id 
-                    ? 'border-b-2 border-primary text-primary bg-primary/5' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
+          <div className="flex border-b border-gray-100 overflow-x-auto">
+            {tabs.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 min-w-[130px] py-4 text-center font-semibold transition-colors whitespace-nowrap ${activeTab === tab.id ? 'border-b-2 border-primary text-primary bg-primary/5' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Tab Content */}
           <div className="p-8">
             {activeTab === 'notices' && (
               <div>
                 <h2 className="text-xl font-bold mb-4">নতুন নোটিশ তৈরি করুন</h2>
                 <div className="space-y-4 max-w-2xl">
-                  {noticeMessage && (
-                    <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm border border-green-100">
-                      {noticeMessage}
-                    </div>
-                  )}
+                  {noticeMessage && <Alert message={noticeMessage} type={noticeMessage.includes('সফল') ? 'success' : 'error'} />}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">শিরোনাম</label>
-                    <input 
-                      type="text" 
-                      value={noticeTitle}
-                      onChange={(e) => setNoticeTitle(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" 
-                      placeholder="নোটিশের শিরোনাম" 
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">শিরোনাম</label>
+                    <input type="text" value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের শিরোনাম" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">বিস্তারিত</label>
-                    <textarea 
-                      rows="4" 
-                      value={noticeContent}
-                      onChange={(e) => setNoticeContent(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" 
-                      placeholder="নোটিশের বিস্তারিত লিখুন..."></textarea>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">বিস্তারিত</label>
+                    <textarea rows="4" value={noticeContent} onChange={e => setNoticeContent(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের বিস্তারিত লিখুন..."></textarea>
                   </div>
-                  <button 
-                    onClick={handlePublishNotice}
-                    disabled={isPublishing}
-                    className="bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-secondary transition-colors disabled:bg-gray-400">
+                  <button onClick={handlePublishNotice} disabled={isPublishing}
+                    className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
                     {isPublishing ? 'পাবলিশ হচ্ছে...' : 'পাবলিশ করুন'}
                   </button>
                 </div>
               </div>
             )}
-
-            {activeTab === 'fees' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold">ফি ট্র্যাকার (জুলাই ২০২৬)</h2>
-                  <input type="text" placeholder="স্টুডেন্ট আইডি বা নাম খুঁজুন..." className="border border-gray-300 rounded-lg p-2 px-4 focus:ring-2 focus:ring-primary outline-none" />
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50 text-gray-600 text-sm border-y border-gray-100">
-                        <th className="p-4 font-semibold">স্টুডেন্ট আইডি</th>
-                        <th className="p-4 font-semibold">নাম</th>
-                        <th className="p-4 font-semibold">ব্যাচ</th>
-                        <th className="p-4 font-semibold">ফি স্ট্যাটাস</th>
-                        <th className="p-4 font-semibold">অ্যাকশন</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[1,2,3].map(i => (
-                        <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
-                          <td className="p-4 font-medium text-gray-900">RC-2026-{200+i}</td>
-                          <td className="p-4 text-gray-700">রাকিবুল হাসান</td>
-                          <td className="p-4 text-gray-600">এইচএসসি (পদার্থবিজ্ঞান)</td>
-                          <td className="p-4">
-                            {i === 1 ? (
-                              <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">পরিশোধিত</span>
-                            ) : (
-                              <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">বকেয়া</span>
-                            )}
-                          </td>
-                          <td className="p-4">
-                            {i !== 1 && (
-                              <button className="text-xs bg-primary text-white px-3 py-1.5 rounded hover:bg-secondary transition-colors">পে মার্ক করুন</button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'students' && (
-              <div className="text-center py-12 text-gray-500">
-                <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <p>শিক্ষার্থী ডেটাবেজ মডিউল শিঘ্রই যুক্ত করা হবে।</p>
-              </div>
-            )}
-
-            {activeTab === 'routines' && (
-              <div>
-                <h2 className="text-xl font-bold mb-4">ডেইলি রুটিন আপডেট করুন</h2>
-                <div className="space-y-4 max-w-2xl">
-                  {routineMessage && (
-                    <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm border border-green-100">
-                      {routineMessage}
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">তারিখ (Date)</label>
-                    <input 
-                      type="date"
-                      value={routineDate}
-                      onChange={(e) => setRoutineDate(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">শুরুর সময় (Start Time)</label>
-                      <input 
-                        type="time" 
-                        value={routineStartTime}
-                        onChange={(e) => setRoutineStartTime(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">শেষ সময় (End Time)</label>
-                      <input 
-                        type="time" 
-                        value={routineEndTime}
-                        onChange={(e) => setRoutineEndTime(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ব্যাচ / ক্লাস লেভেল (Batch / Class)</label>
-                    <input 
-                      type="text" 
-                      value={routineLevel}
-                      onChange={(e) => setRoutineLevel(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" 
-                      placeholder="যেমন: College বা 9th/10th" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">বিষয়ের নাম (Class Name)</label>
-                    <input 
-                      type="text" 
-                      value={routineClass}
-                      onChange={(e) => setRoutineClass(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" 
-                      placeholder="যেমন: English" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">শিক্ষকের নাম (Teacher's Name)</label>
-                    <input 
-                      type="text" 
-                      value={routineTeacher}
-                      onChange={(e) => setRoutineTeacher(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" 
-                      placeholder="যেমন: Irine ma'am" 
-                    />
-                  </div>
-                  <button 
-                    onClick={handleSaveRoutine}
-                    disabled={isSaving}
-                    className="bg-primary text-white px-6 py-2.5 rounded-lg font-medium hover:bg-secondary transition-colors disabled:bg-gray-400">
-                    {isSaving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
-                  </button>
-                </div>
-
-                {/* Master Routine View */}
-                <div className="mt-12 pt-8 border-t border-gray-100">
-                  <h3 className="text-xl font-bold mb-6">মাস্টার রুটিন ভিউ</h3>
-                  {existingRoutines.length === 0 ? (
-                    <div className="text-gray-500 py-4">কোনো রুটিন পাওয়া যায়নি।</div>
-                  ) : (
-                    <div className="space-y-8">
-                      {Object.entries(
-                        existingRoutines.reduce((acc, routine) => {
-                          const date = routine.date;
-                          if (!acc[date]) acc[date] = {};
-                          
-                          const formatTime = (t24) => {
-                            if (!t24) return '';
-                            const [h, m] = t24.split(':');
-                            let hour = parseInt(h, 10);
-                            const ampm = hour >= 12 ? 'PM' : 'AM';
-                            hour = hour % 12 || 12;
-                            return `${hour}:${m} ${ampm}`;
-                          };
-
-                          const timeBlock = `${formatTime(routine.start_time)} - ${formatTime(routine.end_time)}`;
-                          if (!acc[date][timeBlock]) acc[date][timeBlock] = [];
-                          acc[date][timeBlock].push(routine);
-                          return acc;
-                        }, {})
-                      ).map(([date, timeBlocks]) => (
-                        <div key={date} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                          <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                            <h4 className="font-bold text-gray-800 text-lg">তারিখ: {new Date(date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</h4>
-                          </div>
-                          <div className="p-6 space-y-6">
-                            {Object.entries(timeBlocks).map(([time, routines]) => (
-                              <div key={time} className="pl-4 border-l-2 border-primary/30">
-                                <h5 className="font-semibold text-primary mb-3">সময়: {time}</h5>
-                                <div className="space-y-2">
-                                  {routines.map((r, idx) => (
-                                    <div key={idx} className="flex items-center text-gray-700 bg-gray-50 p-2 rounded-lg">
-                                      <span className="font-medium min-w-[100px]">{r.class_level}</span>
-                                      <span className="mx-2">-</span>
-                                      <span className="font-semibold">{r.class_name}</span>
-                                      <span className="ml-2 text-sm text-gray-500">({r.teacher_name})</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {activeTab === 'routines' && <RoutineTab />}
+            {activeTab === 'attendance' && <AttendanceTab />}
+            {activeTab === 'fees' && <FeeTrackerTab />}
+            {activeTab === 'students' && <StudentDatabaseTab />}
+            {activeTab === 'exams' && <ExamManagementTab />}
           </div>
         </div>
       </div>
