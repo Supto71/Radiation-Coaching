@@ -49,7 +49,7 @@ const Login = () => {
         }
       }
     } else {
-      if (userId === 'teacher' && password === '1234') {
+      if (userId.trim() === 'teacher' && password.trim() === '1234') {
         navigate('/admin/dashboard');
       } else {
         setError('টিচার আইডি বা পাসওয়ার্ড ভুল হয়েছে! (Hint: teacher / 1234)');
