@@ -41,6 +41,12 @@ if os.path.exists(STATIC_DIR):
     def serve_react_app(catchall: str):
         if catchall.startswith("api/"):
             return {"detail": "Not Found"}
+        
+        # Check if the requested file exists in the static directory (e.g. images in public folder)
+        file_path = os.path.join(STATIC_DIR, catchall)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+            
         return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 else:
     @app.get("/")
