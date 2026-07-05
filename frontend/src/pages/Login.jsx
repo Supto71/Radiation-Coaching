@@ -52,7 +52,7 @@ const Login = () => {
       if (userId.trim() === 'teacher' && password.trim() === '1234') {
         navigate('/admin/dashboard');
       } else {
-        setError('টিচার আইডি বা পাসওয়ার্ড ভুল হয়েছে! (Hint: teacher / 1234)');
+        setError('টিচার আইডি বা পাসওয়ার্ড ভুল হয়েছে!');
       }
     }
   };
@@ -143,13 +143,13 @@ const Login = () => {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
-                  placeholder={role === 'student' ? 'RC-001' : 'teacher লিখুন'}
+                  placeholder={role === 'student' ? 'RC-001' : 'টিচার আইডি লিখুন'}
                 />
               </div>
 
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {role === 'student' ? 'পাসওয়ার্ড (12345 দিন)' : 'পাসওয়ার্ড'}
+                  পাসওয়ার্ড
                 </label>
                 <input
                   type="password"
@@ -157,7 +157,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
-                  placeholder={role === 'student' ? '12345' : '1234'}
+                  placeholder="আপনার পাসওয়ার্ড লিখুন"
                 />
               </div>
 
