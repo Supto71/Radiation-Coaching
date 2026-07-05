@@ -17,6 +17,8 @@ const StudentDashboard = () => {
   const [examsLoading, setExamsLoading] = useState(true);
   const [results, setResults] = useState([]);
   const [resultsLoading, setResultsLoading] = useState(true);
+  const [notices, setNotices] = useState([]);
+  const [noticesLoading, setNoticesLoading] = useState(true);
 
   useEffect(() => {
     // Load student from localStorage
@@ -116,11 +118,27 @@ const StudentDashboard = () => {
       }
     };
 
+    // Fetch Notices
+    const fetchNotices = async () => {
+      setNoticesLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard/notices`);
+        if (res.ok) {
+          setNotices(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch notices", err);
+      } finally {
+        setNoticesLoading(false);
+      }
+    };
+
     fetchRoutines();
     fetchAttendance();
     fetchFees();
     fetchExams();
     fetchResults();
+    fetchNotices();
   }, [student]);
 
   const handleLogout = () => {
@@ -139,7 +157,8 @@ const StudentDashboard = () => {
     { id: 'attendance', label: 'আমার উপস্থিতি' },
     { id: 'fees', label: 'পেমেন্ট হিস্ট্রি' },
     { id: 'exams', label: 'পরীক্ষা' },
-    { id: 'results', label: 'পরীক্ষার রেজাল্ট' }
+    { id: 'results', label: 'ফলাফল' },
+    { id: 'notices', label: 'নোটিশ বোর্ড' }
   ];
 
   return (
@@ -414,6 +433,34 @@ const StudentDashboard = () => {
                 ) : (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100 border-dashed text-gray-500">
                     আপনি এখনও কোনো পরীক্ষায় অংশগ্রহণ করেননি।
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* NOTICES TAB */}
+            {activeTab === 'notices' && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold mb-4">নোটিশ বোর্ড</h2>
+                {noticesLoading ? (
+                  <div className="text-center py-12 text-gray-400 animate-pulse">লোড হচ্ছে...</div>
+                ) : notices.length === 0 ? (
+                  <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500">
+                    কোনো নতুন নোটিশ নেই।
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {notices.map(notice => (
+                      <div key={notice.id} className="bg-white p-5 rounded-xl border-l-4 border-l-primary shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-bold text-lg text-gray-900">{notice.title}</h3>
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            {notice.custom_date ? new Date(notice.custom_date).toLocaleDateString('bn-BD') : new Date(notice.created_at).toLocaleDateString('bn-BD')}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 whitespace-pre-wrap mt-2 text-sm leading-relaxed">{notice.content}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
