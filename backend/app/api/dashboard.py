@@ -11,6 +11,15 @@ from ..schemas import dashboard as schemas
 
 router = APIRouter()
 
+def get_default_admin(db: Session):
+    admin = db.query(User).first()
+    if not admin:
+        admin = User(email="admin@example.com", hashed_password="x", full_name="System Admin")
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+    return admin.id
+
 # --- NOTICES ---
 @router.get("/notices", response_model=List[schemas.Notice])
 def get_notices(db: Session = Depends(get_db)):
@@ -27,7 +36,7 @@ def create_notice(notice: schemas.NoticeCreate, db: Session = Depends(get_db)):
             created_at = datetime.strptime(custom_date_str, '%Y-%m-%d')
         except ValueError:
             pass
-    db_notice = db_models.Notice(**notice_data, author_id=1, created_at=created_at)
+    db_notice = db_models.Notice(**notice_data, author_id=get_default_admin(db), created_at=created_at)
     db.add(db_notice)
     db.commit()
     db.refresh(db_notice)
@@ -202,9 +211,9 @@ def create_or_update_routine(routine: schemas.RoutineCreate, db: Session = Depen
     if db_routine:
         db_routine.class_name = routine.class_name
         db_routine.teacher_name = routine.teacher_name
-        db_routine.author_id = 1
+        db_routine.author_id = get_default_admin(db)
     else:
-        db_routine = db_models.Routine(**routine.model_dump(), author_id=1)
+        db_routine = db_models.Routine(**routine.model_dump(), author_id=get_default_admin(db))
         db.add(db_routine)
     
     db.commit()
