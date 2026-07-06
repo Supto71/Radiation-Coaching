@@ -49,10 +49,14 @@ const Login = () => {
         }
       }
     } else {
-      if (userId.trim() === 'teacher' && password.trim() === '1234') {
+      if (userId.trim() === 'admin' && password.trim() === 'admin123') {
+        localStorage.setItem('staff_role', 'admin');
+        navigate('/admin/dashboard');
+      } else if (userId.trim() === 'teacher' && password.trim() === '1234') {
+        localStorage.setItem('staff_role', 'teacher');
         navigate('/admin/dashboard');
       } else {
-        setError('টিচার আইডি বা পাসওয়ার্ড ভুল হয়েছে!');
+        setError('টিচার/অ্যাডমিন আইডি বা পাসওয়ার্ড ভুল হয়েছে!');
       }
     }
   };

@@ -43,7 +43,7 @@ const CLASS_LEVELS = [
 ];
 
 // ─── Student Database Tab ─────────────────────────────────────────────────────
-const StudentDatabaseTab = () => {
+const StudentDatabaseTab = ({ role }) => {
   const [activeClass, setActiveClass] = useState('Class 1');
   const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,12 +110,14 @@ const StudentDatabaseTab = () => {
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h2 className="text-xl font-bold text-gray-900">শিক্ষার্থী ডেটাবেজ</h2>
+        {role === 'admin' && (
         <button
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm"
         >
           <PlusIcon /> নতুন স্টুডেন্ট যোগ করুন
         </button>
+        )}
       </div>
 
       <Alert message={msg.text} type={msg.type} />
@@ -312,10 +314,12 @@ const StudentDatabaseTab = () => {
                     <td className="p-4 text-gray-600">{s.phone}</td>
                     <td className="p-4 text-gray-500 text-sm">{s.guardian_phone || '—'}</td>
                     <td className="p-4">
-                      <button onClick={() => handleDelete(s.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
-                        <TrashIcon />
-                      </button>
+                      {role === 'admin' && (
+                        <button onClick={() => handleDelete(s.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                          <TrashIcon />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -909,7 +913,7 @@ const FeeTrackerTab = () => {
 };
 
 // ─── Routine Tab (unchanged) ──────────────────────────────────────────────────
-const RoutineTab = () => {
+const RoutineTab = ({ role }) => {
   const [routineBranch, setRoutineBranch] = useState('প্রধান শাখা');
   const [routineDate, setRoutineDate] = useState('');
   const [routineStartTime, setRoutineStartTime] = useState('');
@@ -1018,6 +1022,7 @@ const RoutineTab = () => {
       </div>
 
       {/* Routine Update Form */}
+      {role === 'admin' && (
       <div>
         <h2 className="text-xl font-bold mb-4">ডেইলি রুটিন আপডেট করুন</h2>
         <div className="space-y-4 max-w-2xl">
@@ -1254,6 +1259,7 @@ const ExamManagementTab = () => {
 
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 const AdminDashboard = () => {
+  const staffRole = localStorage.getItem('staff_role') || 'teacher';
   const [activeTab, setActiveTab] = useState('notices');
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeContent, setNoticeContent] = useState('');
@@ -1288,7 +1294,9 @@ const AdminDashboard = () => {
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">অ্যাডমিন ড্যাশবোর্ড</h1>
-          <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold">অ্যাডমিন প্যানেল</div>
+          <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold">
+            {staffRole === 'admin' ? 'অ্যাডমিন প্যানেল (Full Access)' : 'টিচার প্যানেল (Read Only)'}
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -1304,31 +1312,40 @@ const AdminDashboard = () => {
           <div className="p-8">
             {activeTab === 'notices' && (
               <div>
-                <h2 className="text-xl font-bold mb-4">নতুন নোটিশ তৈরি করুন</h2>
-                <div className="space-y-4 max-w-2xl">
-                  {noticeMessage && <Alert message={noticeMessage} type={noticeMessage.includes('সফল') ? 'success' : 'error'} />}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">শিরোনাম</label>
-                    <input type="text" value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের শিরোনাম" />
+                {staffRole === 'admin' ? (
+                  <>
+                    <h2 className="text-xl font-bold mb-4">নতুন নোটিশ তৈরি করুন</h2>
+                    <div className="space-y-4 max-w-2xl">
+                      {noticeMessage && <Alert message={noticeMessage} type={noticeMessage.includes('সফল') ? 'success' : 'error'} />}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">শিরোনাম</label>
+                        <input type="text" value={noticeTitle} onChange={e => setNoticeTitle(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের শিরোনাম" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">বিস্তারিত</label>
+                        <textarea rows="4" value={noticeContent} onChange={e => setNoticeContent(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের বিস্তারিত লিখুন..."></textarea>
+                      </div>
+                      <button onClick={handlePublishNotice} disabled={isPublishing}
+                        className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+                        {isPublishing ? 'পাবলিশ হচ্ছে...' : 'পাবলিশ করুন'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-2xl border border-gray-200 border-dashed">
+                    <h2 className="text-xl font-bold mb-2">নোটিশ বোর্ড</h2>
+                    <p>নোটিশ তৈরি বা পরিবর্তন করার জন্য অ্যাডমিন পারমিশন প্রয়োজন।</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">বিস্তারিত</label>
-                    <textarea rows="4" value={noticeContent} onChange={e => setNoticeContent(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের বিস্তারিত লিখুন..."></textarea>
-                  </div>
-                  <button onClick={handlePublishNotice} disabled={isPublishing}
-                    className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
-                    {isPublishing ? 'পাবলিশ হচ্ছে...' : 'পাবলিশ করুন'}
-                  </button>
-                </div>
+                )}
               </div>
             )}
-            {activeTab === 'routines' && <RoutineTab />}
-            {activeTab === 'attendance' && <AttendanceTab />}
-            {activeTab === 'fees' && <FeeTrackerTab />}
-            {activeTab === 'students' && <StudentDatabaseTab />}
-            {activeTab === 'exams' && <ExamManagementTab />}
+            {activeTab === 'routines' && <RoutineTab role={staffRole} />}
+            {activeTab === 'attendance' && <AttendanceTab role={staffRole} />}
+            {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
+            {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
+            {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}
           </div>
         </div>
       </div>
