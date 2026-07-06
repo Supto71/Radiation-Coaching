@@ -219,3 +219,12 @@ def create_or_update_routine(routine: schemas.RoutineCreate, db: Session = Depen
     db.commit()
     db.refresh(db_routine)
     return db_routine
+
+@router.delete("/routines/{routine_id}")
+def delete_routine(routine_id: int, db: Session = Depends(get_db)):
+    routine = db.query(db_models.Routine).filter(db_models.Routine.id == routine_id).first()
+    if not routine:
+        raise HTTPException(status_code=404, detail="Routine not found")
+    db.delete(routine)
+    db.commit()
+    return {"message": "Routine deleted successfully"}

@@ -13,7 +13,10 @@ class StudentBase(BaseModel):
     guardian_phone: str # Required now
 
 class StudentCreate(StudentBase):
-    pass
+    student_uid: Optional[str] = None
+
+class StudentUpdate(StudentBase):
+    student_uid: Optional[str] = None
 
 class Student(StudentBase):
     id: int

@@ -50,9 +50,10 @@ const StudentDatabaseTab = ({ role }) => {
   const [search, setSearch] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingStudentId, setEditingStudentId] = useState(null);
   const [msg, setMsg] = useState({ text: '', type: 'success' });
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', class_level: 'Class 1', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+  const [form, setForm] = useState({ name: '', student_uid: '', class_level: 'Class 1', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -83,18 +84,24 @@ const StudentDatabaseTab = ({ role }) => {
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/students/', {
-        method: 'POST',
+      const url = editingStudentId ? `/api/students/${editingStudentId}` : '/api/students/';
+      const method = editingStudentId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          student_uid: form.student_uid.trim() === '' ? null : form.student_uid.trim()
+        })
       });
       if (res.ok) {
-        setMsg({ text: 'স্টুডেন্ট সফলভাবে যোগ করা হয়েছে!', type: 'success' });
+        setMsg({ text: `স্টুডেন্ট সফলভাবে ${editingStudentId ? 'আপডেট' : 'যোগ'} করা হয়েছে!`, type: 'success' });
         setShowForm(false);
-        setForm({ name: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+        setEditingStudentId(null);
+        setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
         fetchStudents();
       } else {
-        setMsg({ text: 'যোগ করতে সমস্যা হয়েছে।', type: 'error' });
+        setMsg({ text: `${editingStudentId ? 'আপডেট' : 'যোগ'} করতে সমস্যা হয়েছে।`, type: 'error' });
       }
     } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
     finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
@@ -112,7 +119,11 @@ const StudentDatabaseTab = ({ role }) => {
         <h2 className="text-xl font-bold text-gray-900">শিক্ষার্থী ডেটাবেজ</h2>
         {role === 'admin' && (
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditingStudentId(null);
+            setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+            setShowForm(!showForm);
+          }}
           className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm"
         >
           <PlusIcon /> নতুন স্টুডেন্ট যোগ করুন
@@ -122,11 +133,17 @@ const StudentDatabaseTab = ({ role }) => {
 
       <Alert message={msg.text} type={msg.type} />
 
-      {/* Add Student Form */}
+      {/* Add / Edit Student Form */}
       {showForm && (
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন শিক্ষার্থীর তথ্য</h3>
+          <h3 className="font-bold text-lg mb-4 text-gray-800">{editingStudentId ? 'শিক্ষার্থীর তথ্য এডিট করুন' : 'নতুন শিক্ষার্থীর তথ্য'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">স্টুডেন্ট আইডি (ঐচ্ছিক)</label>
+              <input type="text" value={form.student_uid || ''} onChange={e => setForm({ ...form, student_uid: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="যেমন: RC-123 (ফাঁকা রাখলে অটো জেনারেট হবে)" />
+            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">পুরো নাম *</label>
               <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
@@ -315,10 +332,30 @@ const StudentDatabaseTab = ({ role }) => {
                     <td className="p-4 text-gray-500 text-sm">{s.guardian_phone || '—'}</td>
                     <td className="p-4">
                       {role === 'admin' && (
-                        <button onClick={() => handleDelete(s.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
-                          <TrashIcon />
-                        </button>
+                        <div className="flex gap-2">
+                          <button onClick={() => {
+                            setEditingStudentId(s.id);
+                            setForm({ 
+                              name: s.name, 
+                              student_uid: s.student_uid, 
+                              class_level: s.class_level, 
+                              branch: s.branch, 
+                              gender: s.gender || 'ছেলে', 
+                              phone: s.phone || '', 
+                              guardian_phone: s.guardian_phone || '', 
+                              father_name: s.father_name || '', 
+                              mother_name: s.mother_name || '' 
+                            });
+                            setShowForm(true);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors text-sm font-semibold">
+                            এডিট
+                          </button>
+                          <button onClick={() => handleDelete(s.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                            <TrashIcon />
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -942,8 +979,31 @@ const RoutineTab = ({ role }) => {
       r.start_time === routineStartTime && r.end_time === routineEndTime && r.class_level === routineLevel
     );
     if (existing) { setRoutineClass(existing.class_name || ''); setRoutineTeacher(existing.teacher_name || ''); }
-    else { setRoutineClass(''); setRoutineTeacher(''); }
+    // Removed clearing logic to allow handleEditRoutine to work without getting wiped out immediately
   }, [routineBranch, routineDate, routineStartTime, routineEndTime, routineLevel, existingRoutines]);
+
+  const handleDeleteRoutine = async (id) => {
+    if (!window.confirm('আপনি কি নিশ্চিত যে এই রুটিনটি মুছতে চান?')) return;
+    try {
+      const res = await fetch(`/api/dashboard/routines/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setExistingRoutines(prev => prev.filter(r => r.id !== id));
+        setRoutineMessage('রুটিন মোছা হয়েছে!');
+        setTimeout(() => setRoutineMessage(''), 3000);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleEditRoutine = (r) => {
+    setRoutineBranch(r.branch);
+    setRoutineDate(r.date);
+    setRoutineStartTime(r.start_time);
+    setRoutineEndTime(r.end_time);
+    setRoutineLevel(r.class_level);
+    setRoutineClass(r.class_name);
+    setRoutineTeacher(r.teacher_name);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
 
   const handleSaveRoutine = async () => {
     if (!routineBranch || !routineDate || !routineStartTime || !routineEndTime || !routineLevel || !routineClass || !routineTeacher) {
@@ -1004,11 +1064,17 @@ const RoutineTab = ({ role }) => {
                       <h5 className="font-semibold text-primary mb-3">সময়: {time}</h5>
                       <div className="space-y-2">
                         {routines.map((r, idx) => (
-                          <div key={idx} className="flex items-center text-gray-700 bg-gray-50 p-2 rounded-lg">
+                          <div key={idx} className="flex items-center text-gray-700 bg-gray-50 p-2 rounded-lg group">
                             <span className="font-semibold min-w-[100px]">{r.class_level}</span>
                             <span className="mx-2">-</span>
                             <span className="font-bold">{r.class_name}</span>
-                            <span className="ml-2 text-sm text-gray-500">({r.teacher_name})</span>
+                            <span className="ml-2 text-sm text-gray-500 flex-1">({r.teacher_name})</span>
+                            {role === 'admin' && (
+                              <div className="flex gap-2">
+                                <button onClick={() => handleEditRoutine(r)} className="text-blue-500 hover:bg-blue-100 p-1.5 rounded transition-colors text-sm font-semibold">এডিট</button>
+                                <button onClick={() => handleDeleteRoutine(r.id)} className="text-red-500 hover:bg-red-100 p-1.5 rounded transition-colors text-sm font-semibold">মুছুন</button>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

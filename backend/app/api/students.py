@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ..db.database import get_db
 from ..models.student import Student as StudentModel
-from ..schemas.student import Student, StudentCreate, StudentLogin
+from ..schemas.student import Student, StudentCreate, StudentUpdate, StudentLogin
 
 router = APIRouter()
 
@@ -37,9 +37,32 @@ def get_students(
 
 @router.post("/", response_model=Student)
 def create_student(student: StudentCreate, db: Session = Depends(get_db)):
-    student_uid = generate_student_uid(db)
-    db_student = StudentModel(**student.model_dump(), student_uid=student_uid)
+    student_uid = student.student_uid
+    if not student_uid:
+        student_uid = generate_student_uid(db)
+    
+    student_data = student.model_dump()
+    student_data.pop("student_uid", None) # remove it if it exists so we can explicitly set it
+    
+    db_student = StudentModel(**student_data, student_uid=student_uid)
     db.add(db_student)
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+@router.put("/{student_id}", response_model=Student)
+def update_student(student_id: int, student: StudentUpdate, db: Session = Depends(get_db)):
+    db_student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    update_data = student.model_dump(exclude_unset=True)
+    if "student_uid" in update_data and update_data["student_uid"] is None:
+        update_data.pop("student_uid") # don't overwrite with null
+
+    for key, value in update_data.items():
+        setattr(db_student, key, value)
+        
     db.commit()
     db.refresh(db_student)
     return db_student
