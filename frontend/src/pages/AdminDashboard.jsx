@@ -1079,6 +1079,7 @@ const RoutineTab = ({ role }) => {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 };
