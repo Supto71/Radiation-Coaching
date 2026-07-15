@@ -54,12 +54,12 @@ const Login = () => {
           <img 
             src="/kids.png" 
             alt="Students" 
-            className="w-[85%] sm:w-[70%] lg:w-[90%] max-w-lg object-contain drop-shadow-2xl z-10"
+            className="w-[95%] sm:w-[80%] lg:w-[100%] max-w-2xl object-contain drop-shadow-2xl z-10"
           />
           <img 
             src="/login-text.png" 
             alt="Login Text" 
-            className="w-[70%] sm:w-[50%] lg:w-[70%] max-w-sm object-contain drop-shadow-xl z-20 -mt-16 sm:-mt-24"
+            className="w-[85%] sm:w-[65%] lg:w-[85%] max-w-lg object-contain drop-shadow-xl z-20 -mt-20 sm:-mt-28"
           />
         </div>
 
@@ -68,11 +68,11 @@ const Login = () => {
           
           {/* Top Heading above Card */}
           <div className="text-center mb-8">
-            <h2 className="text-[1.7rem] font-extrabold text-gray-800 mb-1" style={{ color: '#1f2937' }}>শেখো, বোঝো, এগিয়ে যাও</h2>
-            <p className="text-gray-400 text-sm font-medium">শত শত শিক্ষার্থীর বিশ্বস্ত প্ল্যাটফর্ম</p>
+            <h2 className="text-[1.8rem] font-extrabold text-gray-800 mb-1" style={{ color: '#1f2937' }}>শেখো, বোঝো, এগিয়ে যাও</h2>
+            <p className="text-gray-400 text-base font-medium">শত শত শিক্ষার্থীর বিশ্বস্ত প্ল্যাটফর্ম</p>
           </div>
 
-          <div className="bg-white w-full max-w-md p-8 sm:p-10 rounded-[2rem] shadow-[0_15px_50px_rgba(0,0,0,0.06)]">
+          <div className="bg-white w-full max-w-[500px] p-8 sm:p-12 rounded-[2.5rem] shadow-[0_15px_50px_rgba(0,0,0,0.06)]">
             
             {/* Card Header & Toggle */}
             <div className="flex justify-between items-start mb-8">
