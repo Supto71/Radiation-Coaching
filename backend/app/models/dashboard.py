@@ -17,7 +17,7 @@ class FeeRecord(Base):
     __tablename__ = "fee_records"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("users.id"))
+    student_id = Column(Integer, ForeignKey("students.id"))
     amount = Column(Float)
     month = Column(String) # e.g. "July 2026"
     is_paid = Column(Boolean, default=False)
