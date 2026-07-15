@@ -1,31 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { FaUserGraduate, FaChalkboardTeacher, FaIdBadge, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
   const [role, setRole] = useState('student'); // 'student' or 'teacher'
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  // Public data state
-  const [notices, setNotices] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPublicData = async () => {
-      try {
-        const noticesRes = await axios.get('/api/dashboard/notices').catch(() => ({ data: [] }));
-        setNotices(noticesRes.data);
-      } catch (err) {
-        console.error("Failed to load public data", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPublicData();
-  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -43,7 +27,7 @@ const Login = () => {
         }
       } catch (err) {
         if (err.response && err.response.status === 401) {
-          setError('স্টুডেন্ট আইডি ভুল অথবা পাসওয়ার্ড ১২৩৪৫ দেওয়া হয়নি!');
+          setError('স্টুডেন্ট আইডি বা পাসওয়ার্ড ভুল হয়েছে!');
         } else {
           setError('সার্ভারে সমস্যা হচ্ছে। দয়া করে পরে চেষ্টা করুন।');
         }
@@ -62,124 +46,145 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
-
-      <div className="max-w-6xl w-full flex flex-col lg:flex-row gap-8 z-10">
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8" style={{ backgroundColor: 'var(--color-bg-light, #f4f7fb)' }}>
+      <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12">
         
-        {/* Left Column: Public Information (Notice) */}
-        <div className="lg:w-7/12 flex flex-col gap-6">
-
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 flex-1">
-            <div className="flex items-center mb-6">
-              <div className="bg-secondary/10 p-3 rounded-lg mr-4">
-                <svg className="w-6 h-6 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">নোটিশ বোর্ড</h2>
-            </div>
-            
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-              {loading ? (
-                <div className="text-gray-500 animate-pulse">লোড হচ্ছে...</div>
-              ) : notices.length > 0 ? (
-                notices.map((notice) => (
-                  <div key={notice.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <h3 className="font-bold text-gray-900 mb-2">{notice.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{notice.content}</p>
-                    <p className="text-xs text-gray-400">প্রকাশিত: {new Date(notice.created_at).toLocaleDateString('bn-BD')}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-xl border border-gray-100 border-dashed">
-                  কোনো নতুন নোটিশ নেই।
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Left Side: Illustration */}
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:justify-end mt-12 lg:mt-0 order-2 lg:order-1 relative">
+          <img 
+            src="/kids.png" 
+            alt="Students" 
+            className="w-[85%] sm:w-[70%] lg:w-[90%] max-w-lg object-contain drop-shadow-2xl z-10"
+          />
+          <img 
+            src="/login-text.png" 
+            alt="Login Text" 
+            className="w-[70%] sm:w-[50%] lg:w-[70%] max-w-sm object-contain drop-shadow-xl z-20 -mt-16 sm:-mt-24"
+          />
         </div>
 
-        {/* Right Column: Login Form */}
-        <div className="lg:w-5/12">
-          <div className="w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-100 h-full flex flex-col justify-center">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">লগইন করুন</h2>
-              <p className="text-gray-500">Radiation Coaching প্ল্যাটফর্মে আপনাকে স্বাগতম</p>
-            </div>
+        {/* Right Side: Login Card */}
+        <div className="w-full lg:w-1/2 flex justify-center lg:justify-start order-1 lg:order-2">
+          <div className="bg-white w-full max-w-md p-8 sm:p-10 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
+            
+            <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+              স্বাগতম <span className="animate-wave inline-block origin-[70%_70%]">👋</span>
+            </h1>
+            <p className="text-gray-500 font-medium mb-8">আপনার একাউন্টে লগইন করুন</p>
 
-            {/* Role Toggle */}
-            <div className="flex bg-gray-100 p-1 rounded-xl mb-8">
+            {/* Role Toggle Pill */}
+            <div className="flex bg-blue-50/70 p-1.5 rounded-full mb-8 relative">
               <button
+                type="button"
                 onClick={() => setRole('student')}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                  role === 'student' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold transition-all duration-300 z-10 ${
+                  role === 'student' ? 'bg-primary text-white shadow-md' : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
-                স্টুডেন্ট লগইন
+                <FaUserGraduate className={role === 'student' ? 'text-white' : 'text-gray-400'} /> স্টুডেন্ট
               </button>
               <button
+                type="button"
                 onClick={() => setRole('teacher')}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${
-                  role === 'teacher' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-bold transition-all duration-300 z-10 ${
+                  role === 'teacher' ? 'bg-primary text-white shadow-md' : 'text-gray-500 hover:text-gray-800'
                 }`}
               >
-                টিচার লগইন
+                <FaChalkboardTeacher className={role === 'teacher' ? 'text-white' : 'text-gray-400'} /> টিচার
               </button>
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleLogin} className="space-y-5">
               {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center border border-red-100">
+                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-semibold text-center border border-red-100">
                   {error}
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {role === 'student' ? 'স্টুডেন্ট আইডি' : 'টিচার আইডি'}
+              {/* ID Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-gray-700 ml-1">
+                  <FaIdBadge className="inline mr-2 text-gray-400" />
+                  {role === 'student' ? 'আইডি/রোল' : 'টিচার আইডি'}
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
-                  placeholder={role === 'student' ? 'RC-001' : 'টিচার আইডি লিখুন'}
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <FaIdBadge className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 hover:bg-gray-50 focus:bg-white text-gray-700 font-medium"
+                    placeholder={role === 'student' ? 'আপনার আইডি/রোল লিখুন' : 'টিচার আইডি লিখুন'}
+                  />
+                </div>
               </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  পাসওয়ার্ড
+              {/* Password Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-bold text-gray-700 ml-1">
+                  <FaLock className="inline mr-2 text-gray-400" /> পাসওয়ার্ড
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
-                  placeholder="আপনার পাসওয়ার্ড লিখুন"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <FaLock className="text-gray-400" />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-11 pr-12 py-3.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all bg-gray-50/50 hover:bg-gray-50 focus:bg-white text-gray-700 font-medium"
+                    placeholder="আপনার পাসওয়ার্ড লিখুন"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full bg-primary hover:bg-secondary text-white py-3.5 rounded-xl font-bold text-lg transition-colors shadow-lg shadow-primary/30"
-              >
-                প্রবেশ করুন
-              </button>
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer" />
+                  <span className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">আমাকে মনে রাখুন</span>
+                </label>
+                <a href="#" className="text-sm font-bold text-primary hover:text-secondary transition-colors">
+                  পাসওয়ার্ড ভুলে গেছেন?
+                </a>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  className="w-full bg-[#d92525] hover:bg-[#b91c1c] text-white py-4 rounded-2xl font-bold text-lg transition-all transform hover:scale-[1.02] active:scale-95 shadow-[0_8px_20px_rgba(217,37,37,0.3)]"
+                >
+                  লগইন করুন
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="relative flex items-center py-4">
+                <div className="flex-grow border-t border-gray-200"></div>
+                <span className="flex-shrink-0 mx-4 text-gray-400 text-sm font-medium">অথবা</span>
+                <div className="flex-grow border-t border-gray-200"></div>
+              </div>
+
+              {/* Register Link */}
+              <div className="text-center">
+                <p className="text-sm font-medium text-gray-500">
+                  একাউন্ট নেই? <Link to="/register" className="text-[#d92525] font-bold hover:underline">রেজিস্ট্রেশন করুন</Link>
+                </p>
+              </div>
+
             </form>
-
-            <div className="mt-8 text-center text-sm text-gray-500">
-              <p>
-                {role === 'student' 
-                  ? 'লগইন করতে সমস্যা হলে কোচিং কর্তৃপক্ষের সাথে যোগাযোগ করুন।' 
-                  : 'শিক্ষক প্যানেলে প্রবেশের জন্য আপনার নির্ধারিত আইডি ব্যবহার করুন।'}
-              </p>
-            </div>
           </div>
         </div>
       </div>

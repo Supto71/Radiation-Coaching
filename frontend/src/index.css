@@ -2,9 +2,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #2563EB;
-  --color-secondary: #1E40AF;
-  --color-accent: #F59E0B;
+  --color-primary: #0284c7; /* Sky 600 - Navbar & Highlights */
+  --color-secondary: #0ea5e9; /* Sky 500 - Gradients */
+  --color-accent: #dc2626; /* Red 600 - Buttons & Alerts */
+  --color-bg-light: #f4f7fb; /* Light grayish blue background */
 }
 
 body {
