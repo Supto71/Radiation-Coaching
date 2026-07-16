@@ -13,15 +13,6 @@ const TeacherDashboard = () => {
   const [exams, setExams] = useState([]);
   const [notices, setNotices] = useState([]);
   
-  // Student Attendance States
-  const [attBranch, setAttBranch] = useState('প্রধান শাখা');
-  const [attGender, setAttGender] = useState('ছেলে');
-  const [attClass, setAttClass] = useState('9th');
-  const [attDate, setAttDate] = useState(new Date().toISOString().split('T')[0]);
-  const [studentsForAtt, setStudentsForAtt] = useState([]);
-  const [attendanceRecords, setAttendanceRecords] = useState({});
-  const [submittingAtt, setSubmittingAtt] = useState(false);
-  const [attMessage, setAttMessage] = useState('');
 
   // My Attendance States
   const [myAttDate, setMyAttDate] = useState(new Date().toISOString().split('T')[0]);
@@ -70,57 +61,6 @@ const TeacherDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
-  const fetchStudentsForAttendance = async () => {
-    try {
-      // First fetch students matching branch, class, and gender
-      const res = await axios.get(`/api/students/?branch=${encodeURIComponent(attBranch)}&class_level=${encodeURIComponent(attClass)}&gender=${encodeURIComponent(attGender)}`);
-      
-      let filteredStudents = res.data;
-
-      setStudentsForAtt(filteredStudents);
-      
-      if (filteredStudents.length === 0) {
-        setAttMessage('এই শাখা এবং ক্লাসের কোনো স্টুডেন্ট পাওয়া যায়নি।');
-      } else {
-        setAttMessage('');
-      }
-
-      // Then fetch any existing attendance for this date
-      const attRes = await axios.get(`/api/attendance/?att_date=${attDate}&branch=${encodeURIComponent(attBranch)}&class_level=${encodeURIComponent(attClass)}`);
-      
-      const initialRecords = {};
-      // Default to true (present)
-      filteredStudents.forEach(s => { initialRecords[s.id] = true; });
-      // Override with existing records
-      if (attRes.data && Array.isArray(attRes.data)) {
-          attRes.data.forEach(a => { initialRecords[a.student_id] = a.is_present; });
-      }
-      setAttendanceRecords(initialRecords);
-    } catch (err) {
-      alert('স্টুডেন্ট লোড করতে সমস্যা হয়েছে!');
-    }
-  };
-
-  const submitStudentAttendance = async () => {
-    setSubmittingAtt(true);
-    try {
-      const records = Object.keys(attendanceRecords).map(id => ({
-        student_id: parseInt(id),
-        is_present: attendanceRecords[id]
-      }));
-      await axios.post('/api/attendance/bulk', {
-        date: attDate,
-        branch: attBranch,
-        class_level: attClass,
-        entries: records,
-        marked_by: teacherName
-      });
-      alert('সফলভাবে হাজিরা সেভ হয়েছে!');
-    } catch (err) {
-      alert('হাজিরা সেভ করতে সমস্যা হয়েছে!');
-    }
-    setSubmittingAtt(false);
-  };
 
   const submitMyAttendance = async (e) => {
     e.preventDefault();
@@ -193,9 +133,6 @@ const TeacherDashboard = () => {
           <button onClick={() => setActiveTab('notice')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'notice' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
             <FaClipboardList className={activeTab === 'notice' ? 'text-primary' : 'text-gray-400'} /> নোটিশ বোর্ড
           </button>
-          <button onClick={() => setActiveTab('student_att')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'student_att' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <FaUserCheck className={activeTab === 'student_att' ? 'text-primary' : 'text-gray-400'} /> স্টুডেন্ট হাজিরা
-          </button>
           <button onClick={() => setActiveTab('my_att')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'my_att' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
             <FaClipboardList className={activeTab === 'my_att' ? 'text-primary' : 'text-gray-400'} /> আমার হাজিরা
           </button>
@@ -267,69 +204,7 @@ const TeacherDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'student_att' && (
-          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2"><FaUserCheck className="text-primary"/> স্টুডেন্ট হাজিরা</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <select value={attBranch} onChange={e => setAttBranch(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white">
-                <option value="প্রধান শাখা">প্রধান শাখা</option>
-                <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
-              </select>
-              <select value={attGender} onChange={e => setAttGender(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white">
-                <option value="ছেলে">ছেলে</option>
-                <option value="মেয়ে">মেয়ে</option>
-              </select>
-              <select value={attClass} onChange={e => setAttClass(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white">
-                <option value="Class 1">Class 1</option>
-                <option value="Class 2">Class 2</option>
-                <option value="Class 3">Class 3</option>
-                <option value="Class 4">Class 4</option>
-                <option value="Class 5">Class 5</option>
-                <option value="Class 6">Class 6</option>
-                <option value="Class 7">Class 7</option>
-                <option value="Class 8">Class 8</option>
-                <option value="9th">৯ম শ্রেণি</option>
-                <option value="10th">১০ম শ্রেণি</option>
-                <option value="HSC-1">এইচএসসি ১ম বর্ষ</option>
-                <option value="HSC-2">এইচএসসি ২য় বর্ষ</option>
-              </select>
-              <input type="date" value={attDate} onChange={e => setAttDate(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white" />
-            </div>
-            <button onClick={fetchStudentsForAttendance} className="bg-[#0f172a] text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors mb-8 shadow-md">স্টুডেন্ট লোড করুন</button>
-            
-            {attMessage && (
-              <div className="mb-4 text-red-500 font-bold p-4 bg-red-50 rounded-xl border border-red-100 animate-fade-in">
-                {attMessage}
-              </div>
-            )}
-
-            {studentsForAtt.length > 0 && (
-              <div className="mt-4 animate-fade-in">
-                <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-bold text-gray-700 bg-gray-100 px-4 py-2 rounded-lg inline-block">মোট স্টুডেন্ট: {studentsForAtt.length} জন</h4>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-                  {studentsForAtt.map(s => (
-                    <label key={s.id} className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all transform hover:scale-[1.02] ${attendanceRecords[s.id] ? 'border-green-500 bg-green-50/50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-                      <div>
-                        <p className={`font-bold ${attendanceRecords[s.id] ? 'text-green-800' : 'text-gray-800'}`}>{s.full_name}</p>
-                        <p className="text-xs text-gray-500 font-medium mt-0.5">আইডি: {s.student_uid}</p>
-                      </div>
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors ${attendanceRecords[s.id] ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
-                          <input type="checkbox" className="hidden" checked={attendanceRecords[s.id] || false} onChange={e => setAttendanceRecords({...attendanceRecords, [s.id]: e.target.checked})} />
-                          {attendanceRecords[s.id] && <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <button onClick={submitStudentAttendance} disabled={submittingAtt} className="w-full md:w-auto bg-green-600 text-white px-10 py-3.5 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
-                  <FaSave /> {submittingAtt ? 'সেভ হচ্ছে...' : 'হাজিরা সেভ করুন'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Removed Student Attendance Tab */}
 
         {activeTab === 'my_att' && (
           <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 max-w-2xl mx-auto">
