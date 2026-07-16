@@ -8,9 +8,7 @@ const Navbar = () => {
   const navLinks = [
     { name: 'হোম', path: '/' },
     { name: 'কোর্সসমূহ', path: '/courses' },
-    { name: 'নোটিশ বোর্ড', path: '#' },
-    { name: 'আমাদের সম্পর্কে', path: '#' },
-    { name: 'যোগাযোগ', path: '#' },
+    { name: 'শিক্ষকমন্ডলী', path: '/faculty' },
   ];
 
   return (
@@ -44,7 +42,7 @@ const Navbar = () => {
               to="/login"
               className="relative overflow-hidden group bg-gradient-to-r from-[#00b4d8] to-[#0096b4] text-white px-6 py-2.5 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(0,180,216,0.4)] font-bold text-[15px]"
             >
-              <span className="relative z-10">লগইন/রেজিস্টার</span>
+              <span className="relative z-10">লগইন</span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
             </Link>
           </div>
@@ -80,7 +78,7 @@ const Navbar = () => {
             className="block text-center bg-[#00b4d8] text-white px-4 py-2 rounded-full font-bold shadow-md"
             onClick={() => setIsOpen(false)}
           >
-            লগইন/রেজিস্টার
+            লগইন
           </Link>
         </div>
       )}
