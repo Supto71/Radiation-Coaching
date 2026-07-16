@@ -50,7 +50,7 @@ const Login = () => {
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center gap-12">
         
         {/* Left Side: Illustration */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:justify-end mt-12 lg:mt-0 order-2 lg:order-1 relative">
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:justify-end mt-12 lg:mt-0 order-1 lg:order-1 relative">
           <img 
             src="/kids.png" 
             alt="Students" 
@@ -64,7 +64,7 @@ const Login = () => {
         </div>
 
         {/* Right Side: Login Content */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:justify-start order-1 lg:order-2">
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:justify-start order-2 lg:order-2 mt-8 lg:mt-0">
           
           {/* Top Heading above Card */}
           <div className="text-center mb-8">
