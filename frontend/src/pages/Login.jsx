@@ -59,6 +59,7 @@ const Login = () => {
           <img 
             src="/login-text.png" 
             alt="Login Text" 
+            style={{ clipPath: 'inset(0px 0px 28% 0px)' }}
             className="w-[85%] sm:w-[65%] lg:w-[85%] max-w-lg object-contain drop-shadow-xl z-20 -mt-20 sm:-mt-28"
           />
         </div>
@@ -161,15 +162,12 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Remember Me & Forgot Password */}
+              {/* Remember Me */}
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-1.5 cursor-pointer group">
                   <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer" />
                   <span className="text-[11px] font-medium text-gray-500 group-hover:text-gray-700 transition-colors">আমাকে মনে রাখুন</span>
                 </label>
-                <a href="#" className="text-[11px] font-bold text-primary hover:text-secondary transition-colors">
-                  পাসওয়ার্ড ভুলে গেছেন?
-                </a>
               </div>
 
               {/* Submit Button */}
@@ -180,20 +178,6 @@ const Login = () => {
                 >
                   লগইন করুন
                 </button>
-              </div>
-
-              {/* Divider */}
-              <div className="relative flex items-center py-3">
-                <div className="flex-grow border-t border-gray-100"></div>
-                <span className="flex-shrink-0 mx-4 text-gray-300 text-xs font-medium">অথবা</span>
-                <div className="flex-grow border-t border-gray-100"></div>
-              </div>
-
-              {/* Register Link */}
-              <div className="text-center pb-2">
-                <p className="text-[11px] font-medium text-gray-400">
-                  একাউন্ট নেই? <Link to="/register" className="text-[#d32f2f] font-bold hover:underline ml-1">রেজিস্ট্রেশন করুন</Link>
-                </p>
               </div>
 
             </form>
