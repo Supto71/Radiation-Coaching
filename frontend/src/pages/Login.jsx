@@ -36,8 +36,8 @@ const Login = () => {
       if (userId.trim() === 'admin' && password.trim() === 'admin123') {
         localStorage.setItem('staff_role', 'admin');
         navigate('/admin/dashboard');
-      } else if (password.trim() === '1234' && userId.trim() !== '') {
-        // Any name with password 1234 is accepted as a teacher
+      } else if (password.trim() === '1234' && userId.trim().toUpperCase().startsWith('RC-')) {
+        // Teacher name must start with RC-
         localStorage.setItem('staff_role', 'teacher');
         localStorage.setItem('teacher_name', userId.trim());
         navigate('/teacher/dashboard');
@@ -131,7 +131,7 @@ const Login = () => {
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all bg-white text-sm text-gray-700 font-medium placeholder-gray-300"
-                    placeholder={role === 'student' ? 'আপনার আইডি/রোল লিখুন' : 'অ্যাডমিন আইডি বা আপনার নাম লিখুন'}
+                    placeholder={role === 'student' ? 'আপনার আইডি/রোল লিখুন' : 'যেমন: RC-Supto (অবশ্যই RC- দিয়ে শুরু হতে হবে)'}
                   />
                 </div>
               </div>
