@@ -17,8 +17,8 @@ const Navbar = () => {
         {/* Logo and Name */}
         <Link to="/" className="flex items-center gap-3">
           <img src="/logo.png" alt="Radiation Coaching" className="h-10 w-auto object-contain bg-white rounded-full p-0.5" />
-          <span className="text-white font-extrabold text-xl tracking-wide hidden sm:block">
-            রেডিয়েশন কোচিং জোন
+          <span className="text-white font-extrabold text-lg sm:text-xl tracking-wide">
+            রেডিয়েশন কোচিং
           </span>
         </Link>
 
