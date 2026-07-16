@@ -27,8 +27,11 @@ const Home = () => {
           </div>
           
           {/* Right Image Content */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative mt-8 lg:mt-0">
-            <div className="relative w-full max-w-2xl lg:max-w-[700px] rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative mt-12 lg:mt-0">
+            {/* Soft background glow to blend the image */}
+            <div className="absolute inset-0 bg-[#00b4d8] opacity-5 blur-[100px] rounded-full z-0"></div>
+            
+            <div className="relative w-full max-w-[800px] rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,180,216,0.15)] z-10 transition-transform duration-500 hover:scale-[1.02]">
               {/* Fallback image name 'hero-image.png' (Tell user to save the pic as this name) */}
               <img 
                 src="/hero-image.jpg" 
@@ -40,6 +43,9 @@ const Home = () => {
                   e.target.className="w-[80%] mx-auto opacity-50 py-10";
                 }}
               />
+              
+              {/* Subtle overlay gradient to blend with the background */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#f4f7fb]/40 to-transparent pointer-events-none"></div>
             </div>
           </div>
 
