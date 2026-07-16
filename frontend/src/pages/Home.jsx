@@ -126,7 +126,7 @@ const Home = () => {
               </div>
               <div>
                 <h3 className="text-white font-bold mb-1">প্রধান শাখা</h3>
-                <p className="text-gray-400 text-xs leading-relaxed">দনিয়া বিশ্ববিদ্যালয় কলেজের বিপরীতে, ঢাকা-১২৩৬</p>
+                <p className="text-gray-400 text-xs leading-relaxed">মিজমিজি মাদ্রাসা রোড, বুকস্ গার্ডেন সংলগ্ন</p>
               </div>
             </div>
             {/* Branch 2 */}
