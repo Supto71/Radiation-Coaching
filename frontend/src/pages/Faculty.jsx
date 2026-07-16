@@ -6,7 +6,7 @@ const Faculty = () => {
     name: 'রাকিব হাসান ফাহাদ',
     role: 'পরিচালক',
     institute: 'রেডিয়েশন কোচিং',
-    image: '/rakib.png'
+    image: '/fahad-sir.png'
   };
 
   const facultyMembers = [
