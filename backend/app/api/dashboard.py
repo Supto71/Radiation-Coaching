@@ -323,6 +323,49 @@ def delete_routine(routine_id: int, db: Session = Depends(get_db)):
     routine = db.query(db_models.Routine).filter(db_models.Routine.id == routine_id).first()
     if not routine:
         raise HTTPException(status_code=404, detail="Routine not found")
+    
     db.delete(routine)
     db.commit()
     return {"message": "Routine deleted successfully"}
+
+# --- Teacher Attendance Endpoints ---
+
+@router.get("/teacher-attendance", response_model=List[schemas.TeacherAttendance])
+def get_all_teacher_attendance(db: Session = Depends(get_db)):
+    return db.query(db_models.TeacherAttendance).order_by(db_models.TeacherAttendance.date.desc()).all()
+
+@router.get("/teacher-attendance/{teacher_name}", response_model=List[schemas.TeacherAttendance])
+def get_teacher_attendance(teacher_name: str, db: Session = Depends(get_db)):
+    return db.query(db_models.TeacherAttendance).filter(
+        db_models.TeacherAttendance.teacher_name == teacher_name
+    ).order_by(db_models.TeacherAttendance.date.desc()).all()
+
+@router.post("/teacher-attendance", response_model=schemas.TeacherAttendance)
+def create_teacher_attendance(attendance: schemas.TeacherAttendanceCreate, db: Session = Depends(get_db)):
+    # Check if already submitted for today
+    existing = db.query(db_models.TeacherAttendance).filter(
+        db_models.TeacherAttendance.teacher_name == attendance.teacher_name,
+        db_models.TeacherAttendance.date == attendance.date
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Attendance already submitted for this date")
+    
+    db_attendance = db_models.TeacherAttendance(**attendance.model_dump())
+    db.add(db_attendance)
+    db.commit()
+    db.refresh(db_attendance)
+    return db_attendance
+
+@router.put("/teacher-attendance/{attendance_id}", response_model=schemas.TeacherAttendance)
+def update_teacher_attendance(attendance_id: int, attendance_update: schemas.TeacherAttendanceUpdate, db: Session = Depends(get_db)):
+    db_attendance = db.query(db_models.TeacherAttendance).filter(db_models.TeacherAttendance.id == attendance_id).first()
+    if not db_attendance:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    update_data = attendance_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_attendance, key, value)
+        
+    db.commit()
+    db.refresh(db_attendance)
+    return db_attendance

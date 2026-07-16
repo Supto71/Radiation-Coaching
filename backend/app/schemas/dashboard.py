@@ -145,3 +145,29 @@ class Routine(RoutineBase):
 
     class Config:
         from_attributes = True
+
+# Teacher Attendance Schemas
+class TeacherAttendanceBase(BaseModel):
+    teacher_name: str
+    date: str
+    classes_taken: int
+    subjects: str
+    batches: str
+    status: Optional[str] = "Present"
+
+class TeacherAttendanceCreate(TeacherAttendanceBase):
+    pass
+
+class TeacherAttendanceUpdate(BaseModel):
+    date: Optional[str] = None
+    classes_taken: Optional[int] = None
+    subjects: Optional[str] = None
+    batches: Optional[str] = None
+    status: Optional[str] = None
+
+class TeacherAttendance(TeacherAttendanceBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

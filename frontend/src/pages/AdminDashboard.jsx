@@ -1488,6 +1488,50 @@ const ExamManagementTab = () => {
 };
 
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
+const TeacherAttendanceTab = ({ records, fetchRecords }) => {
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-6 text-gray-800">টিচার হাজিরা রিপোর্ট</h2>
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={fetchRecords} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 shadow-sm">
+          রিফ্রেশ করুন
+        </button>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                <th className="p-4 border-b font-semibold">তারিখ</th>
+                <th className="p-4 border-b font-semibold">টিচারের নাম</th>
+                <th className="p-4 border-b font-semibold text-center">ক্লাস সংখ্যা</th>
+                <th className="p-4 border-b font-semibold">বিষয়সমূহ</th>
+                <th className="p-4 border-b font-semibold">ব্যাচসমূহ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {records.map(r => (
+                <tr key={r.id} className="hover:bg-blue-50/50 transition-colors">
+                  <td className="p-4 text-gray-700 font-medium">{r.date}</td>
+                  <td className="p-4 text-primary font-bold">{r.teacher_name}</td>
+                  <td className="p-4 text-center text-gray-700 font-bold bg-gray-50">{r.classes_taken}</td>
+                  <td className="p-4 text-gray-600">{r.subjects}</td>
+                  <td className="p-4 text-gray-600">{r.batches}</td>
+                </tr>
+              ))}
+              {records.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">কোনো হাজিরা রেকর্ড পাওয়া যায়নি</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const staffRole = localStorage.getItem('staff_role') || 'teacher';
   const [activeTab, setActiveTab] = useState('notices');
@@ -1512,9 +1556,26 @@ const AdminDashboard = () => {
       setLoadingNotices(false);
     }
   }, []);
+  const [teacherAttendanceRecords, setTeacherAttendanceRecords] = useState([]);
+  const [loadingTeacherAtt, setLoadingTeacherAtt] = useState(false);
+
+  const fetchTeacherAttendance = useCallback(async () => {
+    setLoadingTeacherAtt(true);
+    try {
+      const res = await fetch('/api/dashboard/teacher-attendance');
+      if (res.ok) {
+        setTeacherAttendanceRecords(await res.json());
+      }
+    } catch (err) {
+      console.error("Failed to fetch teacher attendance", err);
+    } finally {
+      setLoadingTeacherAtt(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchNotices();
+    fetchTeacherAttendance();
   }, [fetchNotices]);
 
   const handlePublishNotice = async () => {
@@ -1559,6 +1620,7 @@ const AdminDashboard = () => {
   const tabs = [
     { id: 'notices', label: 'নোটিশ বোর্ড' },
     { id: 'attendance', label: 'উপস্থিতি' },
+    { id: 'teacher_att', label: 'টিচার হাজিরা' },
     { id: 'routines', label: 'রুটিন আপডেট' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
@@ -1658,6 +1720,7 @@ const AdminDashboard = () => {
             )}
             {activeTab === 'routines' && <RoutineTab role={staffRole} />}
             {activeTab === 'attendance' && <AttendanceTab role={staffRole} />}
+            {activeTab === 'teacher_att' && <TeacherAttendanceTab records={teacherAttendanceRecords} fetchRecords={fetchTeacherAttendance} />}
             {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
             {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
             {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}

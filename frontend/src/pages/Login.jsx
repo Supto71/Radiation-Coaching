@@ -36,11 +36,13 @@ const Login = () => {
       if (userId.trim() === 'admin' && password.trim() === 'admin123') {
         localStorage.setItem('staff_role', 'admin');
         navigate('/admin/dashboard');
-      } else if (userId.trim() === 'teacher' && password.trim() === '1234') {
+      } else if (password.trim() === '1234' && userId.trim() !== '') {
+        // Any name with password 1234 is accepted as a teacher
         localStorage.setItem('staff_role', 'teacher');
-        navigate('/admin/dashboard');
+        localStorage.setItem('teacher_name', userId.trim());
+        navigate('/teacher/dashboard');
       } else {
-        setError('টিচার/অ্যাডমিন আইডি বা পাসওয়ার্ড ভুল হয়েছে!');
+        setError('অ্যাডমিন আইডি/টিচার নাম বা পাসওয়ার্ড ভুল হয়েছে!');
       }
     }
   };
@@ -117,7 +119,7 @@ const Login = () => {
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-gray-700 ml-1">
                   <FaIdBadge className="inline mr-1.5 text-gray-500" />
-                  {role === 'student' ? 'আইডি/রোল' : 'টিচার আইডি'}
+                  {role === 'student' ? 'আইডি/রোল' : 'অ্যাডমিন আইডি বা শিক্ষকের নাম'}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -129,7 +131,7 @@ const Login = () => {
                     value={userId}
                     onChange={(e) => setUserId(e.target.value)}
                     className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all bg-white text-sm text-gray-700 font-medium placeholder-gray-300"
-                    placeholder={role === 'student' ? 'আপনার আইডি/রোল লিখুন' : 'টিচার আইডি লিখুন'}
+                    placeholder={role === 'student' ? 'আপনার আইডি/রোল লিখুন' : 'অ্যাডমিন আইডি বা আপনার নাম লিখুন'}
                   />
                 </div>
               </div>

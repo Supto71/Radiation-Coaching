@@ -67,3 +67,16 @@ class Routine(Base):
     teacher_name = Column(String) # e.g. "Mim ma'am"
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     author_id = Column(Integer, ForeignKey("users.id"))
+
+class TeacherAttendance(Base):
+    __tablename__ = "teacher_attendance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    teacher_name = Column(String, index=True)
+    date = Column(String, index=True) # e.g. "2026-07-17"
+    classes_taken = Column(Integer, default=0)
+    subjects = Column(String) # e.g. "Math, Physics"
+    batches = Column(String) # e.g. "Batch 1, Batch 2"
+    status = Column(String, default="Present")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
