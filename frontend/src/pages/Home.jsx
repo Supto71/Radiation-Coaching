@@ -34,7 +34,7 @@ const Home = () => {
             <div className="relative w-full max-w-[800px] rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,180,216,0.15)] z-10 transition-transform duration-500 hover:scale-[1.02]">
               {/* Fallback image name 'hero-image.png' (Tell user to save the pic as this name) */}
               <img 
-                src="/hero-image.jpg" 
+                src="/hero-image-v2.jpg" 
                 alt="Classroom" 
                 className="w-full h-auto object-cover"
                 onError={(e) => {
