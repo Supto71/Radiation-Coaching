@@ -42,9 +42,22 @@ try:
                 conn.execute(text('ALTER TABLE exam_results ADD CONSTRAINT exam_results_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES exams(id);'))
             except Exception:
                 pass
-            conn.commit()
+            
+        # Add gender column to students table if it doesn't exist (works for both sqlite and postgres)
+        try:
+            conn.execute(text('ALTER TABLE students ADD COLUMN gender VARCHAR DEFAULT \'ছেলে\';'))
+        except Exception:
+            pass
+            
+        # Update legacy branch names
+        try:
+            conn.execute(text('UPDATE students SET branch = \'দ্বিতীয় শাখা\' WHERE branch = \'বালিকা শাখা\';'))
+        except Exception:
+            pass
+
+        conn.commit()
 except Exception as e:
-    print("FK Fix error:", e)
+    print("DB Schema Fix error:", e)
 
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
