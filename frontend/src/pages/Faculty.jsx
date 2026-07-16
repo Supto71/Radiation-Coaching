@@ -288,7 +288,11 @@ const Faculty = () => {
             <div key={teacher.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 transform hover:-translate-y-1 group">
               <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-100 shadow-md flex-shrink-0 group-hover:border-primary/50 transition-colors">
-                  <img src={teacher.image} alt={teacher.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={teacher.image} 
+                    alt={teacher.name} 
+                    className={`w-full h-full object-cover ${teacher.id === 10 ? 'scale-[1.4] object-[center_10%] origin-top' : ''}`} 
+                  />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1 group-hover:text-primary transition-colors">{teacher.name}</h3>
