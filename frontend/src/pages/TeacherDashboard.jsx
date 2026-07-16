@@ -21,6 +21,7 @@ const TeacherDashboard = () => {
   const [studentsForAtt, setStudentsForAtt] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
   const [submittingAtt, setSubmittingAtt] = useState(false);
+  const [attMessage, setAttMessage] = useState('');
 
   // My Attendance States
   const [myAttDate, setMyAttDate] = useState(new Date().toISOString().split('T')[0]);
@@ -78,7 +79,13 @@ const TeacherDashboard = () => {
 
       setStudentsForAtt(filteredStudents);
       
-      // Load existing attendance
+      if (filteredStudents.length === 0) {
+        setAttMessage('এই শাখা এবং ক্লাসের কোনো স্টুডেন্ট পাওয়া যায়নি।');
+      } else {
+        setAttMessage('');
+      }
+
+      // Then fetch any existing attendance for this date
       const attRes = await axios.get(`/api/attendance/?att_date=${attDate}&branch=${encodeURIComponent(attBranch)}&class_level=${encodeURIComponent(attClass)}`);
       
       const initialRecords = {};
@@ -290,6 +297,12 @@ const TeacherDashboard = () => {
             </div>
             <button onClick={fetchStudentsForAttendance} className="bg-[#0f172a] text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors mb-8 shadow-md">স্টুডেন্ট লোড করুন</button>
             
+            {attMessage && (
+              <div className="mb-4 text-red-500 font-bold p-4 bg-red-50 rounded-xl border border-red-100 animate-fade-in">
+                {attMessage}
+              </div>
+            )}
+
             {studentsForAtt.length > 0 && (
               <div className="mt-4 animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
