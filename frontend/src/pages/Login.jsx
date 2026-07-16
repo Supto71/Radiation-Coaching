@@ -59,7 +59,6 @@ const Login = () => {
           <img 
             src="/login-text.png" 
             alt="Login Text" 
-            style={{ clipPath: 'inset(0px 0px 28% 0px)' }}
             className="w-[85%] sm:w-[65%] lg:w-[85%] max-w-lg object-contain drop-shadow-xl z-20 -mt-20 sm:-mt-28"
           />
         </div>
