@@ -45,7 +45,7 @@ class ExamResult(Base):
     __tablename__ = "exam_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("users.id"))
+    student_id = Column(Integer, ForeignKey("students.id"))
     exam_id = Column(Integer, ForeignKey("exams.id"))
     score = Column(Float)
     total_correct = Column(Integer)

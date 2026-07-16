@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from typing import List, Optional
 from datetime import date
 
@@ -70,10 +71,10 @@ def get_all_fees(
             month=record.month,
             is_paid=record.is_paid,
             payment_date=record.payment_date,
-            student_name=student.name if student else "অজানা",
-            student_uid=student.student_uid if student else "",
-            student_branch=student.branch if student else "",
-            student_class=student.class_level if student else "",
+            student_name=student.name if student and student.name else "অজানা",
+            student_uid=student.student_uid if student and student.student_uid else "",
+            student_branch=student.branch if student and student.branch else "",
+            student_class=student.class_level if student and student.class_level else "",
         ))
     return result
 
@@ -178,7 +179,7 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
 # --- EXAM RESULTS (Performance) ---
 @router.get("/results/me", response_model=List[schemas.ExamResult])
 def get_my_results(student_id: int, db: Session = Depends(get_db)):
-    return db.query(db_models.ExamResult).filter(db_models.ExamResult.student_id == student_id).order_by(db_models.ExamResult.taken_at.asc()).all()
+    return db.query(db_models.ExamResult).options(joinedload(db_models.ExamResult.exam)).filter(db_models.ExamResult.student_id == student_id).order_by(db_models.ExamResult.taken_at.asc()).all()
 
 @router.post("/results", response_model=schemas.ExamResult)
 def submit_exam_result(result: schemas.ExamResultCreate, student_id: int, db: Session = Depends(get_db)):
