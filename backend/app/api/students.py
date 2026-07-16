@@ -19,6 +19,7 @@ def get_students(
     search: Optional[str] = None,
     branch: Optional[str] = None,
     class_level: Optional[str] = None,
+    gender: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(StudentModel)
@@ -26,6 +27,8 @@ def get_students(
         query = query.filter(StudentModel.branch == branch)
     if class_level:
         query = query.filter(StudentModel.class_level == class_level)
+    if gender:
+        query = query.filter(StudentModel.gender == gender)
     if search:
         search_term = f"%{search}%"
         query = query.filter(

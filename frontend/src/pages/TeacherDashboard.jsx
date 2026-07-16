@@ -11,10 +11,12 @@ const TeacherDashboard = () => {
   // States
   const [routines, setRoutines] = useState([]);
   const [exams, setExams] = useState([]);
+  const [notices, setNotices] = useState([]);
   
   // Student Attendance States
   const [attBranch, setAttBranch] = useState('প্রধান শাখা');
-  const [attClass, setAttClass] = useState('9th');
+  const [attGender, setAttGender] = useState('ছেলে');
+  const [attClass, setAttClass] = useState('Class 1');
   const [attDate, setAttDate] = useState(new Date().toISOString().split('T')[0]);
   const [studentsForAtt, setStudentsForAtt] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
@@ -41,9 +43,17 @@ const TeacherDashboard = () => {
     if (!teacherName) {
       navigate('/login');
     }
+    fetchNotices();
     fetchRoutines();
     fetchExams();
   }, [teacherName, navigate]);
+
+  const fetchNotices = async () => {
+    try {
+      const res = await axios.get('/api/dashboard/notices');
+      setNotices(res.data);
+    } catch (err) { console.error(err); }
+  };
 
   const fetchRoutines = async () => {
     try {
@@ -61,10 +71,23 @@ const TeacherDashboard = () => {
 
   const fetchStudentsForAttendance = async () => {
     try {
-      const res = await axios.get(`/api/attendance/students?branch=${encodeURIComponent(attBranch)}&class_level=${encodeURIComponent(attClass)}&date=${attDate}`);
-      setStudentsForAtt(res.data.students);
+      // First fetch students matching branch, class, and gender
+      const res = await axios.get(`/api/students/?branch=${encodeURIComponent(attBranch)}&class_level=${encodeURIComponent(attClass)}&gender=${encodeURIComponent(attGender)}`);
+      
+      let filteredStudents = res.data;
+
+      setStudentsForAtt(filteredStudents);
+      
+      // Load existing attendance
+      const attRes = await axios.get(`/api/attendance/?att_date=${attDate}&branch=${encodeURIComponent(attBranch)}&class_level=${encodeURIComponent(attClass)}`);
+      
       const initialRecords = {};
-      res.data.attendance.forEach(a => { initialRecords[a.student_id] = a.is_present; });
+      // Default to true (present)
+      filteredStudents.forEach(s => { initialRecords[s.id] = true; });
+      // Override with existing records
+      if (attRes.data && Array.isArray(attRes.data)) {
+          attRes.data.forEach(a => { initialRecords[a.student_id] = a.is_present; });
+      }
       setAttendanceRecords(initialRecords);
     } catch (err) {
       alert('স্টুডেন্ট লোড করতে সমস্যা হয়েছে!');
@@ -78,11 +101,11 @@ const TeacherDashboard = () => {
         student_id: parseInt(id),
         is_present: attendanceRecords[id]
       }));
-      await axios.post('/api/attendance/mark', {
+      await axios.post('/api/attendance/bulk', {
         date: attDate,
         branch: attBranch,
         class_level: attClass,
-        records: records,
+        entries: records,
         marked_by: teacherName
       });
       alert('সফলভাবে হাজিরা সেভ হয়েছে!');
@@ -160,6 +183,9 @@ const TeacherDashboard = () => {
           <button onClick={() => setActiveTab('routine')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'routine' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
             <FaCalendarAlt className={activeTab === 'routine' ? 'text-primary' : 'text-gray-400'} /> মাস্টার রুটিন
           </button>
+          <button onClick={() => setActiveTab('notice')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'notice' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+            <FaClipboardList className={activeTab === 'notice' ? 'text-primary' : 'text-gray-400'} /> নোটিশ বোর্ড
+          </button>
           <button onClick={() => setActiveTab('student_att')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'student_att' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
             <FaUserCheck className={activeTab === 'student_att' ? 'text-primary' : 'text-gray-400'} /> স্টুডেন্ট হাজিরা
           </button>
@@ -194,20 +220,19 @@ const TeacherDashboard = () => {
                     <th className="p-4 font-semibold">শিক্ষক</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="text-gray-700">
                   {routines.map(r => (
-                    <tr key={r.id} className="hover:bg-blue-50/30 transition-colors">
-                      <td className="p-4 text-gray-700 font-medium">{r.date}</td>
-                      <td className="p-4 text-gray-600">{r.start_time} - {r.end_time}</td>
-                      <td className="p-4 text-gray-600">{r.branch}</td>
-                      <td className="p-4 text-gray-600">{r.class_level} ({r.class_name})</td>
-                      <td className="p-4 text-primary font-medium">{r.teacher_name}</td>
+                    <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="p-4">{r.day}</td>
+                      <td className="p-4"><span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">{r.branch}</span></td>
+                      <td className="p-4">{r.class_level}</td>
+                      <td className="p-4">{r.time}</td>
+                      <td className="p-4 font-medium">{r.subject}</td>
+                      <td className="p-4 text-gray-500">{r.teacher}</td>
                     </tr>
                   ))}
                   {routines.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="p-8 text-center text-gray-500">কোনো রুটিন পাওয়া যায়নি</td>
-                    </tr>
+                    <tr><td colSpan="6" className="p-8 text-center text-gray-400">কোনো রুটিন পাওয়া যায়নি</td></tr>
                   )}
                 </tbody>
               </table>
@@ -215,15 +240,48 @@ const TeacherDashboard = () => {
           </div>
         )}
 
+        {/* --- Notice Tab --- */}
+        {activeTab === 'notice' && (
+          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2"><FaClipboardList className="text-primary"/> নোটিশ বোর্ড</h3>
+            <div className="grid grid-cols-1 gap-4">
+              {notices.map(n => (
+                <div key={n.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-gray-800">{n.title}</h4>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{n.date}</span>
+                  </div>
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{n.content}</p>
+                </div>
+              ))}
+              {notices.length === 0 && (
+                <div className="text-center text-gray-500 py-8">কোনো নোটিশ নেই</div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'student_att' && (
           <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
             <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2"><FaUserCheck className="text-primary"/> স্টুডেন্ট হাজিরা</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <select value={attBranch} onChange={e => setAttBranch(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white">
                 <option value="প্রধান শাখা">প্রধান শাখা</option>
-                <option value="বালিকা শাখা">বালিকা শাখা</option>
+                <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+              </select>
+              <select value={attGender} onChange={e => setAttGender(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white">
+                <option value="ছেলে">ছেলে</option>
+                <option value="মেয়ে">মেয়ে</option>
               </select>
               <select value={attClass} onChange={e => setAttClass(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-white">
+                <option value="Class 1">Class 1</option>
+                <option value="Class 2">Class 2</option>
+                <option value="Class 3">Class 3</option>
+                <option value="Class 4">Class 4</option>
+                <option value="Class 5">Class 5</option>
+                <option value="Class 6">Class 6</option>
+                <option value="Class 7">Class 7</option>
+                <option value="Class 8">Class 8</option>
                 <option value="9th">৯ম শ্রেণি</option>
                 <option value="10th">১০ম শ্রেণি</option>
                 <option value="HSC-1">এইচএসসি ১ম বর্ষ</option>

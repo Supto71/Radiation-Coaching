@@ -1489,43 +1489,106 @@ const ExamManagementTab = () => {
 
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 const TeacherAttendanceTab = ({ records, fetchRecords }) => {
+  const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [searchTeacher, setSearchTeacher] = useState('');
+
+  // Filter records by month
+  const filteredRecords = records.filter(r => r.date.startsWith(filterMonth));
+  
+  // Calculate Summary
+  const summaryMap = {};
+  filteredRecords.forEach(r => {
+    if (!summaryMap[r.teacher_name]) {
+      summaryMap[r.teacher_name] = { totalClasses: 0 };
+    }
+    summaryMap[r.teacher_name].totalClasses += r.classes_taken;
+  });
+  const summaryArray = Object.keys(summaryMap).map(name => ({
+    name, totalClasses: summaryMap[name].totalClasses
+  }));
+
+  // Filter detailed records by search
+  const displayedRecords = searchTeacher 
+    ? filteredRecords.filter(r => r.teacher_name.toLowerCase().includes(searchTeacher.toLowerCase()))
+    : filteredRecords;
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-6 text-gray-800">টিচার হাজিরা রিপোর্ট</h2>
-      <div className="flex justify-between items-center mb-6">
-        <button onClick={fetchRecords} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 shadow-sm">
+      
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-end mb-6">
+        <div className="flex gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">মাস নির্বাচন করুন</label>
+            <input type="month" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="border border-gray-300 rounded-lg p-2.5 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">টিচার খুঁজুন</label>
+            <input type="text" placeholder="যেমন: RC-Supto" value={searchTeacher} onChange={(e) => setSearchTeacher(e.target.value)} className="border border-gray-300 rounded-lg p-2.5 outline-none" />
+          </div>
+        </div>
+        <button onClick={fetchRecords} className="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-sm">
           রিফ্রেশ করুন
         </button>
       </div>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Summary Table */}
+        <div className="col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-gray-50 p-4 border-b border-gray-100 font-bold text-gray-700">মাসিক সারাংশ ({filterMonth})</div>
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
-                <th className="p-4 border-b font-semibold">তারিখ</th>
-                <th className="p-4 border-b font-semibold">টিচারের নাম</th>
-                <th className="p-4 border-b font-semibold text-center">ক্লাস সংখ্যা</th>
-                <th className="p-4 border-b font-semibold">বিষয়সমূহ</th>
-                <th className="p-4 border-b font-semibold">ব্যাচসমূহ</th>
+              <tr className="text-sm text-gray-500 border-b">
+                <th className="p-3">টিচারের নাম</th>
+                <th className="p-3 text-center">মোট ক্লাস</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {records.map(r => (
-                <tr key={r.id} className="hover:bg-blue-50/50 transition-colors">
-                  <td className="p-4 text-gray-700 font-medium">{r.date}</td>
-                  <td className="p-4 text-primary font-bold">{r.teacher_name}</td>
-                  <td className="p-4 text-center text-gray-700 font-bold bg-gray-50">{r.classes_taken}</td>
-                  <td className="p-4 text-gray-600">{r.subjects}</td>
-                  <td className="p-4 text-gray-600">{r.batches}</td>
+            <tbody>
+              {summaryArray.map((s, idx) => (
+                <tr key={idx} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="p-3 font-medium">{s.name}</td>
+                  <td className="p-3 text-center font-bold text-primary">{s.totalClasses}</td>
                 </tr>
               ))}
-              {records.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-500">কোনো হাজিরা রেকর্ড পাওয়া যায়নি</td>
-                </tr>
+              {summaryArray.length === 0 && (
+                <tr><td colSpan="2" className="p-4 text-center text-gray-500">কোনো তথ্য নেই</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Detailed Table */}
+        <div className="col-span-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+           <div className="bg-gray-50 p-4 border-b border-gray-100 font-bold text-gray-700">বিস্তারিত হাজিরা রেকর্ড</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                  <th className="p-4 border-b font-semibold">তারিখ</th>
+                  <th className="p-4 border-b font-semibold">টিচারের নাম</th>
+                  <th className="p-4 border-b font-semibold text-center">ক্লাস সংখ্যা</th>
+                  <th className="p-4 border-b font-semibold">বিষয়সমূহ</th>
+                  <th className="p-4 border-b font-semibold">ব্যাচসমূহ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {displayedRecords.map(r => (
+                  <tr key={r.id} className="hover:bg-blue-50/50 transition-colors">
+                    <td className="p-4 text-gray-700 font-medium">{r.date}</td>
+                    <td className="p-4 text-primary font-bold">{r.teacher_name}</td>
+                    <td className="p-4 text-center text-gray-700 font-bold bg-gray-50">{r.classes_taken}</td>
+                    <td className="p-4 text-gray-600">{r.subjects}</td>
+                    <td className="p-4 text-gray-600">{r.batches}</td>
+                  </tr>
+                ))}
+                {displayedRecords.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="p-8 text-center text-gray-500">কোনো হাজিরা রেকর্ড পাওয়া যায়নি</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
