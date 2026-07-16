@@ -223,16 +223,15 @@ const TeacherDashboard = () => {
                 <tbody className="text-gray-700">
                   {routines.map(r => (
                     <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                      <td className="p-4">{r.day}</td>
+                      <td className="p-4 text-gray-700 font-medium">{r.date}</td>
+                      <td className="p-4 text-gray-600">{r.start_time} - {r.end_time}</td>
                       <td className="p-4"><span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium">{r.branch}</span></td>
-                      <td className="p-4">{r.class_level}</td>
-                      <td className="p-4">{r.time}</td>
-                      <td className="p-4 font-medium">{r.subject}</td>
-                      <td className="p-4 text-gray-500">{r.teacher}</td>
+                      <td className="p-4 text-gray-600">{r.class_level} ({r.class_name})</td>
+                      <td className="p-4 text-primary font-medium">{r.teacher_name}</td>
                     </tr>
                   ))}
                   {routines.length === 0 && (
-                    <tr><td colSpan="6" className="p-8 text-center text-gray-400">কোনো রুটিন পাওয়া যায়নি</td></tr>
+                    <tr><td colSpan="5" className="p-8 text-center text-gray-400">কোনো রুটিন পাওয়া যায়নি</td></tr>
                   )}
                 </tbody>
               </table>
