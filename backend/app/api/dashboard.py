@@ -116,10 +116,31 @@ def update_fee_record(fee_id: int, fee_update: schemas.FeeRecordUpdate, db: Sess
     fee = db.query(db_models.FeeRecord).filter(db_models.FeeRecord.id == fee_id).first()
     if not fee:
         raise HTTPException(status_code=404, detail="Fee record not found")
-    fee.amount = fee_update.amount
+    
+    if fee_update.amount is not None:
+        fee.amount = fee_update.amount
+    if fee_update.month is not None:
+        fee.month = fee_update.month
+    if fee_update.is_paid is not None:
+        if fee_update.is_paid and not fee.is_paid:
+            from datetime import date
+            fee.payment_date = date.today()
+        elif not fee_update.is_paid:
+            fee.payment_date = None
+        fee.is_paid = fee_update.is_paid
+
     db.commit()
     db.refresh(fee)
     return fee
+
+@router.delete("/fees/{fee_id}")
+def delete_fee_record(fee_id: int, db: Session = Depends(get_db)):
+    fee = db.query(db_models.FeeRecord).filter(db_models.FeeRecord.id == fee_id).first()
+    if not fee:
+        raise HTTPException(status_code=404, detail="Fee record not found")
+    db.delete(fee)
+    db.commit()
+    return {"message": "Fee record deleted successfully"}
 
 # --- EXAMS ---
 @router.get("/exams", response_model=List[schemas.Exam])

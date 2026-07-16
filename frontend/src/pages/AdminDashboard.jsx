@@ -803,6 +803,22 @@ const FeeTrackerTab = () => {
     setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
   };
 
+  const handleDeleteFee = async (feeId) => {
+    if (!window.confirm("আপনি কি নিশ্চিত যে এই ফি রেকর্ডটি ডিলিট করতে চান?")) return;
+    try {
+      const res = await fetch(`/api/dashboard/fees/${feeId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setMsg({ text: 'ফি রেকর্ডটি সফলভাবে ডিলিট করা হয়েছে!', type: 'success' });
+        fetchFees();
+      } else {
+        setMsg({ text: 'ডিলিট করতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch {
+      setMsg({ text: 'সার্ভার এরর!', type: 'error' });
+    }
+    setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
+  };
+
   const totalPaidAmount = fees.filter(f => f.is_paid).reduce((sum, f) => sum + f.amount, 0);
   const totalUnpaidAmount = fees.filter(f => !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
 
@@ -992,13 +1008,17 @@ const FeeTrackerTab = () => {
                       <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
                     )}
                   </td>
-                  <td className="p-4">
+                  <td className="p-4 flex gap-2 items-center h-full">
                     {!f.is_paid && (
                       <button onClick={() => handleMarkPaid(f.id)}
                         className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors font-semibold">
                         পরিশোধিত মার্ক করুন
                       </button>
                     )}
+                    <button onClick={() => handleDeleteFee(f.id)}
+                      className="text-gray-400 hover:text-red-600 transition-colors bg-gray-100 hover:bg-red-50 p-1.5 rounded-lg" title="ডিলিট করুন">
+                      <TrashIcon />
+                    </button>
                   </td>
                 </tr>
               ))}
