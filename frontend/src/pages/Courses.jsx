@@ -11,8 +11,8 @@ const Courses = () => {
         "স্কুল সিলেবাস কভার",
         "বেসিক ডেভেলপমেন্ট"
       ],
-      enrollmentFee: "৩০০০ ৳",
-      monthlyFee: "১৫০০ ৳",
+      enrollmentFee: "১০০০ ৳",
+      monthlyFee: "২০০০ ৳",
       duration: "নিয়মিত ব্যাচ"
     },
     {
@@ -26,8 +26,8 @@ const Courses = () => {
         "হ্যান্ডনোট ও লেকচার শিট",
         "স্পেশাল প্রবলেম সলভিং"
       ],
-      enrollmentFee: "৩৫০০ ৳",
-      monthlyFee: "২০০০ ৳",
+      enrollmentFee: "১০০০ ৳",
+      monthlyFee: "৩০০০ ৳",
       duration: "নিয়মিত ব্যাচ"
     },
     {
@@ -41,8 +41,8 @@ const Courses = () => {
         "অধ্যায়ভিত্তিক পরীক্ষা",
         "শর্টকাট টেকনিক"
       ],
-      enrollmentFee: "৪০০০ ৳",
-      monthlyFee: "২৫০০ ৳",
+      enrollmentFee: "১০০০ ৳",
+      monthlyFee: "৪০০০ ৳",
       duration: "নিয়মিত ব্যাচ"
     }
   ];
