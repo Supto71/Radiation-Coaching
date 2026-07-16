@@ -43,6 +43,29 @@ def create_notice(notice: schemas.NoticeCreate, db: Session = Depends(get_db)):
     db.refresh(db_notice)
     return db_notice
 
+@router.put("/notices/{notice_id}", response_model=schemas.Notice)
+def update_notice(notice_id: int, notice_update: schemas.NoticeUpdate, db: Session = Depends(get_db)):
+    db_notice = db.query(db_models.Notice).filter(db_models.Notice.id == notice_id).first()
+    if not db_notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+    
+    update_data = notice_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_notice, key, value)
+        
+    db.commit()
+    db.refresh(db_notice)
+    return db_notice
+
+@router.delete("/notices/{notice_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_notice(notice_id: int, db: Session = Depends(get_db)):
+    db_notice = db.query(db_models.Notice).filter(db_models.Notice.id == notice_id).first()
+    if not db_notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+    db.delete(db_notice)
+    db.commit()
+    return None
+
 # --- FEES ---
 @router.get("/fees", response_model=List[schemas.FeeRecordWithStudent])
 def get_all_fees(
@@ -177,6 +200,20 @@ def toggle_exam_active(exam_id: int, db: Session = Depends(get_db)):
     db.refresh(exam)
     return exam
 
+@router.put("/exams/{exam_id}", response_model=schemas.Exam)
+def update_exam(exam_id: int, exam_update: schemas.ExamUpdate, db: Session = Depends(get_db)):
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+    
+    update_data = exam_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(exam, key, value)
+        
+    db.commit()
+    db.refresh(exam)
+    return exam
+
 @router.delete("/exams/{exam_id}")
 def delete_exam(exam_id: int, db: Session = Depends(get_db)):
     exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
@@ -210,7 +247,7 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
 # --- EXAM RESULTS (Performance) ---
 @router.get("/results/me", response_model=List[schemas.ExamResult])
 def get_my_results(student_id: int, db: Session = Depends(get_db)):
-    return db.query(db_models.ExamResult).options(joinedload(db_models.ExamResult.exam)).filter(db_models.ExamResult.student_id == student_id).order_by(db_models.ExamResult.taken_at.asc()).all()
+    return db.query(db_models.ExamResult).options(joinedload(db_models.ExamResult.exam)).filter(db_models.ExamResult.student_id == student_id).order_by(db_models.ExamResult.taken_at.desc()).all()
 
 @router.post("/results", response_model=schemas.ExamResult)
 def submit_exam_result(result: schemas.ExamResultCreate, student_id: int, db: Session = Depends(get_db)):
@@ -251,6 +288,35 @@ def create_or_update_routine(routine: schemas.RoutineCreate, db: Session = Depen
     db.commit()
     db.refresh(db_routine)
     return db_routine
+
+@router.put("/routines/{routine_id}", response_model=schemas.Routine)
+def update_routine(routine_id: int, routine_update: schemas.RoutineUpdate, db: Session = Depends(get_db)):
+    routine = db.query(db_models.Routine).filter(db_models.Routine.id == routine_id).first()
+    if not routine:
+        raise HTTPException(status_code=404, detail="Routine not found")
+    
+    update_data = routine_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(routine, key, value)
+        
+    db.commit()
+    db.refresh(routine)
+    return routine
+
+@router.delete("/routines/past")
+def delete_past_routines(db: Session = Depends(get_db)):
+    from datetime import date
+    today = date.today().isoformat()
+    
+    # Delete routines where date < today
+    past_routines = db.query(db_models.Routine).filter(db_models.Routine.date < today).all()
+    count = len(past_routines)
+    
+    for r in past_routines:
+        db.delete(r)
+    db.commit()
+    
+    return {"message": f"{count} past routines deleted successfully"}
 
 @router.delete("/routines/{routine_id}")
 def delete_routine(routine_id: int, db: Session = Depends(get_db)):

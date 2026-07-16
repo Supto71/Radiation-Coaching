@@ -32,6 +32,16 @@ try:
                 conn.execute(text('ALTER TABLE fee_records ADD CONSTRAINT fee_records_student_id_fkey FOREIGN KEY (student_id) REFERENCES students(id);'))
             except Exception:
                 pass
+            conn.execute(text('ALTER TABLE exam_results DROP CONSTRAINT IF EXISTS exam_results_student_id_fkey CASCADE;'))
+            try:
+                conn.execute(text('ALTER TABLE exam_results ADD CONSTRAINT exam_results_student_id_fkey FOREIGN KEY (student_id) REFERENCES students(id);'))
+            except Exception:
+                pass
+            conn.execute(text('ALTER TABLE exam_results DROP CONSTRAINT IF EXISTS exam_results_exam_id_fkey CASCADE;'))
+            try:
+                conn.execute(text('ALTER TABLE exam_results ADD CONSTRAINT exam_results_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES exams(id);'))
+            except Exception:
+                pass
             conn.commit()
 except Exception as e:
     print("FK Fix error:", e)

@@ -378,15 +378,26 @@ const StudentDashboard = () => {
                   <div className="text-center py-12 text-gray-500 animate-pulse">লোড হচ্ছে...</div>
                 ) : exams.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {exams.map(ex => (
-                      <div key={ex.id} className="border rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow">
+                    {exams.map(ex => {
+                      const takenResult = results.find(r => r.exam_id === ex.id);
+                      return (
+                      <div key={ex.id} className="border rounded-xl p-5 bg-white shadow-sm hover:shadow-md transition-shadow relative">
+                        {takenResult && (
+                           <div className="absolute top-2 right-2 bg-green-100 text-green-700 text-xs px-2 py-1 rounded">অংশগ্রহণকৃত</div>
+                        )}
                         <h4 className="font-bold text-lg text-gray-900 mb-1">{ex.title}</h4>
                         <div className="text-sm text-gray-500 mb-4">{ex.subject} • {ex.duration_minutes} মিনিট</div>
-                        <button onClick={() => navigate(`/exam?id=${ex.id}`)} className="bg-primary text-white w-full py-2 rounded-lg font-bold hover:bg-secondary transition-colors">
-                          পরীক্ষা দিন
-                        </button>
+                        {takenResult ? (
+                          <button onClick={() => setActiveTab('results')} className="bg-gray-200 text-gray-700 w-full py-2 rounded-lg font-bold hover:bg-gray-300 transition-colors">
+                            ফলাফল দেখুন
+                          </button>
+                        ) : (
+                          <button onClick={() => navigate(`/exam?id=${ex.id}`)} className="bg-primary text-white w-full py-2 rounded-lg font-bold hover:bg-secondary transition-colors">
+                            পরীক্ষা দিন
+                          </button>
+                        )}
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100 border-dashed text-gray-500">

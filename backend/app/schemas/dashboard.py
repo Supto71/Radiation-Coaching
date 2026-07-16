@@ -11,6 +11,11 @@ class NoticeBase(BaseModel):
 class NoticeCreate(NoticeBase):
     pass
 
+class NoticeUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    is_active: Optional[bool] = None
+
 class Notice(NoticeBase):
     id: int
     created_at: datetime
@@ -78,6 +83,12 @@ class ExamBase(BaseModel):
 class ExamCreate(ExamBase):
     pass
 
+class ExamUpdate(BaseModel):
+    title: Optional[str] = None
+    subject: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    is_active: Optional[bool] = None
+
 class Exam(ExamBase):
     id: int
     created_at: datetime
@@ -117,6 +128,15 @@ class RoutineBase(BaseModel):
 
 class RoutineCreate(RoutineBase):
     pass
+
+class RoutineUpdate(BaseModel):
+    date: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    branch: Optional[str] = None
+    class_level: Optional[str] = None
+    class_name: Optional[str] = None
+    teacher_name: Optional[str] = None
 
 class Routine(RoutineBase):
     id: int

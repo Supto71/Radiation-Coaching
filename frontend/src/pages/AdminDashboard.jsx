@@ -1075,6 +1075,7 @@ const RoutineTab = ({ role }) => {
   const [routineMessage, setRoutineMessage] = useState('');
   const [existingRoutines, setExistingRoutines] = useState([]);
   const [filterBranch, setFilterBranch] = useState('প্রধান শাখা');
+  const [editingRoutineId, setEditingRoutineId] = useState(null);
 
   useEffect(() => {
     const fetchRoutines = async () => {
@@ -1107,7 +1108,22 @@ const RoutineTab = ({ role }) => {
     } catch (e) { console.error(e); }
   };
 
+  const handleDeletePastRoutines = async () => {
+    if (!window.confirm('আপনি কি নিশ্চিত যে সমস্ত পুরনো রুটিন মুছতে চান?')) return;
+    try {
+      const res = await fetch(`/api/dashboard/routines/past`, { method: 'DELETE' });
+      if (res.ok) {
+        const data = await res.json();
+        const today = new Date().toISOString().split('T')[0];
+        setExistingRoutines(prev => prev.filter(r => r.date >= today));
+        setRoutineMessage(data.message || 'পুরনো রুটিন মোছা হয়েছে!');
+        setTimeout(() => setRoutineMessage(''), 3000);
+      }
+    } catch (e) { console.error(e); }
+  };
+
   const handleEditRoutine = (r) => {
+    setEditingRoutineId(r.id);
     setRoutineBranch(r.branch);
     setRoutineDate(r.date);
     setRoutineStartTime(r.start_time);
@@ -1124,19 +1140,24 @@ const RoutineTab = ({ role }) => {
     }
     setIsSaving(true);
     try {
-      const res = await fetch('/api/dashboard/routines', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const url = editingRoutineId ? `/api/dashboard/routines/${editingRoutineId}` : '/api/dashboard/routines';
+      const method = editingRoutineId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ branch: routineBranch, date: routineDate, start_time: routineStartTime, end_time: routineEndTime, class_level: routineLevel, class_name: routineClass, teacher_name: routineTeacher })
       });
       if (res.ok) {
         const saved = await res.json();
         if (saved.branch === filterBranch) {
           setExistingRoutines(prev => {
-            const filtered = prev.filter(r => !(r.branch === saved.branch && r.date === saved.date && r.start_time === saved.start_time && r.end_time === saved.end_time && r.class_level === saved.class_level));
+            const filtered = prev.filter(r => r.id !== saved.id);
             return [...filtered, saved];
           });
         }
-        setRoutineMessage('রুটিন সফলভাবে আপডেট হয়েছে!');
+        setRoutineMessage(editingRoutineId ? 'রুটিন সফলভাবে আপডেট হয়েছে!' : 'রুটিন সফলভাবে তৈরি হয়েছে!');
+        setEditingRoutineId(null);
+        setRoutineClass('');
+        setRoutineTeacher('');
         setTimeout(() => setRoutineMessage(''), 3000);
       } else { setRoutineMessage('রুটিন আপডেট করতে সমস্যা হয়েছে।'); }
     } catch { setRoutineMessage('সার্ভারে কানেক্ট করা যাচ্ছে না।'); }
@@ -1150,6 +1171,9 @@ const RoutineTab = ({ role }) => {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
           <h3 className="text-xl font-bold">মাস্টার রুটিন ভিউ</h3>
           <div className="flex items-center gap-3">
+            <button onClick={handleDeletePastRoutines} className="bg-red-500 text-white font-bold py-2 px-4 rounded-xl hover:bg-red-600 transition-colors">
+              পুরনো রুটিন মুছুন
+            </button>
             <label className="text-gray-600 font-semibold">শাখা:</label>
             <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)} className="border border-gray-300 rounded-xl p-2 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
               <option value="প্রধান শাখা">প্রধান শাখা</option>
@@ -1253,9 +1277,16 @@ const RoutineTab = ({ role }) => {
             <label className="block text-sm font-semibold text-gray-700 mb-1">শিক্ষকের নাম</label>
             <input type="text" value={routineTeacher} onChange={e => setRoutineTeacher(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="যেমন: Irine ma'am" />
           </div>
-          <button onClick={handleSaveRoutine} disabled={isSaving} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
-            {isSaving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
-          </button>
+          <div className="flex gap-4">
+            <button onClick={handleSaveRoutine} disabled={isSaving} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+              {isSaving ? 'সেভ হচ্ছে...' : (editingRoutineId ? 'আপডেট করুন' : 'সেভ করুন')}
+            </button>
+            {editingRoutineId && (
+              <button onClick={() => { setEditingRoutineId(null); setRoutineClass(''); setRoutineTeacher(''); }} className="bg-gray-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-600 transition-colors">
+                বাতিল
+              </button>
+            )}
+          </div>
         </div>
       </div>
       )}
@@ -1268,6 +1299,7 @@ const ExamManagementTab = () => {
   const [exams, setExams] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [newExam, setNewExam] = useState({ title: '', subject: '', duration_minutes: 30 });
+  const [editingExamId, setEditingExamId] = useState(null);
   const [msg, setMsg] = useState('');
   const [selectedExamId, setSelectedExamId] = useState(null);
   const [selectedExam, setSelectedExam] = useState(null);
@@ -1282,21 +1314,31 @@ const ExamManagementTab = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleCreateExam = async () => {
+  const handleSaveExam = async () => {
     if (!newExam.title || !newExam.subject) return setMsg('শিরোনাম এবং বিষয় পূরণ করুন।');
     try {
-      const res = await fetch('/api/dashboard/exams', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const url = editingExamId ? `/api/dashboard/exams/${editingExamId}` : '/api/dashboard/exams';
+      const method = editingExamId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newExam)
       });
       if (res.ok) {
-        setMsg('পরীক্ষা তৈরি হয়েছে!');
+        setMsg(editingExamId ? 'পরীক্ষা আপডেট হয়েছে!' : 'পরীক্ষা তৈরি হয়েছে!');
         setShowForm(false);
+        setEditingExamId(null);
         setNewExam({ title: '', subject: '', duration_minutes: 30 });
         fetchExams();
       }
     } catch (err) { console.error(err); setMsg('সমস্যা হয়েছে।'); }
     setTimeout(() => setMsg(''), 3000);
+  };
+
+  const handleEditExam = (exam, e) => {
+    e.stopPropagation();
+    setNewExam({ title: exam.title, subject: exam.subject, duration_minutes: exam.duration_minutes });
+    setEditingExamId(exam.id);
+    setShowForm(true);
   };
 
   const handleToggleExam = async (id) => {
@@ -1364,7 +1406,14 @@ const ExamManagementTab = () => {
             <div><label className="block mb-1 font-bold">বিষয়</label><input type="text" value={newExam.subject} onChange={e=>setNewExam({...newExam, subject: e.target.value})} className="w-full p-2 border rounded" placeholder="পদার্থবিজ্ঞান" /></div>
             <div><label className="block mb-1 font-bold">সময় (মিনিট)</label><input type="number" value={newExam.duration_minutes} onChange={e=>setNewExam({...newExam, duration_minutes: e.target.value})} className="w-full p-2 border rounded" /></div>
           </div>
-          <button onClick={handleCreateExam} className="bg-blue-600 text-white px-4 py-2 rounded font-bold">সেভ করুন</button>
+          <div className="flex gap-2">
+            <button onClick={handleSaveExam} className="bg-blue-600 text-white px-4 py-2 rounded font-bold">
+              {editingExamId ? 'আপডেট করুন' : 'সেভ করুন'}
+            </button>
+            <button onClick={() => { setShowForm(false); setEditingExamId(null); setNewExam({ title: '', subject: '', duration_minutes: 30 }); }} className="bg-gray-500 text-white px-4 py-2 rounded font-bold">
+              বাতিল
+            </button>
+          </div>
         </div>
       )}
 
@@ -1380,6 +1429,7 @@ const ExamManagementTab = () => {
                   <button onClick={(e) => { e.stopPropagation(); handleToggleExam(ex.id); }} className={`text-xs px-2 py-1 rounded text-white ${ex.is_active ? 'bg-green-500' : 'bg-gray-400'}`}>
                     {ex.is_active ? 'Active' : 'Inactive'}
                   </button>
+                  <button onClick={(e) => handleEditExam(ex, e)} className="text-xs px-2 py-1 rounded bg-blue-500 text-white">এডিট</button>
                   <button onClick={(e) => { e.stopPropagation(); handleDeleteExam(ex.id); }} className="text-xs px-2 py-1 rounded bg-red-500 text-white">ডিলিট</button>
                 </div>
               </div>
@@ -1445,19 +1495,65 @@ const AdminDashboard = () => {
   const [noticeContent, setNoticeContent] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [noticeMessage, setNoticeMessage] = useState('');
+  const [notices, setNotices] = useState([]);
+  const [loadingNotices, setLoadingNotices] = useState(false);
+  const [editingNoticeId, setEditingNoticeId] = useState(null);
+
+  const fetchNotices = useCallback(async () => {
+    setLoadingNotices(true);
+    try {
+      const res = await fetch('/api/dashboard/notices');
+      if (res.ok) {
+        setNotices(await res.json());
+      }
+    } catch (err) {
+      console.error("Failed to fetch notices", err);
+    } finally {
+      setLoadingNotices(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotices();
+  }, [fetchNotices]);
 
   const handlePublishNotice = async () => {
     if (!noticeTitle || !noticeContent) { setNoticeMessage('শিরোনাম এবং বিস্তারিত পূরণ করুন!'); return; }
     setIsPublishing(true);
     try {
-      const res = await fetch('/api/dashboard/notices', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const url = editingNoticeId ? `/api/dashboard/notices/${editingNoticeId}` : '/api/dashboard/notices';
+      const method = editingNoticeId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: noticeTitle, content: noticeContent, is_active: true })
       });
-      if (res.ok) { setNoticeMessage('নোটিশ সফলভাবে পাবলিশ হয়েছে!'); setNoticeTitle(''); setNoticeContent(''); setTimeout(() => setNoticeMessage(''), 3000); }
-      else { setNoticeMessage('নোটিশ পাবলিশ করতে সমস্যা হয়েছে।'); }
+      if (res.ok) { 
+        setNoticeMessage(editingNoticeId ? 'নোটিশ সফলভাবে আপডেট হয়েছে!' : 'নোটিশ সফলভাবে পাবলিশ হয়েছে!'); 
+        setNoticeTitle(''); 
+        setNoticeContent(''); 
+        setEditingNoticeId(null);
+        fetchNotices();
+        setTimeout(() => setNoticeMessage(''), 3000); 
+      }
+      else { setNoticeMessage('নোটিশ সেভ করতে সমস্যা হয়েছে।'); }
     } catch { setNoticeMessage('সার্ভারে কানেক্ট করা যাচ্ছে না।'); }
     finally { setIsPublishing(false); }
+  };
+
+  const handleEditNotice = (notice) => {
+    setNoticeTitle(notice.title);
+    setNoticeContent(notice.content);
+    setEditingNoticeId(notice.id);
+  };
+
+  const handleDeleteNotice = async (id) => {
+    if (!window.confirm('আপনি কি নিশ্চিত যে এই নোটিশটি মুছতে চান?')) return;
+    try {
+      await fetch(`/api/dashboard/notices/${id}`, { method: 'DELETE' });
+      fetchNotices();
+    } catch (err) {
+      console.error('Failed to delete notice', err);
+    }
   };
 
   const tabs = [
@@ -1509,8 +1605,47 @@ const AdminDashboard = () => {
                       </div>
                       <button onClick={handlePublishNotice} disabled={isPublishing}
                         className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
-                        {isPublishing ? 'পাবলিশ হচ্ছে...' : 'পাবলিশ করুন'}
+                        {isPublishing ? 'সেভ হচ্ছে...' : (editingNoticeId ? 'আপডেট করুন' : 'পাবলিশ করুন')}
                       </button>
+                      {editingNoticeId && (
+                        <button onClick={() => { setEditingNoticeId(null); setNoticeTitle(''); setNoticeContent(''); }}
+                          className="ml-4 bg-gray-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-600 transition-colors">
+                          বাতিল
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="mt-12">
+                      <h2 className="text-xl font-bold mb-4">সকল নোটিশ</h2>
+                      {loadingNotices ? (
+                        <div className="text-center py-8 text-gray-500 animate-pulse">লোড হচ্ছে...</div>
+                      ) : notices.length > 0 ? (
+                        <div className="space-y-4">
+                          {notices.map(notice => (
+                            <div key={notice.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                              <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-lg text-gray-900">{notice.title}</h3>
+                                <div className="flex gap-2">
+                                  <button onClick={() => handleEditNotice(notice)} className="text-blue-500 hover:bg-blue-50 px-2 py-1 rounded font-semibold text-sm transition-colors">
+                                    এডিট
+                                  </button>
+                                  <button onClick={() => handleDeleteNotice(notice.id)} className="text-red-500 hover:bg-red-50 px-2 py-1 rounded font-semibold text-sm transition-colors">
+                                    মুছুন
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="text-gray-600 whitespace-pre-wrap text-sm mb-3">{notice.content}</p>
+                              <p className="text-xs text-gray-400">
+                                প্রকাশিত: {new Date(notice.created_at).toLocaleDateString('bn-BD')}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500">
+                          কোনো নোটিশ পাওয়া যায়নি।
+                        </div>
+                      )}
                     </div>
                   </>
                 ) : (
