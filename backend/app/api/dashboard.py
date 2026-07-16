@@ -84,11 +84,21 @@ def get_my_fees(student_id: int, db: Session = Depends(get_db)):
 
 @router.post("/fees", response_model=schemas.FeeRecord)
 def create_fee_record(fee: schemas.FeeRecordCreate, db: Session = Depends(get_db)):
-    db_fee = db_models.FeeRecord(**fee.model_dump())
-    db.add(db_fee)
-    db.commit()
-    db.refresh(db_fee)
-    return db_fee
+    try:
+        data = fee.model_dump()
+        if data.get('is_paid') and not data.get('payment_date'):
+            from datetime import date
+            data['payment_date'] = date.today()
+            
+        db_fee = db_models.FeeRecord(**data)
+        db.add(db_fee)
+        db.commit()
+        db.refresh(db_fee)
+        return db_fee
+    except Exception as e:
+        db.rollback()
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
 
 @router.patch("/fees/{fee_id}/pay", response_model=schemas.FeeRecord)
 def mark_fee_paid(fee_id: int, db: Session = Depends(get_db)):
