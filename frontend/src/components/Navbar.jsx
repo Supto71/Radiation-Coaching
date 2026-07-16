@@ -25,24 +25,27 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden lg:flex space-x-7 items-center">
+        <div className="hidden lg:flex space-x-2 items-center">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
-              className={`text-[15px] font-bold transition-colors ${
-                location.pathname === link.path ? 'text-white' : 'text-gray-200 hover:text-white'
+              className={`text-[15px] font-bold px-4 py-2 rounded-full transition-all duration-300 ${
+                location.pathname === link.path 
+                  ? 'bg-white/20 text-white shadow-inner' 
+                  : 'text-gray-200 hover:bg-white/10 hover:text-white'
               }`}
             >
               {link.name}
             </Link>
           ))}
-          <div className="hidden lg:flex items-center pl-2">
+          <div className="hidden lg:flex items-center pl-4">
             <Link
               to="/login"
-              className="bg-[#00b4d8] text-white px-5 py-2 rounded-full shadow-md hover:bg-[#0096b4] transition-all transform hover:-translate-y-0.5 font-bold text-[15px]"
+              className="relative overflow-hidden group bg-gradient-to-r from-[#00b4d8] to-[#0096b4] text-white px-6 py-2.5 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(0,180,216,0.4)] font-bold text-[15px]"
             >
-              লগইন/রেজিস্টার
+              <span className="relative z-10">লগইন/রেজিস্টার</span>
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
             </Link>
           </div>
         </div>
