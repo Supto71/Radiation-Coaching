@@ -2,135 +2,150 @@ import { Link } from 'react-router-dom';
 
 const Home = () => {
   return (
-    <div className="flex flex-col min-h-[calc(100vh-80px)]">
+    <div className="flex flex-col min-h-[calc(100vh-76px)] bg-[#f4f7fb] overflow-hidden">
+      
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gray-50 flex-grow flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/10 pointer-events-none" />
+      <section className="relative w-full py-12 md:py-20 flex items-center justify-center min-h-[80vh]">
+        {/* Faded Watermark Logo */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none z-0">
+          <img src="/logo.png" alt="Watermark" className="w-[80vw] md:w-[50vw] max-w-3xl object-contain" />
+        </div>
         
-        <div className="container mx-auto px-4 py-20 relative z-10 flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 mb-12 md:mb-0">
-            <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 text-gray-900">
-              আপনার <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">উজ্জ্বল ভবিষ্যতের</span><br />
-              সঠিক দিকনির্দেশনা
+        <div className="container mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
+          
+          {/* Left Text Content */}
+          <div className="w-full lg:w-1/2 flex flex-col text-center lg:text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-800 leading-[1.2] mb-6">
+              আপনার <span className="text-[#00b4d8]">উজ্জ্বল</span><br />
+              <span className="text-[#00b4d8]">ভবিষ্যতের</span><br />
+              সঠিক<br />
+              দিকনির্দেশনা
             </h1>
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed max-w-lg">
-              রেডিয়েশন কোচিং-এ আপনাকে স্বাগতম। আমাদের অভিজ্ঞ শিক্ষকদের নির্দেশনায় আপনার প্রস্তুতি হোক আরও সুদৃঢ়।
+            <p className="text-gray-500 font-medium text-sm md:text-base max-w-lg mx-auto lg:mx-0">
+              রেডিয়েশন কোচিং এ আপনাদের স্বাগতম। আপনাদের সার্বিক উন্নতিতে আমরা গর্বিত এবং সর্বদা প্রস্তুত।
             </p>
-            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-              <Link 
-                to="/courses" 
-                className="bg-primary text-white text-center px-8 py-3.5 rounded-lg shadow-lg shadow-primary/30 hover:bg-secondary transition-all transform hover:-translate-y-1 font-semibold text-lg"
-              >
-                আমাদের কোর্সসমূহ
-              </Link>
-              <Link 
-                to="/exam" 
-                className="bg-white text-primary border-2 border-primary text-center px-8 py-3.5 rounded-lg hover:bg-gray-50 transition-all font-semibold text-lg"
-              >
-                অনলাইন পরীক্ষা
-              </Link>
-            </div>
           </div>
           
-          <div className="md:w-1/2 flex justify-center">
-            {/* Logo Image */}
-            <div className="relative w-full max-w-md flex items-center justify-center">
-               <img src="/logo.png" alt="Radiation Coaching Logo" className="w-full max-w-[300px] md:max-w-[400px] h-auto object-contain rounded-full shadow-2xl hover:scale-105 transition-transform duration-300 mix-blend-multiply" />
+          {/* Right Image Content */}
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative">
+            <div className="relative w-full max-w-lg lg:max-w-xl rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+              {/* Fallback image name 'hero-image.png' (Tell user to save the pic as this name) */}
+              <img 
+                src="/hero-image.png" 
+                alt="Classroom" 
+                className="w-full h-auto object-cover"
+                onError={(e) => {
+                  e.target.onerror = null; 
+                  e.target.src="/logo.png"; // Fallback to logo if not found
+                  e.target.className="w-[80%] mx-auto opacity-50 py-10";
+                }}
+              />
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
+      {/* Why We Are The Best Section */}
+      <section className="py-16 md:py-24 relative z-10">
+        <div className="container mx-auto px-4 max-w-5xl">
+          
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">কেন আমরা সেরা?</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">আমাদের বিশেষত্বসমূহ যা আপনার প্রস্তুতিকে অনন্য করে তুলবে।</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-3">
+              কেন আমরা <span className="text-[#00b4d8]">সেরা?</span>
+            </h2>
+            <p className="text-gray-500 text-sm font-medium">
+              আমাদের বিশেষত্বসমূহ যা আপনাদের পড়াশোনাকে আরও সহজ ও সাবলীল করে তুলবে
+            </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+          <div className="flex flex-col gap-6">
+            
+            {/* Feature Card 1 */}
+            <div className="bg-white rounded-3xl p-6 md:p-8 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.1)] transition-all">
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
+                <span className="text-white font-bold text-xl">১</span>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">আধুনিক সিলেবাস</h3>
-              <p className="text-gray-600 leading-relaxed">সর্বশেষ শিক্ষাক্রম অনুযায়ী সাজানো সম্পূর্ণ স্টাডি ম্যাটেরিয়াল ও লেকচার শিট।</p>
+              <div className="relative z-10">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">স্মার্ট এক্সাম সিস্টেম</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  আমাদের রয়েছে অত্যাধুনিক অনলাইন পরীক্ষা পদ্ধতি। ঘরে বসেই পরীক্ষা দিন এবং সাথে সাথে রেজাল্ট পেয়ে যান।
+                </p>
+              </div>
             </div>
 
-            {/* Feature 2 */}
-            <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-secondary/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <svg className="w-7 h-7 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            {/* Feature Card 2 */}
+            <div className="bg-white rounded-3xl p-6 md:p-8 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.1)] transition-all">
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
+                <span className="text-white font-bold text-xl">২</span>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">স্মার্ট এক্সাম সিস্টেম</h3>
-              <p className="text-gray-600 leading-relaxed">অটোমেটিক গ্রেডিং, নেগেটিভ মার্কিং এবং লাইভ টাইমার সহ অত্যাধুনিক পরীক্ষা পদ্ধতি।</p>
+              <div className="relative z-10">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">অভিজ্ঞ শিক্ষকমণ্ডলী</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  দেশের সেরা বিশ্ববিদ্যালয় থেকে আগত বিষয়ভিত্তিক বিশেষজ্ঞ শিক্ষকদের নির্দেশনায় আপনার প্রস্তুতি হবে ১০০ ভাগ নির্ভুল।
+                </p>
+              </div>
             </div>
 
-            {/* Feature 3 */}
-            <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100 hover:shadow-xl transition-shadow group">
-              <div className="w-14 h-14 bg-accent/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <svg className="w-7 h-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+            {/* Feature Card 3 */}
+            <div className="bg-white rounded-3xl p-6 md:p-8 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.1)] transition-all">
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
+                <span className="text-white font-bold text-xl">৩</span>
               </div>
-              <h3 className="text-xl font-bold mb-3 text-gray-900">অভিজ্ঞ শিক্ষক</h3>
-              <p className="text-gray-600 leading-relaxed">দেশের সেরা বিশ্ববিদ্যালয় থেকে আগত বিষয়ভিত্তিক বিশেষজ্ঞ শিক্ষকমণ্ডলী।</p>
+              <div className="relative z-10">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">স্পেশাল লেকচার শিট</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  সহজ ও সাবলীল ভাষায় তৈরি স্পেশাল লেকচার শিট যা পরীক্ষায় ভালো ফলাফল করতে দারুণ সহায়তা করবে।
+                </p>
+              </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Branch Info Section */}
-      <section className="py-16 bg-gray-50 border-t border-gray-100">
-        <div className="container mx-auto px-4">
+      {/* Footer Section */}
+      <footer className="bg-[#0f172a] mt-auto relative z-10">
+        <div className="container mx-auto px-4 py-16">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">আমাদের শাখাসমূহ</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">রেডিয়েশন কোচিং এর যে কোনো শাখায় ভর্তি হতে যোগাযোগ করুন:</p>
-            <div className="mt-4 inline-flex items-center gap-2 bg-primary/10 text-primary px-6 py-2 rounded-full font-bold text-lg">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              01676924816
+            <h2 className="text-2xl font-bold text-white mb-2">আমাদের শাখা সমূহ</h2>
+            <p className="text-gray-400 text-sm">রেডিয়েশন কোচিং এর যে কোনো শাখায় ভর্তি হতে যোগাযোগ করুন</p>
+            <div className="mt-6 inline-flex items-center gap-2 bg-[#1e293b] text-[#00b4d8] px-6 py-2.5 rounded-full font-bold border border-[#334155]">
+              📞 01676924816
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Branch 1 */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+            <div className="bg-[#1e293b] p-6 rounded-2xl flex items-start gap-4 border border-[#334155]">
+              <div className="w-10 h-10 bg-[#0f172a] rounded-full flex items-center justify-center shrink-0">
+                <span className="text-[#00b4d8]">📍</span>
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">প্রধান শাখা</h3>
-                <p className="text-gray-600 leading-relaxed">মিজমিজি মাদ্রাসা রোড, বুকস্ গার্ডেন সংলগ্ন</p>
+                <h3 className="text-white font-bold mb-1">প্রধান শাখা</h3>
+                <p className="text-gray-400 text-xs leading-relaxed">দনিয়া বিশ্ববিদ্যালয় কলেজের বিপরীতে, ঢাকা-১২৩৬</p>
               </div>
             </div>
-
             {/* Branch 2 */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex items-start gap-4">
-              <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center shrink-0">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+            <div className="bg-[#1e293b] p-6 rounded-2xl flex items-start gap-4 border border-[#334155]">
+              <div className="w-10 h-10 bg-[#0f172a] rounded-full flex items-center justify-center shrink-0">
+                <span className="text-[#00b4d8]">📍</span>
               </div>
               <div>
-                <h3 className="text-xl font-bold mb-2 text-gray-900">দ্বিতীয় শাখা</h3>
-                <p className="text-gray-600 leading-relaxed">মিজমিজি পশ্চিম পাড়া স্কুল এন্ড কলেজ সংলগ্ন</p>
+                <h3 className="text-white font-bold mb-1">দ্বিতীয় শাখা</h3>
+                <p className="text-gray-400 text-xs leading-relaxed">মিজমিজি পশ্চিম পাড়া স্কুল এন্ড কলেজ সংলগ্ন</p>
               </div>
             </div>
           </div>
         </div>
-      </section>
+        <div className="border-t border-[#1e293b] py-6 text-center">
+          <h2 className="text-white font-bold text-lg mb-1">রেডিয়েশন কোচিং জোন</h2>
+          <p className="text-gray-500 text-xs">© {new Date().getFullYear()} All Rights Reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -6,46 +6,49 @@ const Navbar = () => {
   const location = useLocation();
 
   const navLinks = [
-    { name: 'হোম পেইজ', path: '/' },
+    { name: 'হোম', path: '/' },
     { name: 'কোর্সসমূহ', path: '/courses' },
-    { name: 'শিক্ষকমণ্ডলী', path: '/faculty' },
+    { name: 'নোটিশ বোর্ড', path: '#' },
+    { name: 'আমাদের সম্পর্কে', path: '#' },
+    { name: 'যোগাযোগ', path: '#' },
   ];
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-gray-100">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="Radiation Coaching" className="h-12 w-auto object-contain" />
+    <nav className="bg-[#115b76] sticky top-0 z-50 shadow-md">
+      <div className="container mx-auto px-4 py-3.5 flex justify-between items-center">
+        {/* Logo and Name */}
+        <Link to="/" className="flex items-center gap-3">
+          <img src="/logo.png" alt="Radiation Coaching" className="h-10 w-auto object-contain bg-white rounded-full p-0.5" />
+          <span className="text-white font-extrabold text-xl tracking-wide hidden sm:block">
+            রেডিয়েশন কোচিং জোন
+          </span>
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-8 items-center">
+        <div className="hidden lg:flex space-x-7 items-center">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
-              className={`text-lg transition-colors font-medium ${
-                location.pathname === link.path ? 'text-primary' : 'text-gray-600 hover:text-primary'
+              className={`text-[15px] font-bold transition-colors ${
+                location.pathname === link.path ? 'text-white' : 'text-gray-200 hover:text-white'
               }`}
             >
               {link.name}
             </Link>
           ))}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="text-gray-600 hover:text-primary font-medium transition-colors">
-              লগইন
-            </Link>
+          <div className="hidden lg:flex items-center pl-2">
             <Link
-              to="/exam"
-              className="bg-gradient-to-r from-primary to-secondary text-white px-6 py-2.5 rounded-full shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-all transform hover:-translate-y-0.5 font-medium"
+              to="/login"
+              className="bg-[#00b4d8] text-white px-5 py-2 rounded-full shadow-md hover:bg-[#0096b4] transition-all transform hover:-translate-y-0.5 font-bold text-[15px]"
             >
-              পরীক্ষা দিন
+              লগইন/রেজিস্টার
             </Link>
           </div>
         </div>
 
         {/* Mobile Menu Button */}
-        <button className="md:hidden text-gray-600" onClick={() => setIsOpen(!isOpen)}>
+        <button className="lg:hidden text-white" onClick={() => setIsOpen(!isOpen)}>
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {isOpen ? (
                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -58,23 +61,23 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 p-4 space-y-4 shadow-lg absolute w-full">
+        <div className="lg:hidden bg-[#0e4a60] border-t border-[#135d79] p-4 space-y-4 shadow-lg absolute w-full">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
-              className="block text-gray-600 hover:text-primary font-medium"
+              className="block text-gray-200 hover:text-white font-bold"
               onClick={() => setIsOpen(false)}
             >
               {link.name}
             </Link>
           ))}
           <Link
-            to="/exam"
-            className="block text-center bg-primary text-white px-4 py-2 rounded-md font-medium"
+            to="/login"
+            className="block text-center bg-[#00b4d8] text-white px-4 py-2 rounded-full font-bold shadow-md"
             onClick={() => setIsOpen(false)}
           >
-            পরীক্ষা দিন
+            লগইন/রেজিস্টার
           </Link>
         </div>
       )}
