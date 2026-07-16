@@ -22,6 +22,20 @@ from .models import attendance as attendance_model  # ensure table is created
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# Fix Postgres FK constraint if needed
+try:
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        if engine.url.drivername in ["postgresql", "postgresql+psycopg2"]:
+            conn.execute(text('ALTER TABLE fee_records DROP CONSTRAINT IF EXISTS fee_records_student_id_fkey CASCADE;'))
+            try:
+                conn.execute(text('ALTER TABLE fee_records ADD CONSTRAINT fee_records_student_id_fkey FOREIGN KEY (student_id) REFERENCES students(id);'))
+            except Exception:
+                pass
+            conn.commit()
+except Exception as e:
+    print("FK Fix error:", e)
+
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(students.router, prefix="/api/students", tags=["students"])
