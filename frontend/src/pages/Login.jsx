@@ -36,7 +36,7 @@ const Login = () => {
       if (userId.trim() === 'admin' && password.trim() === 'admin123') {
         localStorage.setItem('staff_role', 'admin');
         navigate('/admin/dashboard');
-      } else if (password.trim() === '1234' && userId.trim().toUpperCase().startsWith('RC-')) {
+      } else if (password.trim() === 'Radiation1234' && userId.trim().toUpperCase().startsWith('RC-')) {
         // Teacher name must start with RC-
         localStorage.setItem('staff_role', 'teacher');
         localStorage.setItem('teacher_name', userId.trim());
