@@ -11,6 +11,24 @@ const Faculty = () => {
 
   const facultyMembers = [
     {
+      id: 10,
+      name: 'নায়মুন নাফি সুপ্ত',
+      university: 'University of Information Science and Technology (UITS)',
+      subject: 'Department of C.S.E',
+      year: 'প্রথম বর্ষ',
+      teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
+      image: '/supto.png'
+    },
+    {
+      id: 11,
+      name: 'উম্মে হাবিবা রিয়া',
+      university: 'ঢাকা মহানগর মহিলা কলেজ',
+      subject: 'M.Sc in Zoology',
+      year: '-',
+      teaching: 'গণিত, পদার্থ বিজ্ঞান, রসায়ন, জীববিজ্ঞান, উচ্চতর গণিত',
+      image: '/ria.png'
+    },
+    {
       id: 2,
       name: 'রেহানা আক্তার তৃষা',
       university: 'ঢাকা সিটি কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
@@ -82,24 +100,8 @@ const Faculty = () => {
       teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইংরেজি, বিজ্ঞান',
       image: 'https://ui-avatars.com/api/?name=Lamia&background=6366F1&color=fff&size=200'
     },
-    {
-      id: 10,
-      name: 'নায়মুন নাফি সুপ্ত',
-      university: 'University of Information Science and Technology (UITS)',
-      subject: 'Department of C.S.E',
-      year: 'প্রথম বর্ষ',
-      teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
-      image: 'https://ui-avatars.com/api/?name=Naymon+Nafi+Supto&background=0EA5E9&color=fff&size=200'
-    },
-    {
-      id: 11,
-      name: 'উম্মে হাবিবা রিয়া',
-      university: 'ঢাকা মহানগর মহিলা কলেজ',
-      subject: 'M.Sc in Zoology',
-      year: '-',
-      teaching: 'গণিত, পদার্থ বিজ্ঞান, রসায়ন, জীববিজ্ঞান, উচ্চতর গণিত',
-      image: 'https://ui-avatars.com/api/?name=Umme+Habiba+Ria&background=84CC16&color=fff&size=200'
-    },
+    
+    
     {
       id: 12,
       name: 'ইমাম হাসান বাঁধন',
