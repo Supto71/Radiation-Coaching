@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 const SearchIcon = () => (
@@ -622,7 +622,103 @@ const AttendanceTab = () => {
   );
 };
 
+const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
+  const [search, setSearch] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedStudent = students.find(s => s.id.toString() === value?.toString());
+  
+  const filteredStudents = students.filter(s => 
+    s.name.toLowerCase().includes(search.toLowerCase()) || 
+    s.student_uid.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Calculate due for selected student
+  let totalDue = 0;
+  if (selectedStudent && fees) {
+    totalDue = fees
+      .filter(f => f.student_id === selectedStudent.id && !f.is_paid)
+      .reduce((sum, f) => sum + f.amount, 0);
+  }
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="block text-sm font-semibold text-gray-700 mb-1">স্টুডেন্ট খুঁজুন (নাম বা আইডি) *</label>
+      
+      {!selectedStudent ? (
+        <div className="relative">
+          <input 
+            type="text" 
+            placeholder="নাম বা আইডি টাইপ করুন..."
+            className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+            value={search}
+            onChange={e => {
+              setSearch(e.target.value);
+              setIsOpen(true);
+            }}
+            onClick={() => setIsOpen(true)}
+          />
+          <div className="absolute right-3 top-3 text-gray-400">
+            <SearchIcon />
+          </div>
+        </div>
+      ) : (
+        <div className="w-full border border-primary bg-blue-50 rounded-lg p-3 flex justify-between items-start">
+          <div>
+            <div className="font-bold text-gray-800">{selectedStudent.name} <span className="text-gray-500 font-normal">({selectedStudent.student_uid})</span></div>
+            <div className="text-sm text-gray-600 mt-0.5">{selectedStudent.class_level} — {selectedStudent.branch}</div>
+            <div className="mt-2 text-sm">
+              পূর্বের বকেয়া: <span className={totalDue > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>৳ {totalDue}</span>
+            </div>
+          </div>
+          <button 
+            type="button"
+            onClick={() => { onChange(''); setSearch(''); }}
+            className="text-gray-400 hover:text-red-500 bg-white rounded-full p-1 shadow-sm border border-gray-200"
+            title="পরিবর্তন করুন"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+      )}
+      
+      {isOpen && !selectedStudent && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 flex flex-col">
+          <div className="overflow-y-auto">
+            {filteredStudents.length > 0 ? (
+              filteredStudents.map(s => (
+                <div 
+                  key={s.id} 
+                  className="p-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 cursor-pointer"
+                  onClick={() => { onChange(s.id); setIsOpen(false); setSearch(''); }}
+                >
+                  <div className="font-semibold text-gray-800">{s.name} <span className="text-gray-500 font-normal">({s.student_uid})</span></div>
+                  <div className="text-xs text-gray-500 mt-1">{s.branch}</div>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-sm text-gray-500 text-center">কোনো স্টুডেন্ট পাওয়া যায়নি</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Fee Tracker Tab ──────────────────────────────────────────────────────────
+
 const FeeTrackerTab = () => {
   const [fees, setFees] = useState([]);
   const [students, setStudents] = useState([]);
@@ -767,16 +863,12 @@ const FeeTrackerTab = () => {
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
           <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন ফি এন্ট্রি</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">স্টুডেন্ট সিলেক্ট করুন *</label>
-              <select value={form.student_id} onChange={e => setForm({ ...form, student_id: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
-                <option value="">-- স্টুডেন্ট বেছে নিন --</option>
-                {students.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.student_uid}) — {s.branch}</option>
-                ))}
-              </select>
-            </div>
+            <SearchableStudentSelect 
+              students={students} 
+              fees={fees} 
+              value={form.student_id} 
+              onChange={val => setForm({ ...form, student_id: val })} 
+            />
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">মাস *</label>
               <input type="month" value={form.month} onChange={e => setForm({ ...form, month: e.target.value })}
