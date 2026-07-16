@@ -674,9 +674,10 @@ const FeeTrackerTab = () => {
         setShowForm(false);
         fetchFees();
       } else {
-        setMsg({ text: 'সমস্যা হয়েছে।', type: 'error' });
+        const errorData = await res.json().catch(() => ({}));
+        setMsg({ text: `সমস্যা হয়েছে: ${errorData.detail || res.statusText}`, type: 'error' });
       }
-    } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
+    } catch (e) { setMsg({ text: `সার্ভার এরর! ${e.message}`, type: 'error' }); }
     finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
   };
 
