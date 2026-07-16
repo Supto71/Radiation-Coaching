@@ -53,7 +53,7 @@ const StudentDatabaseTab = ({ role }) => {
   const [editingStudentId, setEditingStudentId] = useState(null);
   const [msg, setMsg] = useState({ text: '', type: 'success' });
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', student_uid: '', class_level: 'Class 1', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+  const [form, setForm] = useState({ name: '', student_uid: '', class_level: '9th', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);

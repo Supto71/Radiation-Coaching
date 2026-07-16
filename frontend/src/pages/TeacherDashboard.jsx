@@ -16,7 +16,7 @@ const TeacherDashboard = () => {
   // Student Attendance States
   const [attBranch, setAttBranch] = useState('প্রধান শাখা');
   const [attGender, setAttGender] = useState('ছেলে');
-  const [attClass, setAttClass] = useState('Class 1');
+  const [attClass, setAttClass] = useState('9th');
   const [attDate, setAttDate] = useState(new Date().toISOString().split('T')[0]);
   const [studentsForAtt, setStudentsForAtt] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
