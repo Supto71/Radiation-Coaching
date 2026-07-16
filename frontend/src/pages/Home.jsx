@@ -27,8 +27,8 @@ const Home = () => {
           </div>
           
           {/* Right Image Content */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative">
-            <div className="relative w-full max-w-lg lg:max-w-xl rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative mt-8 lg:mt-0">
+            <div className="relative w-full max-w-2xl lg:max-w-[700px] rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
               {/* Fallback image name 'hero-image.png' (Tell user to save the pic as this name) */}
               <img 
                 src="/hero-image.jpg" 
