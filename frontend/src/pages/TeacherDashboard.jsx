@@ -192,7 +192,7 @@ const TeacherDashboard = () => {
                 <div key={n.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50">
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-bold text-gray-800">{n.title}</h4>
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{n.date}</span>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{new Date(n.custom_date || n.created_at).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   </div>
                   <p className="text-sm text-gray-600 whitespace-pre-wrap">{n.content}</p>
                 </div>
