@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -9,7 +9,7 @@
 }
 
 body {
-  font-family: 'Hind Siliguri', sans-serif;
+  font-family: 'Noto Sans Bengali', sans-serif;
   background-color: #F9FAFB; /* gray-50 */
   color: #111827; /* gray-900 */
   font-size: 1.15rem;
@@ -18,13 +18,13 @@ body {
 
 /* Bengali text - bolder & bigger for all elements */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Hind Siliguri', sans-serif;
+  font-family: 'Noto Sans Bengali', sans-serif;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
 
 p, span, label, td, th, li, a, button, select, option, textarea, input, div {
-  font-family: 'Hind Siliguri', sans-serif;
+  font-family: 'Noto Sans Bengali', sans-serif;
 }
 
 p {
