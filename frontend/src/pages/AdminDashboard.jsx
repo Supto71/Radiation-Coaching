@@ -1680,10 +1680,140 @@ const AdminDashboard = () => {
     }
   };
 
+  const TeacherManagementTab = () => {
+    const [teachers, setTeachers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [showForm, setShowForm] = useState(false);
+    const [form, setForm] = useState({ name: '', teacher_uid: '', password: '' });
+    const [msg, setMsg] = useState({ text: '', type: 'success' });
+    const [saving, setSaving] = useState(false);
+
+    const fetchTeachers = useCallback(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/teachers/');
+        if (res.ok) setTeachers(await res.json());
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
+    }, []);
+
+    useEffect(() => { fetchTeachers(); }, [fetchTeachers]);
+
+    const handleSave = async () => {
+      if (!form.name || !form.teacher_uid || !form.password) {
+        setMsg({ text: 'সব ফিল্ড পূরণ করুন!', type: 'error' });
+        return;
+      }
+      setSaving(true);
+      try {
+        const res = await fetch('/api/teachers/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form)
+        });
+        if (res.ok) {
+          setMsg({ text: 'শিক্ষক সফলভাবে যোগ করা হয়েছে!', type: 'success' });
+          setShowForm(false);
+          setForm({ name: '', teacher_uid: '', password: '' });
+          fetchTeachers();
+        } else {
+          const errData = await res.json().catch(()=>({}));
+          setMsg({ text: errData.detail || 'শিক্ষক যোগ করতে সমস্যা হয়েছে।', type: 'error' });
+        }
+      } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
+      finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
+    };
+
+    const handleDelete = async (id) => {
+      if (!window.confirm('শিক্ষক মুছতে চান?')) return;
+      await fetch(`/api/teachers/${id}`, { method: 'DELETE' });
+      fetchTeachers();
+    };
+
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-900">শিক্ষক ম্যানেজমেন্ট</h2>
+          <button onClick={() => setShowForm(!showForm)} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary">
+            + নতুন শিক্ষক
+          </button>
+        </div>
+
+        <Alert message={msg.text} type={msg.type} />
+
+        {showForm && (
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
+            <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন শিক্ষকের তথ্য</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">পুরো নাম *</label>
+                <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নাম" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">টিচার আইডি (Teacher UID) *</label>
+                <input type="text" value={form.teacher_uid} onChange={e => setForm({ ...form, teacher_uid: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="যেমন: RC-Name" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">লগিন পাসওয়ার্ড *</label>
+                <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="পাসওয়ার্ড দিন" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={handleSave} disabled={saving} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary">
+                {saving ? 'সেভ হচ্ছে...' : 'যোগ করুন'}
+              </button>
+              <button onClick={() => setShowForm(false)} className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold">
+                বাতিল
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+          {loading ? (
+             <div className="text-center py-12 text-gray-400">লোড হচ্ছে...</div>
+          ) : teachers.length === 0 ? (
+             <div className="text-center py-16 bg-gray-50 text-gray-500 font-medium border-dashed border-gray-300">কোনো শিক্ষক পাওয়া যায়নি।</div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
+                  <th className="p-4 font-bold">টিচার আইডি</th>
+                  <th className="p-4 font-bold">নাম</th>
+                  <th className="p-4 font-bold">ছবি (URL)</th>
+                  <th className="p-4 font-bold">অ্যাকশন</th>
+                </tr>
+              </thead>
+              <tbody>
+                {teachers.map(t => (
+                  <tr key={t.id} className="border-b border-gray-50 hover:bg-blue-50/40">
+                    <td className="p-4 font-bold text-primary">{t.teacher_uid}</td>
+                    <td className="p-4 font-semibold text-gray-900">{t.name}</td>
+                    <td className="p-4 text-sm text-gray-500 break-all">{t.image ? 'সেট করা আছে' : 'নেই'}</td>
+                    <td className="p-4">
+                      <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg">
+                        <TrashIcon />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+
   const tabs = [
     { id: 'notices', label: 'নোটিশ বোর্ড' },
     { id: 'attendance', label: 'উপস্থিতি' },
     { id: 'teacher_att', label: 'টিচার হাজিরা' },
+    { id: 'teachers', label: 'শিক্ষক ম্যানেজমেন্ট' },
     { id: 'routines', label: 'রুটিন আপডেট' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
@@ -1784,6 +1914,7 @@ const AdminDashboard = () => {
             {activeTab === 'routines' && <RoutineTab role={staffRole} />}
             {activeTab === 'attendance' && <AttendanceTab role={staffRole} />}
             {activeTab === 'teacher_att' && <TeacherAttendanceTab records={teacherAttendanceRecords} fetchRecords={fetchTeacherAttendance} />}
+            {activeTab === 'teachers' && <TeacherManagementTab />}
             {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
             {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
             {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}

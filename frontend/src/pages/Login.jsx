@@ -36,13 +36,27 @@ const Login = () => {
       if (userId.trim() === 'admin' && password.trim() === 'admin123') {
         localStorage.setItem('staff_role', 'admin');
         navigate('/admin/dashboard');
-      } else if (password.trim() === 'Radiation1234' && userId.trim().toUpperCase().startsWith('RC-')) {
-        // Teacher name must start with RC-
-        localStorage.setItem('staff_role', 'teacher');
-        localStorage.setItem('teacher_name', userId.trim());
-        navigate('/teacher/dashboard');
+      } else if (userId.trim().toUpperCase().startsWith('RC-')) {
+        try {
+          const res = await axios.post('/api/teachers/login', {
+            teacher_uid: userId.trim(),
+            password: password.trim()
+          });
+          if (res.data) {
+            localStorage.setItem('staff_role', 'teacher');
+            localStorage.setItem('teacher_name', res.data.name);
+            localStorage.setItem('teacher_id', res.data.id);
+            navigate('/teacher/dashboard');
+          }
+        } catch (err) {
+          if (err.response && (err.response.status === 401 || err.response.status === 400)) {
+            setError('টিচার আইডি বা পাসওয়ার্ড ভুল হয়েছে!');
+          } else {
+            setError('সার্ভারে সমস্যা হচ্ছে। দয়া করে পরে চেষ্টা করুন।');
+          }
+        }
       } else {
-        setError('অ্যাডমিন আইডি/টিচার নাম বা পাসওয়ার্ড ভুল হয়েছে!');
+        setError('অ্যাডমিন আইডি বা শিক্ষকের আইডি ভুল হয়েছে!');
       }
     }
   };

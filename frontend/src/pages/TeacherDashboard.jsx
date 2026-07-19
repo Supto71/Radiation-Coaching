@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave } from 'react-icons/fa';
+import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave, FaUserCog } from 'react-icons/fa';
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState('routine');
   const navigate = useNavigate();
   const teacherName = localStorage.getItem('teacher_name');
-  
+  const teacherId = localStorage.getItem('teacher_id');
   // States
   const [routines, setRoutines] = useState([]);
   const [exams, setExams] = useState([]);
@@ -30,6 +30,11 @@ const TeacherDashboard = () => {
   const [qText, setQText] = useState('');
   const [qOptions, setQOptions] = useState(['', '', '', '']);
   const [qCorrect, setQCorrect] = useState(0);
+
+  // Profile
+  const [profileImg, setProfileImg] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [updatingProfile, setUpdatingProfile] = useState(false);
 
   useEffect(() => {
     if (!teacherName) {
@@ -114,8 +119,25 @@ const TeacherDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('teacher_name');
+    localStorage.removeItem('teacher_id');
     localStorage.removeItem('staff_role');
     navigate('/login');
+  };
+
+  const updateProfile = async (e) => {
+    e.preventDefault();
+    if (!teacherId) return alert('Teacher ID not found!');
+    setUpdatingProfile(true);
+    try {
+      const data = {};
+      if (profileImg) data.image = profileImg;
+      if (newPassword) data.password = newPassword;
+      await axios.put(`/api/teachers/${teacherId}`, data);
+      alert('প্রোফাইল আপডেট হয়েছে!');
+      setNewPassword('');
+      setProfileImg('');
+    } catch (err) { alert('আপডেট করতে সমস্যা হয়েছে!'); }
+    setUpdatingProfile(false);
   };
 
   return (
@@ -138,6 +160,9 @@ const TeacherDashboard = () => {
           </button>
           <button onClick={() => setActiveTab('exams')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'exams' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
             <FaQuestionCircle className={activeTab === 'exams' ? 'text-primary' : 'text-gray-400'} /> প্রশ্ন তৈরি (MCQ)
+          </button>
+          <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+            <FaUserCog className={activeTab === 'profile' ? 'text-primary' : 'text-gray-400'} /> আমার প্রোফাইল
           </button>
         </nav>
         <div className="p-4 border-t border-gray-100">
@@ -288,6 +313,27 @@ const TeacherDashboard = () => {
                 </form>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 max-w-xl mx-auto mt-8">
+            <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2"><FaUserCog className="text-primary"/> প্রোফাইল সেটিংস</h3>
+            <form onSubmit={updateProfile} className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">নতুন পাসওয়ার্ড (পরিবর্তন করতে না চাইলে ফাঁকা রাখুন)</label>
+                <input type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50" placeholder="নতুন পাসওয়ার্ড" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">প্রোফাইল ছবির URL (পরিবর্তন করতে না চাইলে ফাঁকা রাখুন)</label>
+                <input type="text" value={profileImg} onChange={e => setProfileImg(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50" placeholder="/example.png অথবা https://..." />
+              </div>
+              <div className="pt-4">
+                <button type="submit" disabled={updatingProfile} className="w-full bg-[#0f172a] text-white py-3.5 rounded-xl font-bold hover:bg-gray-800 shadow-lg shadow-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg disabled:opacity-50">
+                  <FaSave /> {updatingProfile ? 'আপডেট হচ্ছে...' : 'প্রোফাইল আপডেট করুন'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </div>
