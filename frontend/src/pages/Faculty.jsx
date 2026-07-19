@@ -15,7 +15,7 @@ const Faculty = () => {
     {
       id: 10,
       name: 'নায়মুন নাফি সুপ্ত',
-      university: 'Universty Of Information Technology and Science',
+      university: 'University of Information Technology and Science (UITS)',
       subject: 'Department of C.S.E',
       year: 'প্রথম বর্ষ',
       teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
