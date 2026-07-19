@@ -35,7 +35,7 @@ const Faculty = () => {
       subject: 'B.B.A (Department of Accounting)',
       year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
       teaching: 'ইংরেজি, বাণিজ্য বিভাগের সকল বিষয় এবং বাংলা',
-      image: 'https://ui-avatars.com/api/?name=Rehana+Akter+Trisha&background=10B981&color=fff&size=200'
+      image: '/trisha_mam.png'
     },
     {
       id: 3,
