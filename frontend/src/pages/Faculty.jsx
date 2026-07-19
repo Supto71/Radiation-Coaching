@@ -35,7 +35,7 @@ const Faculty = () => {
       subject: 'B.B.A (Department of Accounting)',
       year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
       teaching: 'ইংরেজি, বাণিজ্য বিভাগের সকল বিষয় এবং বাংলা',
-      image: '/Trisha_mam.png'
+      image: '/Trisha_mam.png?v=2'
     },
     {
       id: 3,
