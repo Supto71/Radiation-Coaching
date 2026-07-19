@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 
 const Faculty = () => {
@@ -13,7 +15,7 @@ const Faculty = () => {
     {
       id: 10,
       name: 'নায়মুন নাফি সুপ্ত',
-      university: 'University of Information Science and Technology (UITS)',
+      university: 'University of Information Technology and Science (UITS)',
       subject: 'Department of C.S.E',
       year: 'প্রথম বর্ষ',
       teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
@@ -100,8 +102,8 @@ const Faculty = () => {
       teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইংরেজি, বিজ্ঞান',
       image: 'https://ui-avatars.com/api/?name=Lamia&background=6366F1&color=fff&size=200'
     },
-    
-    
+
+
     {
       id: 12,
       name: 'ইমাম হাসান বাঁধন',
@@ -275,7 +277,7 @@ const Faculty = () => {
               </div>
               <div className="absolute inset-0 bg-gradient-to-tr from-primary to-accent rounded-full blur-2xl opacity-20 group-hover:opacity-50 transition-opacity duration-300 transform scale-110"></div>
             </div>
-            
+
             <h3 className="text-3xl font-bold text-gray-900 mb-2 relative z-10">{founder.name}</h3>
             <p className="text-primary font-bold text-xl mb-1 relative z-10">{founder.role}</p>
             <p className="text-gray-600 font-medium text-lg relative z-10">{founder.institute}</p>
@@ -288,17 +290,17 @@ const Faculty = () => {
             <div key={teacher.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 transform hover:-translate-y-1 group">
               <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-100 shadow-md flex-shrink-0 group-hover:border-primary/50 transition-colors">
-                  <img 
-                    src={teacher.image} 
-                    alt={teacher.name} 
-                    className={`w-full h-full object-cover ${teacher.id === 10 ? 'scale-[1.4] object-[center_10%] origin-top' : ''}`} 
+                  <img
+                    src={teacher.image}
+                    alt={teacher.name}
+                    className={`w-full h-full object-cover ${teacher.id === 10 ? 'scale-[1.4] object-[center_10%] origin-top' : ''}`}
                   />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1 group-hover:text-primary transition-colors">{teacher.name}</h3>
                 </div>
               </div>
-              
+
               <div className="space-y-4 text-sm">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 text-primary">
