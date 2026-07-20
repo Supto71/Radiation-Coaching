@@ -147,10 +147,6 @@ const Home = () => {
             </div>
           </div>
         </div>
-        <div className="border-t border-[#1e293b] py-6 text-center">
-          <h2 className="text-white font-bold text-lg mb-1">রেডিয়েশন কোচিং জোন</h2>
-          <p className="text-gray-500 text-xs">© {new Date().getFullYear()} All Rights Reserved.</p>
-        </div>
       </footer>
     </div>
   );
