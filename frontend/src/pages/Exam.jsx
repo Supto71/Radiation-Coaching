@@ -75,6 +75,56 @@ const Exam = () => {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [started, submitted]);
 
+  useEffect(() => {
+    // 1 baarer besi = >= 2 times
+    if (cheatWarnings >= 2 && started && !submitted && !submitting) {
+      alert("আপনি একাধিকবার ট্যাব পরিবর্তন করেছেন। আপনার পরীক্ষাটি স্বয়ংক্রিয়ভাবে বাতিল ও সাবমিট করা হলো।");
+      handleSubmit();
+    }
+  }, [cheatWarnings, started, submitted, submitting]);
+
+  useEffect(() => {
+    if (!started || submitted) return;
+    
+    const handleContextMenu = (e) => e.preventDefault();
+    const handleCopyPaste = (e) => {
+      e.preventDefault();
+      alert("সতর্কতা: কপি বা পেস্ট করা সম্পূর্ণ নিষেধ!");
+    };
+    const handleSelectStart = (e) => e.preventDefault();
+    
+    const handleKeyDown = (e) => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i')) ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j')) ||
+        (e.ctrlKey && (e.key === 'U' || e.key === 'u')) ||
+        (e.ctrlKey && (e.key === 'C' || e.key === 'c')) ||
+        (e.ctrlKey && (e.key === 'V' || e.key === 'v')) ||
+        (e.ctrlKey && (e.key === 'X' || e.key === 'x'))
+      ) {
+        e.preventDefault();
+        alert("সতর্কতা: কীবোর্ড শর্টকাট ব্যবহার করা সম্পূর্ণ নিষেধ!");
+      }
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("copy", handleCopyPaste);
+    document.addEventListener("paste", handleCopyPaste);
+    document.addEventListener("cut", handleCopyPaste);
+    document.addEventListener("selectstart", handleSelectStart);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("copy", handleCopyPaste);
+      document.removeEventListener("paste", handleCopyPaste);
+      document.removeEventListener("cut", handleCopyPaste);
+      document.removeEventListener("selectstart", handleSelectStart);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [started, submitted]);
+
   const handleOptionSelect = (questionId, optionIndex) => {
     setAnswers(prev => ({
       ...prev,
@@ -152,7 +202,12 @@ const Exam = () => {
               <li className="flex items-center"><span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span> প্রতিটি ভুল উত্তরের জন্য ০.২৫ নম্বর কাটা যাবে</li>
             </ul>
             <button 
-              onClick={() => setStarted(true)}
+              onClick={() => {
+                setStarted(true);
+                if (document.documentElement.requestFullscreen) {
+                  document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen request failed:", err));
+                }
+              }}
               className="w-full bg-primary text-white py-3 rounded-lg font-bold text-lg hover:bg-secondary transition-colors shadow-lg shadow-primary/30"
             >
               পরীক্ষা শুরু করুন

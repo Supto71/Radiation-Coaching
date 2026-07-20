@@ -19,7 +19,7 @@ const Faculty = () => {
       subject: 'Department of C.S.E',
       year: 'প্রথম বর্ষ',
       teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
-      image: '/supto.png'
+      image: '/supto.png?v=2'
     },
     {
       id: 11,
