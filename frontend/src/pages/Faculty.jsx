@@ -13,6 +13,15 @@ const Faculty = () => {
 
   const facultyMembers = [
     {
+      id: 13,
+      name: 'মো: ফাহিম আহমেদ',
+      university: '-',
+      subject: 'বিবিএ, এমবিএ (ফার্স্টক্লাস) হিসাববিজ্ঞান',
+      year: '-',
+      teaching: 'নির্ধারিত হয়নি',
+      image: 'https://ui-avatars.com/api/?name=Md+Fahim+Ahmed&background=10B981&color=fff&size=200'
+    },
+    {
       id: 10,
       name: 'নায়মুন নাফি সুপ্ত',
       university: 'University of Information Technology and Science (UITS)',
@@ -128,15 +137,6 @@ const Faculty = () => {
       year: '-',
       teaching: 'নির্ধারিত হয়নি',
       image: 'https://ui-avatars.com/api/?name=Imam+Hasan+Badhon&background=3B82F6&color=fff&size=200'
-    },
-    {
-      id: 13,
-      name: 'মো: ফাহিম আহমেদ',
-      university: '-',
-      subject: 'বিবিএ, এমবিএ (ফার্স্টক্লাস) হিসাববিজ্ঞান',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Md+Fahim+Ahmed&background=10B981&color=fff&size=200'
     },
     {
       id: 14,
