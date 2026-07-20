@@ -1684,7 +1684,7 @@ const AdminDashboard = () => {
     const [teachers, setTeachers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ name: '', teacher_uid: '', password: '' });
+    const [form, setForm] = useState({ name: '', teacher_uid: '', password: '', image: '' });
     const [msg, setMsg] = useState({ text: '', type: 'success' });
     const [saving, setSaving] = useState(false);
 
@@ -1698,6 +1698,31 @@ const AdminDashboard = () => {
     }, []);
 
     useEffect(() => { fetchTeachers(); }, [fetchTeachers]);
+
+    const handleImageChange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          const MAX_SIZE = 300;
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width; width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height; height = MAX_SIZE;
+          }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          setForm(prev => ({ ...prev, image: canvas.toDataURL('image/jpeg', 0.8) }));
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
 
     const handleSave = async () => {
       if (!form.name || !form.teacher_uid || !form.password) {
@@ -1714,7 +1739,7 @@ const AdminDashboard = () => {
         if (res.ok) {
           setMsg({ text: 'শিক্ষক সফলভাবে যোগ করা হয়েছে!', type: 'success' });
           setShowForm(false);
-          setForm({ name: '', teacher_uid: '', password: '' });
+          setForm({ name: '', teacher_uid: '', password: '', image: '' });
           fetchTeachers();
         } else {
           const errData = await res.json().catch(()=>({}));
@@ -1759,6 +1784,12 @@ const AdminDashboard = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">লগিন পাসওয়ার্ড *</label>
                 <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="পাসওয়ার্ড দিন" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">প্রোফাইল ছবি (ঐচ্ছিক)</label>
+                <input type="file" accept="image/*" onChange={handleImageChange}
+                  className="w-full border border-gray-300 rounded-lg p-1.5 focus:ring-2 focus:ring-primary outline-none bg-white text-sm" />
+                {form.image && <img src={form.image} alt="Preview" className="mt-2 w-16 h-16 object-cover rounded-full border border-gray-200" />}
               </div>
             </div>
             <div className="flex gap-3 mt-5">
