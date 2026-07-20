@@ -125,6 +125,17 @@ const Exam = () => {
     };
   }, [started, submitted]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && started && !submitted) {
+        setCheatWarnings(prev => prev + 1);
+        alert("সতর্কতা: আপনি ফুলস্ক্রিন থেকে বের হয়েছেন! এটি চিটিং হিসেবে গণ্য হতে পারে।");
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [started, submitted]);
+
   const handleOptionSelect = (questionId, optionIndex) => {
     setAnswers(prev => ({
       ...prev,
