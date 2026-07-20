@@ -19,7 +19,7 @@ const Faculty = () => {
       subject: 'বিবিএ, এমবিএ (ফার্স্টক্লাস) হিসাববিজ্ঞান',
       year: '-',
       teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Md+Fahim+Ahmed&background=10B981&color=fff&size=200'
+      image: '/fahim.png'
     },
     {
       id: 10,
@@ -46,7 +46,7 @@ const Faculty = () => {
       subject: 'B.B.A (Department of Accounting)',
       year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
       teaching: 'ইংরেজি, বাণিজ্য বিভাগের সকল বিষয় এবং বাংলা',
-      image: '/Trisha_mam.png?v=3'
+      image: '/Tr.png'
     },
     {
       id: 4,
@@ -244,7 +244,7 @@ const Faculty = () => {
       subject: 'বিএ (অনার্স) ইংরেজি',
       year: '-',
       teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Shamim+Mahmud+Antu&background=8B5CF6&color=fff&size=200'
+      image: '/Shamim.png'
     },
     {
       id: 27,
