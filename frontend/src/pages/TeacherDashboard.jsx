@@ -8,6 +8,7 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const teacherName = localStorage.getItem('teacher_name');
   const teacherId = localStorage.getItem('teacher_id');
+  const teacherImage = localStorage.getItem('teacher_image');
   // States
   const [routines, setRoutines] = useState([]);
   const [exams, setExams] = useState([]);
@@ -32,7 +33,7 @@ const TeacherDashboard = () => {
   const [qCorrect, setQCorrect] = useState(0);
 
   // Profile
-  const [profileImg, setProfileImg] = useState('');
+  const [profileImg, setProfileImg] = useState(teacherImage || '');
   const [newPassword, setNewPassword] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
 
@@ -130,12 +131,14 @@ const TeacherDashboard = () => {
     setUpdatingProfile(true);
     try {
       const data = {};
-      if (profileImg) data.image = profileImg;
+      if (profileImg) {
+          data.image = profileImg;
+          localStorage.setItem('teacher_image', profileImg);
+      }
       if (newPassword) data.password = newPassword;
       await axios.put(`/api/teachers/${teacherId}`, data);
       alert('প্রোফাইল আপডেট হয়েছে!');
       setNewPassword('');
-      setProfileImg('');
     } catch (err) { alert('আপডেট করতে সমস্যা হয়েছে!'); }
     setUpdatingProfile(false);
   };
@@ -144,7 +147,14 @@ const TeacherDashboard = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Sidebar */}
       <div className="w-full md:w-64 bg-white shadow-lg flex flex-col z-10">
-        <div className="p-6 text-center border-b border-gray-100">
+        <div className="p-6 text-center border-b border-gray-100 flex flex-col items-center">
+          {teacherImage ? (
+              <img src={teacherImage} alt="Profile" className="w-20 h-20 rounded-full object-cover border-4 border-gray-100 shadow-sm mb-3" />
+          ) : (
+              <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border-4 border-blue-100 shadow-sm mb-3">
+                  <FaUserCheck className="text-3xl text-primary opacity-60" />
+              </div>
+          )}
           <h2 className="text-2xl font-bold text-gray-800">Teacher Panel</h2>
           <p className="text-sm text-gray-500 mt-2 font-medium">স্বাগতম, <span className="text-primary">{teacherName}</span></p>
         </div>

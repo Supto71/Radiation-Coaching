@@ -46,6 +46,7 @@ const Login = () => {
             localStorage.setItem('staff_role', 'teacher');
             localStorage.setItem('teacher_name', res.data.name);
             localStorage.setItem('teacher_id', res.data.id);
+            if (res.data.image) localStorage.setItem('teacher_image', res.data.image);
             navigate('/teacher/dashboard');
           }
         } catch (err) {
