@@ -40,22 +40,13 @@ const Faculty = () => {
       image: '/Trisha_mam.png?v=3'
     },
     {
-      id: 3,
-      name: 'নাবিলা বাশার ঐশী',
-      university: 'নারায়ণগঞ্জ কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
-      subject: 'B.Sc (Department of Economics)',
-      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
-      teaching: 'ইংরেজি, মানবিক বিভাগের সকল বিষয় এবং বিজ্ঞান',
-      image: 'https://ui-avatars.com/api/?name=Nabila+Basher+Oyshe&background=8B5CF6&color=fff&size=200'
-    },
-    {
       id: 4,
       name: 'উম্মে হানি লুনা',
       university: 'নারায়ণগঞ্জ সরকারি তোলারাম কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
       subject: 'B.A',
       year: 'দ্বিতীয় বর্ষ',
       teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইসলাম, ফিন্যান্স, ব্যবসায় উদ্যোগ',
-      image: 'https://ui-avatars.com/api/?name=Ummey+Hany+Luna&background=F59E0B&color=fff&size=200'
+      image: '/Luna.png'
     },
     {
       id: 5,
@@ -64,7 +55,7 @@ const Faculty = () => {
       subject: 'B.Sc (Department of Geography and Environment)',
       year: '৩য় বর্ষ',
       teaching: 'বাংলাদেশ ও বিশ্বপরিচয়',
-      image: 'https://ui-avatars.com/api/?name=Fahmida+akter+Panna&background=EC4899&color=fff&size=200'
+      image: '/panna.png'
     },
     {
       id: 6,
@@ -73,7 +64,7 @@ const Faculty = () => {
       subject: 'Department of Management',
       year: 'দ্বিতীয় বর্ষ',
       teaching: 'হিসাববিজ্ঞান, অর্থনীতি',
-      image: 'https://ui-avatars.com/api/?name=Mim+Islam&background=14B8A6&color=fff&size=200'
+      image: '/Mim.png'
     },
     {
       id: 7,
@@ -82,7 +73,43 @@ const Faculty = () => {
       subject: 'Department of Management',
       year: '৩য় বর্ষ',
       teaching: 'ফিন্যান্স এবং ইংরেজি',
-      image: 'https://ui-avatars.com/api/?name=Airin+Chowdhury+Smrity&background=F43F5E&color=fff&size=200'
+      image: '/Irinn.png'
+    },
+    {
+      id: 9,
+      name: 'লামিয়া',
+      university: 'Central Women\'s College',
+      subject: 'Department of English',
+      year: '৩য় বর্ষ',
+      teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইংরেজি, বিজ্ঞান',
+      image: '/lamia.png'
+    },
+    {
+      id: 16,
+      name: 'হাফেজ মাওলানা আমির মোহাম্মদ ওসমান গনি',
+      university: '-',
+      subject: 'দাওরায় হাদিস (মাস্টার্স), বিএ (অনার্স) আলকুরআন এন্ড ইসলামিক স্টাডিজ',
+      year: '-',
+      teaching: 'নির্ধারিত হয়নি',
+      image: '/Osman_Goni.png'
+    },
+    {
+      id: 29,
+      name: 'মেহেরুন নেছা নিলিমা',
+      university: 'সিদ্ধেশ্বরী কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
+      subject: 'B.B.A (Department of Marketing)',
+      year: '৩য় বর্ষ',
+      teaching: 'ব্যবসায়ী শাখার সকল বিষয় ও অন্যান্য সাধারণ বিষয়',
+      image: '/Nilima.png'
+    },
+    {
+      id: 3,
+      name: 'নাবিলা বাশার ঐশী',
+      university: 'নারায়ণগঞ্জ কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
+      subject: 'B.Sc (Department of Economics)',
+      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
+      teaching: 'ইংরেজি, মানবিক বিভাগের সকল বিষয় এবং বিজ্ঞান',
+      image: 'https://ui-avatars.com/api/?name=Nabila+Basher+Oyshe&background=8B5CF6&color=fff&size=200'
     },
     {
       id: 8,
@@ -93,17 +120,6 @@ const Faculty = () => {
       teaching: 'বাংলা, পৌরনীতি, সমাজকর্ম, গার্হস্থ্য, ইতিহাস, ভূগোল',
       image: 'https://ui-avatars.com/api/?name=Ayesha+Akter+Priyanka&background=3B82F6&color=fff&size=200'
     },
-    {
-      id: 9,
-      name: 'লামিয়া',
-      university: 'Central Women\'s College',
-      subject: 'Department of English',
-      year: '৩য় বর্ষ',
-      teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইংরেজি, বিজ্ঞান',
-      image: 'https://ui-avatars.com/api/?name=Lamia&background=6366F1&color=fff&size=200'
-    },
-
-
     {
       id: 12,
       name: 'ইমাম হাসান বাঁধন',
@@ -139,15 +155,6 @@ const Faculty = () => {
       year: '-',
       teaching: 'নির্ধারিত হয়নি',
       image: 'https://ui-avatars.com/api/?name=Riazuddin+Rakib&background=6366F1&color=fff&size=200'
-    },
-    {
-      id: 16,
-      name: 'হাফেজ মাওলানা আমির মোহাম্মদ ওসমান গনি',
-      university: '-',
-      subject: 'দাওরায় হাদিস (মাস্টার্স), বিএ (অনার্স) আলকুরআন এন্ড ইসলামিক স্টাডিজ',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Osman+Gani&background=8B5CF6&color=fff&size=200'
     },
     {
       id: 17,
