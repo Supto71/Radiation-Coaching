@@ -10,25 +10,31 @@ router = APIRouter()
 
 @router.post("/", response_model=teacher_schema.TeacherResponse)
 def create_teacher(teacher: teacher_schema.TeacherCreate, db: Session = Depends(get_db)):
-    if not teacher.teacher_uid.startswith("RC-"):
-        raise HTTPException(status_code=400, detail="Teacher UID must start with RC-")
+    try:
+        if not teacher.teacher_uid.startswith("RC-"):
+            raise HTTPException(status_code=400, detail="Teacher UID must start with RC-")
+            
+        db_teacher = db.query(teacher_model.Teacher).filter(teacher_model.Teacher.teacher_uid == teacher.teacher_uid).first()
+        if db_teacher:
+            raise HTTPException(status_code=400, detail="Teacher UID already exists")
         
-    db_teacher = db.query(teacher_model.Teacher).filter(teacher_model.Teacher.teacher_uid == teacher.teacher_uid).first()
-    if db_teacher:
-        raise HTTPException(status_code=400, detail="Teacher UID already exists")
-    
-    hashed_password = security.get_password_hash(teacher.password)
-    new_teacher = teacher_model.Teacher(
-        name=teacher.name,
-        teacher_uid=teacher.teacher_uid,
-        hashed_password=hashed_password,
-        image=teacher.image,
-        is_active=teacher.is_active
-    )
-    db.add(new_teacher)
-    db.commit()
-    db.refresh(new_teacher)
-    return new_teacher
+        hashed_password = security.get_password_hash(teacher.password)
+        new_teacher = teacher_model.Teacher(
+            name=teacher.name,
+            teacher_uid=teacher.teacher_uid,
+            hashed_password=hashed_password,
+            image=teacher.image,
+            is_active=teacher.is_active
+        )
+        db.add(new_teacher)
+        db.commit()
+        db.refresh(new_teacher)
+        return new_teacher
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
 
 @router.get("/", response_model=List[teacher_schema.TeacherResponse])
 def get_teachers(db: Session = Depends(get_db)):
