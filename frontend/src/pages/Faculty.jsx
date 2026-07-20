@@ -19,7 +19,7 @@ const Faculty = () => {
       subject: 'Department of C.S.E',
       year: 'প্রথম বর্ষ',
       teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
-      image: '  '
+      image: '/supto.png'
     },
     {
       id: 11,
@@ -70,7 +70,7 @@ const Faculty = () => {
       id: 7,
       name: 'আইরিন চৌধুরী স্মৃতি',
       university: 'ইডেন মহিলা কলেজ',
-      subject: 'Department of Management',
+      subject: 'BBA (Hons) Department of Management',
       year: '৩য় বর্ষ',
       teaching: 'ফিন্যান্স এবং ইংরেজি',
       image: '/Irinn.png'
