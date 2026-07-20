@@ -27,7 +27,7 @@ const Courses = () => {
         "স্পেশাল প্রবলেম সলভিং"
       ],
       enrollmentFee: "১০০০ ৳",
-      monthlyFee: "৩০০০ ৳",
+      monthlyFee: "২৫০০ ৳",
       duration: "নিয়মিত ব্যাচ"
     },
     {
@@ -42,7 +42,7 @@ const Courses = () => {
         "শর্টকাট টেকনিক"
       ],
       enrollmentFee: "১০০০ ৳",
-      monthlyFee: "৪০০০ ৳",
+      monthlyFee: "৩০০০ ৳",
       duration: "নিয়মিত ব্যাচ"
     }
   ];
@@ -50,7 +50,7 @@ const Courses = () => {
   return (
     <div className="py-20 min-h-screen" style={{ backgroundColor: 'var(--color-bg-light, #f4f7fb)' }}>
       <div className="container mx-auto px-4 sm:px-8 max-w-6xl">
-        
+
         {/* Header Section */}
         <div className="text-center mb-20">
           <h1 className="text-4xl md:text-5xl font-extrabold text-[#0f172a] mb-4">আমাদের <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00b4d8] to-[#0096b4]">কোর্সসমূহ</span></h1>
@@ -65,30 +65,30 @@ const Courses = () => {
           <div className="space-y-12 md:space-y-20">
             {courseList.map((course, index) => {
               const isLeft = index % 2 === 0;
-              
+
               return (
                 <div key={course.id} className={`relative flex flex-col md:flex-row items-center ${isLeft ? '' : 'md:flex-row-reverse'}`}>
-                  
+
                   {/* Timeline Dot */}
                   <div className="absolute left-8 md:left-1/2 w-6 h-6 rounded-full bg-[#00b4d8] border-4 border-white shadow-[0_0_15px_rgba(0,180,216,0.6)] transform -translate-x-1/2 top-8 md:top-1/2 md:-translate-y-1/2 z-10"></div>
-                  
+
                   {/* Empty space for alternating layout */}
                   <div className="hidden md:block md:w-1/2"></div>
 
                   {/* Course Card */}
                   <div className={`w-full md:w-1/2 pl-16 md:pl-0 ${isLeft ? 'md:pr-12 lg:pr-16' : 'md:pl-12 lg:pl-16'}`}>
                     <div className="bg-white rounded-[2rem] shadow-[0_15px_50px_rgba(0,0,0,0.05)] border border-gray-100 hover:shadow-[0_20px_50px_rgba(0,180,216,0.15)] transition-all duration-300 overflow-hidden group transform hover:-translate-y-1">
-                      
+
                       {/* Top Gradient Bar */}
                       <div className="h-2 w-full bg-gradient-to-r from-[#00b4d8] to-[#0096b4] transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
-                      
+
                       <div className="p-8 sm:p-10">
                         <h2 className="text-2xl font-bold text-[#0f172a] mb-2">{course.title}</h2>
                         <p className="inline-block bg-[#00b4d8]/10 text-[#00b4d8] font-bold px-4 py-1.5 rounded-full text-sm mb-4">
                           {course.subtitle}
                         </p>
                         <p className="text-gray-600 mb-8 leading-relaxed">{course.description}</p>
-                        
+
                         {/* Features List */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                           {course.features.map((feature, idx) => (
@@ -102,7 +102,7 @@ const Courses = () => {
                             </div>
                           ))}
                         </div>
-                        
+
                         {/* Pricing & Duration */}
                         <div className="bg-[#f4f7fb] rounded-2xl p-6 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                           <div className="w-full sm:w-auto">
