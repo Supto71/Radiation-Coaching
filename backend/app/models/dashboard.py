@@ -9,6 +9,7 @@ class Notice(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     content = Column(String)
+    image = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     author_id = Column(Integer, ForeignKey("users.id"))

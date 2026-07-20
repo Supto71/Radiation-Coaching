@@ -470,6 +470,9 @@ const StudentDashboard = () => {
                           </span>
                         </div>
                         <p className="text-gray-600 whitespace-pre-wrap mt-2 text-sm leading-relaxed">{notice.content}</p>
+                        {notice.image && (
+                          <img src={notice.image} alt="Notice Image" className="mt-4 max-h-64 rounded-lg border border-gray-200 object-contain" />
+                        )}
                       </div>
                     ))}
                   </div>

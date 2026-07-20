@@ -6,6 +6,7 @@ from datetime import datetime, date
 class NoticeBase(BaseModel):
     title: str
     content: str
+    image: Optional[str] = None
     custom_date: Optional[str] = None  # format: YYYY-MM-DD
 
 class NoticeCreate(NoticeBase):
@@ -14,6 +15,7 @@ class NoticeCreate(NoticeBase):
 class NoticeUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+    image: Optional[str] = None
     is_active: Optional[bool] = None
 
 class Notice(NoticeBase):

@@ -16,6 +16,11 @@ const TrashIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
+const EditIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>
+);
 
 // ─── Reusable Alert ───────────────────────────────────────────────────────────
 const Alert = ({ message, type = 'success' }) => {
@@ -1600,6 +1605,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('notices');
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeContent, setNoticeContent] = useState('');
+  const [noticeImage, setNoticeImage] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [noticeMessage, setNoticeMessage] = useState('');
   const [notices, setNotices] = useState([]);
@@ -1641,6 +1647,31 @@ const AdminDashboard = () => {
     fetchTeacherAttendance();
   }, [fetchNotices]);
 
+  const handleNoticeImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        const MAX_SIZE = 800; // slightly larger for notices
+        if (width > height && width > MAX_SIZE) {
+          height *= MAX_SIZE / width; width = MAX_SIZE;
+        } else if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height; height = MAX_SIZE;
+        }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        setNoticeImage(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handlePublishNotice = async () => {
     if (!noticeTitle || !noticeContent) { setNoticeMessage('শিরোনাম এবং বিস্তারিত পূরণ করুন!'); return; }
     setIsPublishing(true);
@@ -1649,12 +1680,13 @@ const AdminDashboard = () => {
       const method = editingNoticeId ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: noticeTitle, content: noticeContent, is_active: true })
+        body: JSON.stringify({ title: noticeTitle, content: noticeContent, image: noticeImage || null, is_active: true })
       });
       if (res.ok) { 
         setNoticeMessage(editingNoticeId ? 'নোটিশ সফলভাবে আপডেট হয়েছে!' : 'নোটিশ সফলভাবে পাবলিশ হয়েছে!'); 
         setNoticeTitle(''); 
         setNoticeContent(''); 
+        setNoticeImage('');
         setEditingNoticeId(null);
         fetchNotices();
         setTimeout(() => setNoticeMessage(''), 3000); 
@@ -1667,6 +1699,7 @@ const AdminDashboard = () => {
   const handleEditNotice = (notice) => {
     setNoticeTitle(notice.title);
     setNoticeContent(notice.content);
+    setNoticeImage(notice.image || '');
     setEditingNoticeId(notice.id);
   };
 
@@ -1684,6 +1717,7 @@ const AdminDashboard = () => {
     const [teachers, setTeachers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState({ name: '', teacher_uid: '', password: '', image: '' });
     const [msg, setMsg] = useState({ text: '', type: 'success' });
     const [saving, setSaving] = useState(false);
@@ -1724,21 +1758,30 @@ const AdminDashboard = () => {
       reader.readAsDataURL(file);
     };
 
+    const handleEdit = (t) => {
+      setForm({ name: t.name, teacher_uid: t.teacher_uid, password: '', image: t.image || '' });
+      setEditingId(t.id);
+      setShowForm(true);
+    };
+
     const handleSave = async () => {
-      if (!form.name || !form.teacher_uid || !form.password) {
+      if (!form.name || !form.teacher_uid || (!form.password && !editingId)) {
         setMsg({ text: 'সব ফিল্ড পূরণ করুন!', type: 'error' });
         return;
       }
       setSaving(true);
       try {
-        const res = await fetch('/api/teachers/', {
-          method: 'POST',
+        const url = editingId ? `/api/teachers/${editingId}` : '/api/teachers/';
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form)
         });
         if (res.ok) {
-          setMsg({ text: 'শিক্ষক সফলভাবে যোগ করা হয়েছে!', type: 'success' });
+          setMsg({ text: editingId ? 'শিক্ষকের তথ্য আপডেট হয়েছে!' : 'শিক্ষক সফলভাবে যোগ করা হয়েছে!', type: 'success' });
           setShowForm(false);
+          setEditingId(null);
           setForm({ name: '', teacher_uid: '', password: '', image: '' });
           fetchTeachers();
         } else {
@@ -1759,7 +1802,7 @@ const AdminDashboard = () => {
       <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-gray-900">শিক্ষক ম্যানেজমেন্ট</h2>
-          <button onClick={() => setShowForm(!showForm)} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary">
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: '', teacher_uid: '', password: '', image: '' }); }} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary">
             + নতুন শিক্ষক
           </button>
         </div>
@@ -1768,7 +1811,7 @@ const AdminDashboard = () => {
 
         {showForm && (
           <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
-            <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন শিক্ষকের তথ্য</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-800">{editingId ? 'শিক্ষকের তথ্য আপডেট করুন' : 'নতুন শিক্ষকের তথ্য'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">পুরো নাম *</label>
@@ -1781,7 +1824,7 @@ const AdminDashboard = () => {
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="যেমন: RC-Name" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">লগিন পাসওয়ার্ড *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{editingId ? 'নতুন পাসওয়ার্ড (ঐচ্ছিক)' : 'লগিন পাসওয়ার্ড *'}</label>
                 <input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="পাসওয়ার্ড দিন" />
               </div>
@@ -1794,9 +1837,9 @@ const AdminDashboard = () => {
             </div>
             <div className="flex gap-3 mt-5">
               <button onClick={handleSave} disabled={saving} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary">
-                {saving ? 'সেভ হচ্ছে...' : 'যোগ করুন'}
+                {saving ? 'সেভ হচ্ছে...' : (editingId ? 'আপডেট করুন' : 'যোগ করুন')}
               </button>
-              <button onClick={() => setShowForm(false)} className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold">
+              <button onClick={() => { setShowForm(false); setEditingId(null); setForm({ name: '', teacher_uid: '', password: '', image: '' }); }} className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold">
                 বাতিল
               </button>
             </div>
@@ -1824,7 +1867,10 @@ const AdminDashboard = () => {
                     <td className="p-4 font-bold text-primary">{t.teacher_uid}</td>
                     <td className="p-4 font-semibold text-gray-900">{t.name}</td>
                     <td className="p-4 text-sm text-gray-500 break-all">{t.image ? 'সেট করা আছে' : 'নেই'}</td>
-                    <td className="p-4">
+                    <td className="p-4 flex gap-2">
+                      <button onClick={() => handleEdit(t)} className="text-blue-500 hover:bg-blue-50 p-2 rounded-lg">
+                        <EditIcon />
+                      </button>
                       <button onClick={() => handleDelete(t.id)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg">
                         <TrashIcon />
                       </button>
@@ -1889,12 +1935,18 @@ const AdminDashboard = () => {
                         <textarea rows="4" value={noticeContent} onChange={e => setNoticeContent(e.target.value)}
                           className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none" placeholder="নোটিশের বিস্তারিত লিখুন..."></textarea>
                       </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">ছবি (ঐচ্ছিক)</label>
+                        <input type="file" accept="image/*" onChange={handleNoticeImageChange}
+                          className="w-full border border-gray-300 rounded-lg p-1.5 focus:ring-2 focus:ring-primary outline-none bg-white text-sm" />
+                        {noticeImage && <img src={noticeImage} alt="Preview" className="mt-3 max-h-48 rounded-lg border border-gray-200 object-contain" />}
+                      </div>
                       <button onClick={handlePublishNotice} disabled={isPublishing}
                         className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
                         {isPublishing ? 'সেভ হচ্ছে...' : (editingNoticeId ? 'আপডেট করুন' : 'পাবলিশ করুন')}
                       </button>
                       {editingNoticeId && (
-                        <button onClick={() => { setEditingNoticeId(null); setNoticeTitle(''); setNoticeContent(''); }}
+                        <button onClick={() => { setEditingNoticeId(null); setNoticeTitle(''); setNoticeContent(''); setNoticeImage(''); }}
                           className="ml-4 bg-gray-500 text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-600 transition-colors">
                           বাতিল
                         </button>
@@ -1921,6 +1973,9 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                               <p className="text-gray-600 whitespace-pre-wrap text-sm mb-3">{notice.content}</p>
+                              {notice.image && (
+                                <img src={notice.image} alt="Notice Image" className="mb-3 max-h-64 rounded-lg border border-gray-200 object-contain" />
+                              )}
                               <p className="text-xs text-gray-400">
                                 প্রকাশিত: {new Date(notice.created_at).toLocaleDateString('bn-BD')}
                               </p>
