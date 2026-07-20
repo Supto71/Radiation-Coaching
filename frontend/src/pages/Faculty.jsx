@@ -112,13 +112,13 @@ const Faculty = () => {
       image: '/Nilima.png'
     },
     {
-      id: 3,
-      name: 'নাবিলা বাশার ঐশী',
-      university: 'নারায়ণগঞ্জ কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
-      subject: 'B.Sc (Department of Economics)',
-      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
-      teaching: 'ইংরেজি, মানবিক বিভাগের সকল বিষয় এবং বিজ্ঞান',
-      image: 'https://ui-avatars.com/api/?name=Nabila+Basher+Oyshe&background=8B5CF6&color=fff&size=200'
+      id: 26,
+      name: 'শামীম মাহমুদ অন্তু',
+      university: '-',
+      subject: 'বিএ (অনার্স) ইংরেজি',
+      year: '-',
+      teaching: 'নির্ধারিত হয়নি',
+      image: '/Shamim.png'
     },
     {
       id: 8,
@@ -128,6 +128,15 @@ const Faculty = () => {
       year: '-',
       teaching: 'বাংলা, পৌরনীতি, সমাজকর্ম, গার্হস্থ্য, ইতিহাস, ভূগোল',
       image: 'https://ui-avatars.com/api/?name=Ayesha+Akter+Priyanka&background=3B82F6&color=fff&size=200'
+    },
+    {
+      id: 3,
+      name: 'নাবিলা বাশার ঐশী',
+      university: 'নারায়ণগঞ্জ কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
+      subject: 'B.Sc (Department of Economics)',
+      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
+      teaching: 'ইংরেজি, মানবিক বিভাগের সকল বিষয় এবং বিজ্ঞান',
+      image: 'https://ui-avatars.com/api/?name=Nabila+Basher+Oyshe&background=8B5CF6&color=fff&size=200'
     },
     {
       id: 12,
@@ -236,15 +245,6 @@ const Faculty = () => {
       year: '-',
       teaching: 'নির্ধারিত হয়নি',
       image: 'https://ui-avatars.com/api/?name=Md+Riad&background=F59E0B&color=fff&size=200'
-    },
-    {
-      id: 26,
-      name: 'শামীম মাহমুদ অন্তু',
-      university: '-',
-      subject: 'বিএ (অনার্স) ইংরেজি',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: '/Shamim.png'
     },
     {
       id: 27,
