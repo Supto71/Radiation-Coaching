@@ -14,13 +14,11 @@ const Navbar = () => {
   return (
     <nav className="bg-[#0f172a] sticky top-0 z-50 shadow-md border-b border-white/10">
       <div className="container mx-auto px-4 py-3.5 flex justify-between items-center relative">
-        
-        {/* MOBILE VIEW ELEMENTS (hidden on lg) */}
-        
-        {/* Left Side: Three Dot Menu (Mobile only) */}
-        <div className="flex items-center lg:hidden">
+        {/* Left Side: Menu + Logo */}
+        <div className="flex items-center gap-1 sm:gap-3">
+          {/* Three Dot Menu (Mobile only) */}
           <button 
-            className="text-white hover:text-[#00b4d8] transition-colors p-2 -ml-2"
+            className="lg:hidden text-white hover:text-[#00b4d8] transition-colors p-1 sm:p-2 -ml-1 sm:-ml-2"
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? (
@@ -33,15 +31,15 @@ const Navbar = () => {
               </svg>
             )}
           </button>
-        </div>
 
-        {/* Center/Left: Logo (Centered on Mobile, Left on PC) */}
-        <Link to="/" className="flex items-center gap-2 lg:gap-3 absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
-          <img src="/logo.png" alt="Radiation Coaching" className="h-8 sm:h-10 w-auto object-contain bg-white rounded-full p-0.5" />
-          <span className="text-white font-extrabold text-[15px] sm:text-xl tracking-wide hidden sm:block">
-            রেডিয়েশন কোচিং
-          </span>
-        </Link>
+          {/* Logo (Visible on all screens next to menu) */}
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="Radiation Coaching" className="h-8 sm:h-10 w-auto object-contain bg-white rounded-full p-0.5" />
+            <span className="text-white font-extrabold text-[14px] sm:text-xl tracking-wide">
+              রেডিয়েশন কোচিং
+            </span>
+          </Link>
+        </div>
 
         {/* Right Side: Red Login Button (Mobile only) */}
         <div className="flex items-center lg:hidden">
