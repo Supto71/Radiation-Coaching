@@ -643,10 +643,9 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
   }, []);
 
   const selectedStudent = students.find(s => s.id.toString() === value?.toString());
-  
-  const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(search.toLowerCase()) || 
-    s.student_uid.toLowerCase().includes(search.toLowerCase())
+  const filteredStudents = students.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    (s.student_uid || '').toLowerCase().includes(search.toLowerCase())
   );
 
   // Calculate due for selected student
@@ -657,26 +656,27 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
       .reduce((sum, f) => sum + f.amount, 0);
   }
 
+  // Calculate due for any student in dropdown
+  const getDue = (studentId) => {
+    if (!fees) return 0;
+    return fees.filter(f => f.student_id === studentId && !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <label className="block text-sm font-semibold text-gray-700 mb-1">স্টুডেন্ট খুঁজুন (নাম বা আইডি) *</label>
-      
+
       {!selectedStudent ? (
         <div className="relative">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="নাম বা আইডি টাইপ করুন..."
             className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
             value={search}
-            onChange={e => {
-              setSearch(e.target.value);
-              setIsOpen(true);
-            }}
+            onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
             onClick={() => setIsOpen(true)}
           />
-          <div className="absolute right-3 top-3 text-gray-400">
-            <SearchIcon />
-          </div>
+          <div className="absolute right-3 top-3 text-gray-400"><SearchIcon /></div>
         </div>
       ) : (
         <div className="w-full border border-primary bg-blue-50 rounded-lg p-3 flex justify-between items-start">
@@ -684,10 +684,10 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
             <div className="font-bold text-gray-800">{selectedStudent.name} <span className="text-gray-500 font-normal">({selectedStudent.student_uid})</span></div>
             <div className="text-sm text-gray-600 mt-0.5">{selectedStudent.class_level} — {selectedStudent.branch}</div>
             <div className="mt-2 text-sm">
-              পূর্বের বকেয়া: <span className={totalDue > 0 ? "font-bold text-red-600" : "font-bold text-green-600"}>৳ {totalDue}</span>
+              পূর্বের বকেয়া: <span className={totalDue > 0 ? 'font-bold text-red-600' : 'font-bold text-green-600'}>৳{totalDue}</span>
             </div>
           </div>
-          <button 
+          <button
             type="button"
             onClick={() => { onChange(''); setSearch(''); }}
             className="text-gray-400 hover:text-red-500 bg-white rounded-full p-1 shadow-sm border border-gray-200"
@@ -697,23 +697,31 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
           </button>
         </div>
       )}
-      
+
       {isOpen && !selectedStudent && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 flex flex-col">
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 flex flex-col">
           <div className="overflow-y-auto">
             {filteredStudents.length > 0 ? (
-              filteredStudents.map(s => (
-                <div 
-                  key={s.id} 
-                  className="p-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 cursor-pointer"
-                  onClick={() => { onChange(s.id); setIsOpen(false); setSearch(''); }}
-                >
-                  <div className="font-semibold text-gray-800">{s.name} <span className="text-gray-500 font-normal">({s.student_uid})</span></div>
-                  <div className="text-xs text-gray-500 mt-1">{s.branch}</div>
-                </div>
-              ))
+              filteredStudents.map(s => {
+                const due = getDue(s.id);
+                return (
+                  <div
+                    key={s.id}
+                    className="p-3 hover:bg-blue-50 border-b border-gray-100 last:border-0 cursor-pointer flex justify-between items-center"
+                    onClick={() => { onChange(s.id); setIsOpen(false); setSearch(''); }}
+                  >
+                    <div>
+                      <div className="font-semibold text-gray-800">{s.name} <span className="text-gray-400 font-normal text-sm">({s.student_uid})</span></div>
+                      <div className="text-xs text-gray-500 mt-0.5">{s.class_level} · {s.branch}</div>
+                    </div>
+                    {due > 0 && (
+                      <span className="text-xs font-bold bg-red-100 text-red-600 px-2 py-1 rounded-full ml-2 flex-shrink-0">বকেয়া ৳{due}</span>
+                    )}
+                  </div>
+                );
+              })
             ) : (
-              <div className="p-4 text-sm text-gray-500 text-center">কোনো স্টুডেন্ট পাওয়া যায়নি</div>
+              <div className="p-4 text-sm text-gray-500 text-center">কোনো স্টুডেন্ট পাওয়া যায়নি</div>
             )}
           </div>
         </div>
@@ -724,18 +732,24 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
 
 // ─── Fee Tracker Tab ──────────────────────────────────────────────────────────
 
+
 const FeeTrackerTab = () => {
   const [fees, setFees] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterPaid, setFilterPaid] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
-  const [feeViewMode, setFeeViewMode] = useState('all'); // 'all' or 'dues'
+  const [filterMonth, setFilterMonth] = useState('');
+  const [feeViewMode, setFeeViewMode] = useState('all'); // 'all', 'dues', 'history'
   const [showForm, setShowForm] = useState(false);
   const [editingFeeId, setEditingFeeId] = useState(null);
   const [editAmount, setEditAmount] = useState('');
   const [msg, setMsg] = useState({ text: '', type: 'success' });
   const [saving, setSaving] = useState(false);
+  // History view state
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyStudent, setHistoryStudent] = useState(null);
+  const [allFees, setAllFees] = useState([]); // unfiltered, for history
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
@@ -746,18 +760,26 @@ const FeeTrackerTab = () => {
       let url = '/api/dashboard/fees?';
       if (filterPaid !== '') url += `is_paid=${filterPaid}&`;
       if (filterBranch) url += `branch=${encodeURIComponent(filterBranch)}&`;
+      if (filterMonth) url += `month=${encodeURIComponent(filterMonth)}&`;
       const res = await fetch(url);
       if (res.ok) setFees(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [filterPaid, filterBranch]);
+  }, [filterPaid, filterBranch, filterMonth]);
+
+  const fetchAllFees = useCallback(async () => {
+    try {
+      const res = await fetch('/api/dashboard/fees');
+      if (res.ok) setAllFees(await res.json());
+    } catch (e) { console.error(e); }
+  }, []);
 
   const fetchStudents = async () => {
     const res = await fetch('/api/students/');
     if (res.ok) setStudents(await res.json());
   };
 
-  useEffect(() => { fetchFees(); fetchStudents(); }, [fetchFees]);
+  useEffect(() => { fetchFees(); fetchAllFees(); fetchStudents(); }, [fetchFees, fetchAllFees]);
 
   const handleAddFee = async () => {
     if (!form.student_id || !form.amount || !form.month) {
@@ -773,7 +795,7 @@ const FeeTrackerTab = () => {
       if (res.ok) {
         setMsg({ text: 'ফি রেকর্ড সফলভাবে যোগ হয়েছে!', type: 'success' });
         setShowForm(false);
-        fetchFees();
+        fetchFees(); fetchAllFees();
       } else {
         const errorData = await res.json().catch(() => ({}));
         setMsg({ text: `সমস্যা হয়েছে: ${errorData.detail || res.statusText}`, type: 'error' });
@@ -784,7 +806,7 @@ const FeeTrackerTab = () => {
 
   const handleMarkPaid = async (feeId) => {
     await fetch(`/api/dashboard/fees/${feeId}/pay`, { method: 'PATCH' });
-    fetchFees();
+    fetchFees(); fetchAllFees();
   };
 
   const handleEditFeeAmount = async (feeId) => {
@@ -797,7 +819,7 @@ const FeeTrackerTab = () => {
       });
       if (res.ok) {
         setEditingFeeId(null);
-        fetchFees();
+        fetchFees(); fetchAllFees();
         setMsg({ text: 'পরিমাণ আপডেট হয়েছে!', type: 'success' });
       } else {
         setMsg({ text: 'আপডেট করতে সমস্যা হয়েছে।', type: 'error' });
@@ -814,7 +836,7 @@ const FeeTrackerTab = () => {
       const res = await fetch(`/api/dashboard/fees/${feeId}`, { method: 'DELETE' });
       if (res.ok) {
         setMsg({ text: 'ফি রেকর্ডটি সফলভাবে ডিলিট করা হয়েছে!', type: 'success' });
-        fetchFees();
+        fetchFees(); fetchAllFees();
       } else {
         setMsg({ text: 'ডিলিট করতে সমস্যা হয়েছে।', type: 'error' });
       }
@@ -851,6 +873,24 @@ const FeeTrackerTab = () => {
     return acc;
   }, {})).sort((a, b) => b.total_due - a.total_due);
 
+  // History view: get all fees for a specific student (from unfiltered allFees)
+  const historyStudentFees = historyStudent
+    ? allFees.filter(f => f.student_id === historyStudent.id)
+    : [];
+
+  // History: filtered students list for search
+  const historyFilteredStudents = historySearch
+    ? students.filter(s =>
+        s.name.toLowerCase().includes(historySearch.toLowerCase()) ||
+        (s.student_uid || '').toLowerCase().includes(historySearch.toLowerCase())
+      ).slice(0, 8)
+    : [];
+
+  // Calculate total due for a student (from allFees)
+  const getStudentDue = (studentId) => {
+    return allFees.filter(f => f.student_id === studentId && !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
+  };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -868,11 +908,11 @@ const FeeTrackerTab = () => {
           <p className="text-sm text-blue-600 font-semibold mt-1">মোট রেকর্ড</p>
         </div>
         <div className="bg-green-50 border border-green-100 rounded-2xl p-4 text-center">
-          <p className="text-2xl font-bold text-green-700">৳{totalPaidAmount}</p>
-          <p className="text-sm text-green-600 font-semibold mt-1">মোট আদায় (পরিশোধিত)</p>
+          <p className="text-2xl font-bold text-green-700">৳{totalPaidAmount.toLocaleString('bn-BD')}</p>
+          <p className="text-sm text-green-600 font-semibold mt-1">মোট আদায়</p>
         </div>
         <div className="bg-red-50 border border-red-100 rounded-2xl p-4 text-center">
-          <p className="text-2xl font-bold text-red-700">৳{totalUnpaidAmount}</p>
+          <p className="text-2xl font-bold text-red-700">৳{totalUnpaidAmount.toLocaleString('bn-BD')}</p>
           <p className="text-sm text-red-600 font-semibold mt-1">মোট বকেয়া</p>
         </div>
       </div>
@@ -884,11 +924,11 @@ const FeeTrackerTab = () => {
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
           <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন ফি এন্ট্রি</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableStudentSelect 
-              students={students} 
-              fees={fees} 
-              value={form.student_id} 
-              onChange={val => setForm({ ...form, student_id: val })} 
+            <SearchableStudentSelect
+              students={students}
+              fees={allFees}
+              value={form.student_id}
+              onChange={val => setForm({ ...form, student_id: val })}
             />
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">মাস *</label>
@@ -920,7 +960,7 @@ const FeeTrackerTab = () => {
         </div>
       )}
 
-      {/* Filters & View Toggle */}
+      {/* View Mode Tabs */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
         <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-max">
           <button onClick={() => setFeeViewMode('all')}
@@ -929,12 +969,16 @@ const FeeTrackerTab = () => {
           </button>
           <button onClick={() => setFeeViewMode('dues')}
             className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${feeViewMode === 'dues' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            স্টুডেন্টদের বকেয়া
+            বকেয়া তালিকা
+          </button>
+          <button onClick={() => { setFeeViewMode('history'); setHistoryStudent(null); setHistorySearch(''); }}
+            className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${feeViewMode === 'history' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+            পেমেন্ট হিস্ট্রি
           </button>
         </div>
-        
+
         {feeViewMode === 'all' && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <select value={filterPaid} onChange={e => setFilterPaid(e.target.value)}
               className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
               <option value="">সব রেকর্ড</option>
@@ -947,91 +991,104 @@ const FeeTrackerTab = () => {
               <option value="প্রধান শাখা">প্রধান শাখা</option>
               <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
             </select>
+            <div className="flex items-center gap-2">
+              <input
+                type="month"
+                value={filterMonth}
+                onChange={e => setFilterMonth(e.target.value)}
+                className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium"
+                title="মাস ফিল্টার"
+              />
+              {filterMonth && (
+                <button onClick={() => setFilterMonth('')}
+                  className="text-sm text-gray-500 hover:text-red-500 border border-gray-200 rounded-xl px-3 py-2.5 bg-white font-medium transition-colors">
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Fee Table View */}
-      {feeViewMode === 'all' ? (
+      {/* ── All Records View ── */}
+      {feeViewMode === 'all' && (
         loading ? (
-        <div className="text-center py-12 text-gray-400 animate-pulse font-medium">লোড হচ্ছে...</div>
-      ) : fees.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
-          কোনো ফি রেকর্ড পাওয়া যায়নি।
-        </div>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
-                <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
-                <th className="p-4 font-bold">নাম</th>
-                <th className="p-4 font-bold">শাখা</th>
-                <th className="p-4 font-bold">মাস</th>
-                <th className="p-4 font-bold">পরিমাণ</th>
-                <th className="p-4 font-bold">স্ট্যাটাস</th>
-                <th className="p-4 font-bold">অ্যাকশন</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fees.map(f => (
-                <tr key={f.id} className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors">
-                  <td className="p-4"><span className="font-bold text-primary text-sm">{f.student_uid}</span></td>
-                  <td className="p-4 font-semibold text-gray-900">{f.student_name}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${f.student_branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                      {f.student_branch}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-600 font-medium">{formatMonth(f.month)}</td>
-                  <td className="p-4 font-bold text-gray-900">
-                    {editingFeeId === f.id ? (
-                      <div className="flex gap-2 items-center">
-                        <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} 
-                          className="border border-gray-300 rounded px-2 py-1 w-20 text-sm font-normal outline-none focus:ring-2 focus:ring-primary" />
-                        <button onClick={() => handleEditFeeAmount(f.id)} className="text-green-600 font-bold hover:bg-green-50 p-1 rounded transition-colors">✓</button>
-                        <button onClick={() => setEditingFeeId(null)} className="text-red-500 font-bold hover:bg-red-50 p-1 rounded transition-colors">✗</button>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2 items-center">
-                        <span>৳{f.amount}</span>
-                        {!f.is_paid && (
-                          <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="পরিমাণ এডিট করুন">
-                            ✎
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    {f.is_paid ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                        ✓ পরিশোধিত
-                        {f.payment_date && <span className="ml-1 opacity-70">({f.payment_date})</span>}
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
-                    )}
-                  </td>
-                  <td className="p-4 flex gap-2 items-center h-full">
-                    {!f.is_paid && (
-                      <button onClick={() => handleMarkPaid(f.id)}
-                        className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors font-semibold">
-                        পরিশোধিত মার্ক করুন
-                      </button>
-                    )}
-                    <button onClick={() => handleDeleteFee(f.id)}
-                      className="text-gray-400 hover:text-red-600 transition-colors bg-gray-100 hover:bg-red-50 p-1.5 rounded-lg" title="ডিলিট করুন">
-                      <TrashIcon />
-                    </button>
-                  </td>
+          <div className="text-center py-8 text-gray-500 font-medium">লোড হচ্ছে...</div>
+        ) : displayedFees.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400 font-medium">
+            কোনো ফি সংক্রান্ত তথ্য পাওয়া যায়নি।
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+                  <th className="p-4 font-bold">তারিখ / মাস</th>
+                  <th className="p-4 font-bold">আইডি & নাম</th>
+                  <th className="p-4 font-bold">পরিমাণ</th>
+                  <th className="p-4 font-bold">স্ট্যাটাস</th>
+                  <th className="p-4 font-bold">অ্যাকশন</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )) : (
-        /* Dues Summary View */
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {displayedFees.map(f => (
+                  <tr key={f.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="p-4 text-sm font-medium text-gray-700">{f.month}</td>
+                    <td className="p-4">
+                      <div className="font-bold text-gray-900">{f.student_name}</div>
+                      <div className="text-xs text-gray-400 font-semibold">{f.student_id}</div>
+                    </td>
+                    <td className="p-4 font-bold text-gray-900">
+                      {editingFeeId === f.id ? (
+                        <div className="flex gap-2 items-center">
+                          <input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)} 
+                            className="border border-gray-300 rounded px-2 py-1 w-20 text-sm font-normal outline-none focus:ring-2 focus:ring-primary" />
+                          <button onClick={() => handleEditFeeAmount(f.id)} className="text-green-600 font-bold hover:bg-green-50 p-1 rounded transition-colors">✓</button>
+                          <button onClick={() => setEditingFeeId(null)} className="text-red-500 font-bold hover:bg-red-50 p-1 rounded transition-colors">✗</button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2 items-center">
+                          <span>৳{f.amount}</span>
+                          {!f.is_paid && (
+                            <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="পরিমাণ এডিট করুন">
+                              ✎
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4">
+                      {f.is_paid ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                          ✓ পরিশোধিত
+                          {f.payment_date && <span className="ml-1 opacity-70">({f.payment_date})</span>}
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
+                      )}
+                    </td>
+                    <td className="p-4 flex gap-2 items-center h-full">
+                      {!f.is_paid && (
+                        <button onClick={() => handleMarkPaid(f.id)}
+                          className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors font-semibold">
+                          পরিশোধিত মার্ক করুন
+                        </button>
+                      )}
+                      <button onClick={() => handleDeleteFee(f.id)}
+                        className="text-gray-400 hover:text-red-600 transition-colors bg-gray-100 hover:bg-red-50 p-1.5 rounded-lg" title="ডিলিট করুন">
+                        <TrashIcon />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+
+      {/* Dues Summary View */}
+      {feeViewMode === 'dues' && (
         <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
           {studentDues.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 text-gray-500 font-medium">
@@ -1401,27 +1458,20 @@ const ExamManagementTab = () => {
           + নতুন পরীক্ষা
         </button>
       </div>
-
       {msg && <div className="mb-4 text-green-700 bg-green-100 p-3 rounded">{msg}</div>}
-
       {showForm && (
         <div className="bg-blue-50 p-6 rounded-xl mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div><label className="block mb-1 font-bold">শিরোনাম</label><input type="text" value={newExam.title} onChange={e=>setNewExam({...newExam, title: e.target.value})} className="w-full p-2 border rounded" placeholder="মডেল টেস্ট ১" /></div>
-            <div><label className="block mb-1 font-bold">বিষয়</label><input type="text" value={newExam.subject} onChange={e=>setNewExam({...newExam, subject: e.target.value})} className="w-full p-2 border rounded" placeholder="পদার্থবিজ্ঞান" /></div>
-            <div><label className="block mb-1 font-bold">সময় (মিনিট)</label><input type="number" value={newExam.duration_minutes} onChange={e=>setNewExam({...newExam, duration_minutes: e.target.value})} className="w-full p-2 border rounded" /></div>
+            <div><label className="block mb-1 font-bold">বিষয়</label><input type="text" value={newExam.subject} onChange={e=>setNewExam({...newExam, subject: e.target.value})} className="w-full p-2 border rounded" placeholder="পদার্থবিজ্ঞান" /></div>
+            <div><label className="block mb-1 font-bold">সময় (মিনিট)</label><input type="number" value={newExam.duration_minutes} onChange={e=>setNewExam({...newExam, duration_minutes: e.target.value})} className="w-full p-2 border rounded" /></div>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleSaveExam} className="bg-blue-600 text-white px-4 py-2 rounded font-bold">
-              {editingExamId ? 'আপডেট করুন' : 'সেভ করুন'}
-            </button>
-            <button onClick={() => { setShowForm(false); setEditingExamId(null); setNewExam({ title: '', subject: '', duration_minutes: 30 }); }} className="bg-gray-500 text-white px-4 py-2 rounded font-bold">
-              বাতিল
-            </button>
+            <button onClick={handleSaveExam} className="bg-blue-600 text-white px-4 py-2 rounded font-bold">{editingExamId ? 'আপডেট করুন' : 'সেভ করুন'}</button>
+            <button onClick={() => { setShowForm(false); setEditingExamId(null); setNewExam({ title: '', subject: '', duration_minutes: 30 }); }} className="bg-gray-500 text-white px-4 py-2 rounded font-bold">বাতিল</button>
           </div>
         </div>
       )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 border rounded-xl overflow-hidden">
           <div className="bg-gray-100 p-3 font-bold border-b">পরীক্ষার তালিকা</div>
@@ -1431,9 +1481,7 @@ const ExamManagementTab = () => {
                 <div className="font-bold">{ex.title}</div>
                 <div className="text-sm text-gray-500">{ex.subject} • {ex.duration_minutes} মিনিট</div>
                 <div className="mt-2 flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); handleToggleExam(ex.id); }} className={`text-xs px-2 py-1 rounded text-white ${ex.is_active ? 'bg-green-500' : 'bg-gray-400'}`}>
-                    {ex.is_active ? 'Active' : 'Inactive'}
-                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); handleToggleExam(ex.id); }} className={`text-xs px-2 py-1 rounded text-white ${ex.is_active ? 'bg-green-500' : 'bg-gray-400'}`}>{ex.is_active ? 'Active' : 'Inactive'}</button>
                   <button onClick={(e) => handleEditExam(ex, e)} className="text-xs px-2 py-1 rounded bg-blue-500 text-white">এডিট</button>
                   <button onClick={(e) => { e.stopPropagation(); handleDeleteExam(ex.id); }} className="text-xs px-2 py-1 rounded bg-red-500 text-white">ডিলিট</button>
                 </div>
@@ -1441,7 +1489,6 @@ const ExamManagementTab = () => {
             ))}
           </div>
         </div>
-
         <div className="lg:col-span-2 border rounded-xl overflow-hidden p-6 bg-white">
           {selectedExam ? (
             <div>
@@ -1465,7 +1512,6 @@ const ExamManagementTab = () => {
                   <button onClick={handleAddQuestion} className="bg-primary text-white px-4 py-2 rounded font-bold">+ যোগ করুন</button>
                 </div>
               </div>
-
               <div className="space-y-4">
                 {selectedExam.questions?.map((q, idx) => {
                   const opts = JSON.parse(q.options);
@@ -1484,7 +1530,7 @@ const ExamManagementTab = () => {
               </div>
             </div>
           ) : (
-             <div className="text-center text-gray-400 py-10">বাম পাশ থেকে একটি পরীক্ষা নির্বাচন করুন</div>
+            <div className="text-center text-gray-400 py-10">বাম পাশ থেকে একটি পরীক্ষা নির্বাচন করুন</div>
           )}
         </div>
       </div>
@@ -1494,108 +1540,265 @@ const ExamManagementTab = () => {
 
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 const TeacherAttendanceTab = ({ records, fetchRecords }) => {
-  const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7));
   const [searchTeacher, setSearchTeacher] = useState('');
+  const [activeView, setActiveView] = useState('records');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [attMsg, setAttMsg] = useState({ text: '', type: 'success' });
+  const [saving, setSaving] = useState(false);
+  const [ratePerClass, setRatePerClass] = useState(500);
 
-  // Filter records by month
-  const filteredRecords = records.filter(r => r.date.startsWith(filterMonth));
-  
-  // Calculate Summary
+  const emptyForm = {
+    teacher_name: '', date: new Date().toISOString().slice(0, 10),
+    classes_taken: 1, subjects: '', batches: '', status: 'Present'
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  const showAttMsg = (text, type = 'success') => {
+    setAttMsg({ text, type });
+    setTimeout(() => setAttMsg({ text: '', type: 'success' }), 4000);
+  };
+
+  const filteredRecords = records
+    .filter(r => r.date.startsWith(filterMonth))
+    .filter(r => !searchTeacher || r.teacher_name.toLowerCase().includes(searchTeacher.toLowerCase()));
+
   const summaryMap = {};
-  filteredRecords.forEach(r => {
-    if (!summaryMap[r.teacher_name]) {
-      summaryMap[r.teacher_name] = { totalClasses: 0 };
-    }
+  records.filter(r => r.date.startsWith(filterMonth)).forEach(r => {
+    if (!summaryMap[r.teacher_name]) summaryMap[r.teacher_name] = { totalClasses: 0 };
     summaryMap[r.teacher_name].totalClasses += r.classes_taken;
   });
-  const summaryArray = Object.keys(summaryMap).map(name => ({
-    name, totalClasses: summaryMap[name].totalClasses
-  }));
+  const summaryArray = Object.keys(summaryMap)
+    .map(name => ({ name, totalClasses: summaryMap[name].totalClasses }))
+    .sort((a, b) => b.totalClasses - a.totalClasses);
 
-  // Filter detailed records by search
-  const displayedRecords = searchTeacher 
-    ? filteredRecords.filter(r => r.teacher_name.toLowerCase().includes(searchTeacher.toLowerCase()))
-    : filteredRecords;
+  const handleAttSubmit = async () => {
+    if (!form.teacher_name || !form.date || !form.classes_taken) {
+      showAttMsg('নাম, তারিখ এবং ক্লাস সংখ্যা আবশ্যিক!', 'error'); return;
+    }
+    setSaving(true);
+    try {
+      const url = editingId
+        ? `/api/dashboard/teacher-attendance/${editingId}`
+        : '/api/dashboard/teacher-attendance';
+      const res = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, classes_taken: parseInt(form.classes_taken) })
+      });
+      if (res.ok) {
+        showAttMsg(editingId ? 'রেকর্ড আপডেট হয়েছে!' : 'হাজিরা এন্ট্রি সফল!');
+        setShowForm(false); setEditingId(null); setForm(emptyForm);
+        fetchRecords();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showAttMsg(`সমস্যা: ${err.detail || 'অজানা এরর'}`, 'error');
+      }
+    } catch { showAttMsg('সার্ভারে সংযোগ নেই।', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const handleAttEdit = (record) => {
+    setForm({
+      teacher_name: record.teacher_name, date: record.date,
+      classes_taken: record.classes_taken, subjects: record.subjects,
+      batches: record.batches, status: record.status || 'Present'
+    });
+    setEditingId(record.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAttDelete = async (id) => {
+    if (!window.confirm('এই রেকর্ডটি মুছতে চান?')) return;
+    try {
+      const res = await fetch(`/api/dashboard/teacher-attendance/${id}`, { method: 'DELETE' });
+      if (res.ok || res.status === 204) { showAttMsg('রেকর্ড মুছে গেছে!'); fetchRecords(); }
+      else showAttMsg('ডিলিট করতে সমস্যা হয়েছে।', 'error');
+    } catch { showAttMsg('সার্ভার এরর!', 'error'); }
+  };
+
+  const handleAttCancel = () => { setShowForm(false); setEditingId(null); setForm(emptyForm); };
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-6 text-gray-800">টিচার হাজিরা রিপোর্ট</h2>
-      
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-end mb-6">
-        <div className="flex gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">মাস নির্বাচন করুন</label>
-            <input type="month" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="border border-gray-300 rounded-lg p-2.5 outline-none" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">টিচার খুঁজুন</label>
-            <input type="text" placeholder="যেমন: RC-Supto" value={searchTeacher} onChange={(e) => setSearchTeacher(e.target.value)} className="border border-gray-300 rounded-lg p-2.5 outline-none" />
-          </div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">টিচার হাজিরা</h2>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={fetchRecords} className="border border-gray-300 bg-white text-gray-600 px-4 py-2 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm">↻ রিফ্রেশ</button>
+          <button onClick={() => { if (showForm) { handleAttCancel(); } else { setShowForm(true); } }}
+            className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm text-sm">
+            + নতুন এন্ট্রি
+          </button>
         </div>
-        <button onClick={fetchRecords} className="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-blue-700 shadow-sm">
-          রিফ্রেশ করুন
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Summary Table */}
-        <div className="col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gray-50 p-4 border-b border-gray-100 font-bold text-gray-700">মাসিক সারাংশ ({filterMonth})</div>
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-sm text-gray-500 border-b">
-                <th className="p-3">টিচারের নাম</th>
-                <th className="p-3 text-center">মোট ক্লাস</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summaryArray.map((s, idx) => (
-                <tr key={idx} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="p-3 font-medium">{s.name}</td>
-                  <td className="p-3 text-center font-bold text-primary">{s.totalClasses}</td>
-                </tr>
-              ))}
-              {summaryArray.length === 0 && (
-                <tr><td colSpan="2" className="p-4 text-center text-gray-500">কোনো তথ্য নেই</td></tr>
-              )}
-            </tbody>
-          </table>
+      {attMsg.text && (
+        <div className={`p-3 rounded-lg text-sm border mb-4 ${attMsg.type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+          {attMsg.text}
         </div>
+      )}
 
-        {/* Detailed Table */}
-        <div className="col-span-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-           <div className="bg-gray-50 p-4 border-b border-gray-100 font-bold text-gray-700">বিস্তারিত হাজিরা রেকর্ড</div>
-          <div className="overflow-x-auto">
+      {showForm && (
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
+          <h3 className="font-bold text-lg mb-4 text-gray-800">{editingId ? '✎ হাজিরা এডিট করুন' : '+ নতুন হাজিরা এন্ট্রি'}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">টিচারের নাম *</label>
+              <input type="text" value={form.teacher_name} onChange={e => setForm({ ...form, teacher_name: e.target.value })} placeholder="যেমন: RC-Supto" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">তারিখ *</label>
+              <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">ক্লাস সংখ্যা *</label>
+              <input type="number" min="0" value={form.classes_taken} onChange={e => setForm({ ...form, classes_taken: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">বিষয়সমূহ</label>
+              <input type="text" value={form.subjects} onChange={e => setForm({ ...form, subjects: e.target.value })} placeholder="যেমন: Math, Physics" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">ব্যাচসমূহ</label>
+              <input type="text" value={form.batches} onChange={e => setForm({ ...form, batches: e.target.value })} placeholder="যেমন: Batch A" className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">স্ট্যাটাস</label>
+              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white">
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Leave">Leave</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5">
+            <button onClick={handleAttSubmit} disabled={saving} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+              {saving ? 'সেভ হচ্ছে...' : (editingId ? 'আপডেট করুন' : 'সেভ করুন')}
+            </button>
+            <button onClick={handleAttCancel} className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors">বাতিল</button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-max mb-6">
+        <button onClick={() => setActiveView('records')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${activeView === 'records' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>হাজিরা রেকর্ড</button>
+        <button onClick={() => setActiveView('salary')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${activeView === 'salary' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>💰 বেতন হিসাব</button>
+      </div>
+
+      <div className="flex flex-wrap gap-4 mb-6">
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">মাস</label>
+          <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white font-medium" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">টিচার খুঁজুন</label>
+          <input type="text" placeholder="নাম লিখুন..." value={searchTeacher} onChange={e => setSearchTeacher(e.target.value)} className="border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white font-medium" />
+        </div>
+        {activeView === 'salary' && (
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">রেট (টাকা/ক্লাস)</label>
+            <input type="number" min="0" value={ratePerClass} onChange={e => setRatePerClass(parseInt(e.target.value) || 0)} className="border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white font-medium w-36" />
+          </div>
+        )}
+      </div>
+
+      {activeView === 'records' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-gray-700 text-sm">মাসিক সারাংশ — {filterMonth}</div>
             <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
-                  <th className="p-4 border-b font-semibold">তারিখ</th>
-                  <th className="p-4 border-b font-semibold">টিচারের নাম</th>
-                  <th className="p-4 border-b font-semibold text-center">ক্লাস সংখ্যা</th>
-                  <th className="p-4 border-b font-semibold">বিষয়সমূহ</th>
-                  <th className="p-4 border-b font-semibold">ব্যাচসমূহ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {displayedRecords.map(r => (
-                  <tr key={r.id} className="hover:bg-blue-50/50 transition-colors">
-                    <td className="p-4 text-gray-700 font-medium">{r.date}</td>
-                    <td className="p-4 text-primary font-bold">{r.teacher_name}</td>
-                    <td className="p-4 text-center text-gray-700 font-bold bg-gray-50">{r.classes_taken}</td>
-                    <td className="p-4 text-gray-600">{r.subjects}</td>
-                    <td className="p-4 text-gray-600">{r.batches}</td>
+              <thead><tr className="text-xs text-gray-500 border-b bg-gray-50"><th className="px-4 py-2.5">নাম</th><th className="px-4 py-2.5 text-center">ক্লাস</th></tr></thead>
+              <tbody>
+                {summaryArray.map((s, idx) => (
+                  <tr key={idx} className="border-b last:border-0 hover:bg-gray-50">
+                    <td className="px-4 py-3 font-semibold text-gray-800 text-sm">{s.name}</td>
+                    <td className="px-4 py-3 text-center font-bold text-primary">{s.totalClasses}</td>
                   </tr>
                 ))}
-                {displayedRecords.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="p-8 text-center text-gray-500">কোনো হাজিরা রেকর্ড পাওয়া যায়নি</td>
-                  </tr>
-                )}
+                {summaryArray.length === 0 && <tr><td colSpan="2" className="px-4 py-6 text-center text-gray-400 text-sm">কোনো তথ্য নেই</td></tr>}
               </tbody>
             </table>
           </div>
+          <div className="col-span-1 lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 font-bold text-gray-700 text-sm">বিস্তারিত রেকর্ড ({filteredRecords.length} টি)</div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600 text-xs font-bold uppercase tracking-wider border-b">
+                    <th className="px-4 py-3">তারিখ</th><th className="px-4 py-3">টিচার</th><th className="px-4 py-3 text-center">ক্লাস</th><th className="px-4 py-3">বিষয়</th><th className="px-4 py-3">ব্যাচ</th><th className="px-4 py-3">স্ট্যাটাস</th><th className="px-4 py-3">অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredRecords.map(r => (
+                    <tr key={r.id} className="hover:bg-blue-50/40 transition-colors">
+                      <td className="px-4 py-3 text-gray-700 font-medium text-sm">{r.date}</td>
+                      <td className="px-4 py-3 font-bold text-primary text-sm">{r.teacher_name}</td>
+                      <td className="px-4 py-3 text-center font-bold text-gray-800">{r.classes_taken}</td>
+                      <td className="px-4 py-3 text-gray-500 text-sm">{r.subjects}</td>
+                      <td className="px-4 py-3 text-gray-500 text-sm">{r.batches}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${r.status === 'Present' ? 'bg-green-100 text-green-700' : r.status === 'Absent' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{r.status || 'Present'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <button onClick={() => handleAttEdit(r)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="এডিট">✎</button>
+                          <button onClick={() => handleAttDelete(r.id)} className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="ডিলিট">✖</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredRecords.length === 0 && <tr><td colSpan="7" className="px-4 py-10 text-center text-gray-400">কোনো হাজিরা রেকর্ড পাওয়া যায়নি</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {activeView === 'salary' && (
+        <div>
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-5 mb-5">
+            <p className="text-sm text-gray-600 mb-1">হিসাব পদ্ধতি</p>
+            <p className="font-bold text-gray-800">বেতন = মোট ক্লাস × ৳{ratePerClass}/ক্লাস | মাস: {filterMonth}</p>
+          </div>
+          {summaryArray.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400">এই মাসে কোনো হাজিরা রেকর্ড নেই।</div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+                    <th className="px-5 py-3 font-bold">#</th>
+                    <th className="px-5 py-3 font-bold">টিচারের নাম</th>
+                    <th className="px-5 py-3 font-bold text-center">মোট ক্লাস</th>
+                    <th className="px-5 py-3 font-bold text-center">রেট</th>
+                    <th className="px-5 py-3 font-bold text-right">মোট বেতন</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summaryArray.map((s, idx) => (
+                    <tr key={idx} className="border-b border-gray-50 hover:bg-green-50/30 transition-colors">
+                      <td className="px-5 py-4 text-gray-400 text-sm">{idx + 1}</td>
+                      <td className="px-5 py-4 font-bold text-gray-900">{s.name}</td>
+                      <td className="px-5 py-4 text-center"><span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold text-sm">{s.totalClasses} ক্লাস</span></td>
+                      <td className="px-5 py-4 text-center text-gray-500 font-medium">৳{ratePerClass}</td>
+                      <td className="px-5 py-4 text-right font-bold text-lg text-green-600">৳{(s.totalClasses * ratePerClass).toLocaleString('bn-BD')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="bg-green-50 border-t-2 border-green-200">
+                    <td colSpan="4" className="px-5 py-4 font-bold text-gray-700">মোট ({summaryArray.length} জন)</td>
+                    <td className="px-5 py-4 text-right font-bold text-xl text-green-700">৳{summaryArray.reduce((sum, s) => sum + s.totalClasses * ratePerClass, 0).toLocaleString('bn-BD')}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -369,3 +369,12 @@ def update_teacher_attendance(attendance_id: int, attendance_update: schemas.Tea
     db.commit()
     db.refresh(db_attendance)
     return db_attendance
+
+@router.delete("/teacher-attendance/{attendance_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_teacher_attendance(attendance_id: int, db: Session = Depends(get_db)):
+    db_attendance = db.query(db_models.TeacherAttendance).filter(db_models.TeacherAttendance.id == attendance_id).first()
+    if not db_attendance:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    db.delete(db_attendance)
+    db.commit()
+    return None
