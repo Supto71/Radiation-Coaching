@@ -19,7 +19,7 @@ const Faculty = () => {
       subject: 'বিবিএ, এমবিএ (ফার্স্টক্লাস) হিসাববিজ্ঞান',
       year: '-',
       teaching: 'ইংরেজি',
-      image: '/fahim.png'
+      image: '/fahim.png?v=2'
     },
     {
       id: 10,

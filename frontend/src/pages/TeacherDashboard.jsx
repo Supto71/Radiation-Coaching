@@ -11,6 +11,7 @@ const TeacherDashboard = () => {
   const teacherImage = localStorage.getItem('teacher_image');
   // States
   const [routines, setRoutines] = useState([]);
+  const [routineBranchFilter, setRoutineBranchFilter] = useState('');
   const [exams, setExams] = useState([]);
   const [notices, setNotices] = useState([]);
   
@@ -187,7 +188,19 @@ const TeacherDashboard = () => {
         
         {activeTab === 'routine' && (
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-6 text-gray-800">মাস্টার রুটিন (Master Routine)</h3>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+              <h3 className="text-xl font-bold text-gray-800">মাস্টার রুটিন (Master Routine)</h3>
+              <select 
+                value={routineBranchFilter} 
+                onChange={e => setRoutineBranchFilter(e.target.value)}
+                className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium"
+              >
+                <option value="">সব শাখা</option>
+                {[...new Set(routines.map(r => r.branch))].filter(Boolean).map(b => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
             <div className="overflow-x-auto rounded-xl border border-gray-100">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -200,7 +213,7 @@ const TeacherDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="text-gray-700">
-                  {routines.map(r => (
+                  {routines.filter(r => !routineBranchFilter || r.branch === routineBranchFilter).map(r => (
                     <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="p-4 text-gray-700 font-medium">{r.date}</td>
                       <td className="p-4 text-gray-600">{r.start_time} - {r.end_time}</td>
@@ -209,7 +222,7 @@ const TeacherDashboard = () => {
                       <td className="p-4 text-primary font-medium">{r.teacher_name}</td>
                     </tr>
                   ))}
-                  {routines.length === 0 && (
+                  {routines.filter(r => !routineBranchFilter || r.branch === routineBranchFilter).length === 0 && (
                     <tr><td colSpan="5" className="p-8 text-center text-gray-400">কোনো রুটিন পাওয়া যায়নি</td></tr>
                   )}
                 </tbody>

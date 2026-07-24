@@ -14,7 +14,7 @@ const Home = () => {
         <div className="container mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
           
           {/* Left Text Content */}
-          <div className="w-full lg:w-1/2 flex flex-col text-center lg:text-left">
+          <div className="w-full lg:w-1/2 flex flex-col text-center lg:text-left animate-fade-in-up">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-800 leading-[1.2] mb-6">
               আপনার <span className="text-[#00b4d8]">উজ্জ্বল</span><br />
               <span className="text-[#00b4d8]">ভবিষ্যতের</span><br />
@@ -27,7 +27,7 @@ const Home = () => {
           </div>
           
           {/* Right Image Content */}
-          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative mt-12 lg:mt-0">
+          <div className="w-full lg:w-1/2 flex justify-center lg:justify-end relative mt-12 lg:mt-0 animate-fade-in-up delay-200">
             {/* Soft background glow to blend the image */}
             <div className="absolute inset-0 bg-[#00b4d8] opacity-5 blur-[100px] rounded-full z-0"></div>
             
@@ -68,7 +68,7 @@ const Home = () => {
           <div className="flex flex-col gap-6">
             
             {/* Feature Card 1 */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.1)] transition-all">
+            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-200">
               <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
                 <span className="text-white font-bold text-xl">১</span>
@@ -82,7 +82,7 @@ const Home = () => {
             </div>
 
             {/* Feature Card 2 */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.1)] transition-all">
+            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-300">
               <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
                 <span className="text-white font-bold text-xl">২</span>
@@ -96,7 +96,7 @@ const Home = () => {
             </div>
 
             {/* Feature Card 3 */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 flex items-center shadow-[0_8px_30px_rgba(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.1)] transition-all">
+            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-400">
               <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
                 <span className="text-white font-bold text-xl">৩</span>
@@ -105,6 +105,20 @@ const Home = () => {
                 <h3 className="text-lg font-bold text-gray-800 mb-1">স্পেশাল লেকচার শিট</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">
                   সহজ ও সাবলীল ভাষায় তৈরি স্পেশাল লেকচার শিট যা পরীক্ষায় ভালো ফলাফল করতে দারুণ সহায়তা করবে।
+                </p>
+              </div>
+            </div>
+
+            {/* Feature Card 4 */}
+            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-[500ms]">
+              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
+                <span className="text-white font-bold text-xl">৪</span>
+              </div>
+              <div className="relative z-10">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">অভাবনীয় সাফল্য</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  প্রতিষ্ঠালগ্ন থেকে সরকারি বৃত্তি, গোল্ডেন A+ সহ শতভাগ পাশ
                 </p>
               </div>
             </div>
@@ -145,6 +159,16 @@ const Home = () => {
                 <p className="text-gray-400 text-xs leading-relaxed">মিজমিজি পশ্চিম পাড়া স্কুল এন্ড কলেজ সংলগ্ন</p>
               </div>
             </div>
+          </div>
+          
+          {/* Established Info */}
+          <div className="mt-16 pt-8 border-t border-white/10 text-center flex flex-col items-center justify-center gap-3">
+            <span className="bg-[#1e293b] text-[#00b4d8] px-6 py-2 rounded-full text-sm font-bold border border-[#334155] inline-flex items-center gap-2 shadow-lg">
+              <span>🏛️</span> স্থাপিত : ২০১৬
+            </span>
+            <p className="text-gray-500 text-xs mt-2">
+              © {new Date().getFullYear()} রেডিয়েশন কোচিং। সর্বস্বত্ব সংরক্ষিত।
+            </p>
           </div>
         </div>
       </footer>
