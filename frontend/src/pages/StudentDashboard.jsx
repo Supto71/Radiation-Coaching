@@ -6,6 +6,8 @@ const StudentDashboard = () => {
   const [student, setStudent] = useState(null);
   const [activeTab, setActiveTab] = useState('routine');
   
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   // Data states
   const [routines, setRoutines] = useState({});
   const [loading, setLoading] = useState(true);
@@ -160,8 +162,6 @@ const StudentDashboard = () => {
     { id: 'results', label: 'ফলাফল' },
     { id: 'notices', label: 'নোটিশ বোর্ড' }
   ];
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="bg-gray-50 min-h-screen">
