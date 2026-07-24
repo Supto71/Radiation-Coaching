@@ -205,8 +205,6 @@ const StudentDashboard = () => {
             ))}
           </div>
 
-          </div>
-
           {/* Tab Content */}
           <div className="flex-1 w-full p-4 md:p-8">
             
@@ -490,7 +488,6 @@ const StudentDashboard = () => {
 
           </div>
           </div>
-        </div>
       </div>
     </div>
   );
