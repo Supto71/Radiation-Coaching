@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
-  const [activeTab, setActiveTab] = useState('routine');
+  const [activeTab, setActiveTab] = useState('profile');
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -155,6 +155,7 @@ const StudentDashboard = () => {
   const pct = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
 
   const tabs = [
+    { id: 'profile', label: 'আমার প্রোফাইল' },
     { id: 'routine', label: 'আমার রুটিন' },
     { id: 'attendance', label: 'আমার উপস্থিতি' },
     { id: 'fees', label: 'পেমেন্ট হিস্ট্রি' },
@@ -214,6 +215,46 @@ const StudentDashboard = () => {
               <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}></div>
             )}
             
+            {/* PROFILE TAB */}
+            {activeTab === 'profile' && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6 text-gray-800">আমার প্রোফাইল</h2>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden max-w-2xl">
+                  <div className="bg-[#0f172a] p-6 text-center md:text-left md:flex items-center gap-6">
+                    <div className="w-24 h-24 rounded-full bg-white/10 mx-auto md:mx-0 flex items-center justify-center text-4xl mb-4 md:mb-0 border-4 border-[#00b4d8]/30 text-white font-bold">
+                      {student.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white mb-1">{student.name}</h3>
+                      <p className="text-[#00b4d8] font-medium text-sm">স্টুডেন্ট আইডি: {student.student_uid}</p>
+                    </div>
+                  </div>
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-500 mb-1">শাখা</p>
+                      <p className="text-gray-900 font-bold">{student.branch}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-500 mb-1">ক্লাস/স্তর</p>
+                      <p className="text-gray-900 font-bold">{student.class_level}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-500 mb-1">মোবাইল নম্বর</p>
+                      <p className="text-gray-900 font-bold">{student.phone || 'দেওয়া নেই'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-500 mb-1">লিঙ্গ</p>
+                      <p className="text-gray-900 font-bold">{student.gender || 'দেওয়া নেই'}</p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm font-semibold text-gray-500 mb-1">পিতার নাম</p>
+                      <p className="text-gray-900 font-bold">{student.father_name || 'দেওয়া নেই'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* ROUTINE TAB */}
             {activeTab === 'routine' && (
               <div>
