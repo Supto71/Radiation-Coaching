@@ -92,24 +92,22 @@ const Home = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+          <div className="flex flex-col gap-5 max-w-2xl mx-auto relative z-10">
             {features.map((feature) => (
-              <div key={feature.id} className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 flex flex-col items-center text-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all min-h-[220px]">
-                <div className="absolute -right-8 -top-8 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+              <div key={feature.id} className="bg-white/60 backdrop-blur-md border border-white/60 rounded-2xl p-5 flex items-center gap-5 shadow-md hover:shadow-[0_10px_30px_rgba(0,180,216,0.15)] transition-all group">
                 
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#00b4d8] rounded-2xl flex items-center justify-center shrink-0 mb-6 shadow-md shadow-cyan-200">
-                  <span className="text-white font-bold text-2xl md:text-3xl">{feature.number}</span>
+                <div className="w-14 h-14 bg-[#00b4d8] rounded-2xl flex items-center justify-center shrink-0 shadow-md shadow-cyan-200">
+                  <span className="text-white font-bold text-2xl">{feature.number}</span>
                 </div>
                 
-                <div className="relative z-10 flex-1">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2 md:mb-3">{feature.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">
-                    {feature.desc}
-                  </p>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">{feature.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
                 </div>
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
