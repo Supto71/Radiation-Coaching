@@ -1547,7 +1547,7 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
   const [editingId, setEditingId] = useState(null);
   const [attMsg, setAttMsg] = useState({ text: '', type: 'success' });
   const [saving, setSaving] = useState(false);
-  const [ratePerClass, setRatePerClass] = useState(500);
+  const [teacherRates, setTeacherRates] = useState({});
 
   const emptyForm = {
     teacher_name: '', date: new Date().toISOString().slice(0, 10),
@@ -1697,9 +1697,8 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
           <input type="text" placeholder="নাম লিখুন..." value={searchTeacher} onChange={e => setSearchTeacher(e.target.value)} className="border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white font-medium" />
         </div>
         {activeView === 'salary' && (
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">রেট (টাকা/ক্লাস)</label>
-            <input type="number" min="0" value={ratePerClass} onChange={e => setRatePerClass(parseInt(e.target.value) || 0)} className="border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white font-medium w-36" />
+          <div className="flex gap-2 items-center">
+            <span className="text-sm text-gray-500 font-semibold bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">💡 নোট: নিচের ছক থেকে প্রতিটি টিচারের রেট আলাদাভাবে পরিবর্তন করা যাবে।</span>
           </div>
         )}
       </div>
@@ -1761,7 +1760,7 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
         <div>
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100 p-5 mb-5">
             <p className="text-sm text-gray-600 mb-1">হিসাব পদ্ধতি</p>
-            <p className="font-bold text-gray-800">বেতন = মোট ক্লাস × ৳{ratePerClass}/ক্লাস | মাস: {filterMonth}</p>
+            <p className="font-bold text-gray-800">বেতন = মোট ক্লাস × টিচারের নিজস্ব রেট/ক্লাস | মাস: {filterMonth}</p>
           </div>
           {summaryArray.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-400">এই মাসে কোনো হাজিরা রেকর্ড নেই।</div>
@@ -1773,25 +1772,30 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
                     <th className="px-5 py-3 font-bold">#</th>
                     <th className="px-5 py-3 font-bold">টিচারের নাম</th>
                     <th className="px-5 py-3 font-bold text-center">মোট ক্লাস</th>
-                    <th className="px-5 py-3 font-bold text-center">রেট</th>
+                    <th className="px-5 py-3 font-bold text-center">রেট (৳)</th>
                     <th className="px-5 py-3 font-bold text-right">মোট বেতন</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {summaryArray.map((s, idx) => (
-                    <tr key={idx} className="border-b border-gray-50 hover:bg-green-50/30 transition-colors">
-                      <td className="px-5 py-4 text-gray-400 text-sm">{idx + 1}</td>
-                      <td className="px-5 py-4 font-bold text-gray-900">{s.name}</td>
-                      <td className="px-5 py-4 text-center"><span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold text-sm">{s.totalClasses} ক্লাস</span></td>
-                      <td className="px-5 py-4 text-center text-gray-500 font-medium">৳{ratePerClass}</td>
-                      <td className="px-5 py-4 text-right font-bold text-lg text-green-600">৳{(s.totalClasses * ratePerClass).toLocaleString('bn-BD')}</td>
-                    </tr>
-                  ))}
+                  {summaryArray.map((s, idx) => {
+                    const rate = teacherRates[s.name] !== undefined ? teacherRates[s.name] : 500;
+                    return (
+                      <tr key={idx} className="border-b border-gray-50 hover:bg-green-50/30 transition-colors">
+                        <td className="px-5 py-4 text-gray-400 text-sm">{idx + 1}</td>
+                        <td className="px-5 py-4 font-bold text-gray-900">{s.name}</td>
+                        <td className="px-5 py-4 text-center"><span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-bold text-sm">{s.totalClasses} ক্লাস</span></td>
+                        <td className="px-5 py-4 text-center">
+                          <input type="number" min="0" value={rate} onChange={e => setTeacherRates({ ...teacherRates, [s.name]: e.target.value === '' ? '' : parseInt(e.target.value) || 0 })} className="border border-gray-300 rounded-lg p-1.5 focus:ring-2 focus:ring-primary outline-none bg-white font-medium w-24 text-center" />
+                        </td>
+                        <td className="px-5 py-4 text-right font-bold text-lg text-green-600">৳{(s.totalClasses * rate).toLocaleString('bn-BD')}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="bg-green-50 border-t-2 border-green-200">
                     <td colSpan="4" className="px-5 py-4 font-bold text-gray-700">মোট ({summaryArray.length} জন)</td>
-                    <td className="px-5 py-4 text-right font-bold text-xl text-green-700">৳{summaryArray.reduce((sum, s) => sum + s.totalClasses * ratePerClass, 0).toLocaleString('bn-BD')}</td>
+                    <td className="px-5 py-4 text-right font-bold text-xl text-green-700">৳{summaryArray.reduce((sum, s) => sum + s.totalClasses * (teacherRates[s.name] !== undefined ? (teacherRates[s.name] || 0) : 500), 0).toLocaleString('bn-BD')}</td>
                   </tr>
                 </tfoot>
               </table>
