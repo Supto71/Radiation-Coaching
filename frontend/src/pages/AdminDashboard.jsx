@@ -849,6 +849,8 @@ const FeeTrackerTab = () => {
   const totalPaidAmount = fees.filter(f => f.is_paid).reduce((sum, f) => sum + f.amount, 0);
   const totalUnpaidAmount = fees.filter(f => !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
 
+  const displayedFees = fees;
+
   const formatMonth = (monthStr) => {
     if (!monthStr || !monthStr.includes('-')) return monthStr;
     const [year, month] = monthStr.split('-');
