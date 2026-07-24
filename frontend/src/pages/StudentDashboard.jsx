@@ -161,51 +161,59 @@ const StudentDashboard = () => {
     { id: 'notices', label: 'নোটিশ বোর্ড' }
   ];
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">স্বাগতম, {student.name}</h1>
-            <div className="flex items-center gap-3 text-sm font-medium text-gray-600">
-              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">{student.student_uid}</span>
-              <span className="bg-gray-200 px-3 py-1 rounded-full">{student.class_level}</span>
-              <span className="bg-gray-200 px-3 py-1 rounded-full">{student.branch}</span>
+    <div className="bg-gray-50 min-h-screen">
+      {/* Universal Header */}
+      <div className="bg-white shadow-sm border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-gray-600 hover:text-primary transition-colors">
+            {/* Hamburger / Three lines icon */}
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">স্টুডেন্ট ড্যাশবোর্ড</h1>
+        </div>
+        <button onClick={handleLogout} className="text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+          লগআউট
+        </button>
+      </div>
+
+      <div className="flex container mx-auto px-0 md:px-4 max-w-[1400px]">
+        
+        {/* Sidebar */}
+        <div className={`fixed inset-y-0 left-0 w-64 md:w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#0f172a]">
+            <div>
+              <h2 className="text-xl font-bold text-white">স্টুডেন্ট প্যানেল</h2>
+              <p className="text-xs text-[#00b4d8] mt-1 font-medium">{student.student_uid}</p>
             </div>
-          </div>
-          <div className="flex gap-3 items-center">
-            <div className="bg-secondary/10 text-secondary px-4 py-2 rounded-lg font-semibold">
-              স্টুডেন্ট প্যানেল
-            </div>
-            <button 
-              onClick={handleLogout}
-              className="bg-red-50 text-red-600 px-4 py-2 rounded-lg font-semibold hover:bg-red-100 transition-colors border border-red-100"
-            >
-              লগআউট
+            <button onClick={() => setIsSidebarOpen(false)} className="text-white/70 hover:text-white p-1">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Tabs */}
-          <div className="flex overflow-x-auto border-b border-gray-100 no-scrollbar">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-[120px] py-4 text-center font-medium transition-colors ${
-                  activeTab === tab.id 
-                    ? 'border-b-2 border-primary text-primary bg-primary/5' 
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-              >
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {tabs.map(tab => (
+              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === tab.id ? 'bg-[#00b4d8]/10 text-[#00b4d8] shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                 {tab.label}
               </button>
             ))}
           </div>
 
+          </div>
+
           {/* Tab Content */}
-          <div className="p-6 md:p-8">
+          <div className="flex-1 w-full p-4 md:p-8">
+            
+            {/* Backdrop overlay */}
+            {isSidebarOpen && (
+              <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}></div>
+            )}
             
             {/* ROUTINE TAB */}
             {activeTab === 'routine' && (
@@ -480,6 +488,7 @@ const StudentDashboard = () => {
               </div>
             )}
 
+          </div>
           </div>
         </div>
       </div>

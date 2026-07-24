@@ -144,47 +144,79 @@ const TeacherDashboard = () => {
     setUpdatingProfile(false);
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <div className="w-full md:w-64 bg-white shadow-lg flex flex-col z-10">
-        <div className="p-6 text-center border-b border-gray-100 flex flex-col items-center">
-          {teacherImage ? (
-              <img src={teacherImage} alt="Profile" className="w-20 h-20 rounded-full object-cover border-4 border-gray-100 shadow-sm mb-3" />
-          ) : (
-              <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center border-4 border-blue-100 shadow-sm mb-3">
-                  <FaUserCheck className="text-3xl text-primary opacity-60" />
-              </div>
-          )}
-          <h2 className="text-2xl font-bold text-gray-800">Teacher Panel</h2>
-          <p className="text-sm text-gray-500 mt-2 font-medium">স্বাগতম, <span className="text-primary">{teacherName}</span></p>
-        </div>
-        <nav className="flex-1 p-4 space-y-2">
-          <button onClick={() => setActiveTab('routine')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'routine' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <FaCalendarAlt className={activeTab === 'routine' ? 'text-primary' : 'text-gray-400'} /> মাস্টার রুটিন
+    <div className="bg-gray-50 min-h-screen">
+      {/* Universal Header */}
+      <div className="bg-white shadow-sm border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-gray-600 hover:text-primary transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
-          <button onClick={() => setActiveTab('notice')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'notice' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <FaClipboardList className={activeTab === 'notice' ? 'text-primary' : 'text-gray-400'} /> নোটিশ বোর্ড
-          </button>
-          <button onClick={() => setActiveTab('my_att')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'my_att' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <FaClipboardList className={activeTab === 'my_att' ? 'text-primary' : 'text-gray-400'} /> আমার হাজিরা
-          </button>
-          <button onClick={() => setActiveTab('exams')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'exams' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <FaQuestionCircle className={activeTab === 'exams' ? 'text-primary' : 'text-gray-400'} /> প্রশ্ন তৈরি (MCQ)
-          </button>
-          <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
-            <FaUserCog className={activeTab === 'profile' ? 'text-primary' : 'text-gray-400'} /> আমার প্রোফাইল
-          </button>
-        </nav>
-        <div className="p-4 border-t border-gray-100">
-          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 font-bold transition-colors">
-            <FaSignOutAlt /> লগআউট
-          </button>
+          <h1 className="text-xl font-bold text-gray-900">টিচার ড্যাশবোর্ড</h1>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 md:p-8 overflow-y-auto h-screen bg-[#f4f7fb]">
+      <div className="flex container mx-auto px-0 md:px-4 max-w-[1400px]">
+        {/* Sidebar */}
+        <div className={`fixed inset-y-0 left-0 w-64 md:w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
+          <div className="p-6 text-center border-b border-gray-100 flex flex-col items-center bg-[#0f172a] relative">
+            <button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 right-4 text-white/70 hover:text-white p-1">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {teacherImage ? (
+                <img src={teacherImage} alt="Profile" className="w-20 h-20 rounded-full object-cover border-4 border-white/20 shadow-sm mb-3" />
+            ) : (
+                <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center border-4 border-white/20 shadow-sm mb-3">
+                    <FaUserCheck className="text-3xl text-white opacity-80" />
+                </div>
+            )}
+            <h2 className="text-xl font-bold text-white">টিচার প্যানেল</h2>
+            <p className="text-xs text-[#00b4d8] mt-1 font-medium">স্বাগতম, {teacherName}</p>
+          </div>
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onClick={() => { setActiveTab('routine'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'routine' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FaCalendarAlt className={activeTab === 'routine' ? 'text-primary' : 'text-gray-400'} /> মাস্টার রুটিন
+            </button>
+            <button onClick={() => { setActiveTab('notice'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'notice' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FaClipboardList className={activeTab === 'notice' ? 'text-primary' : 'text-gray-400'} /> নোটিশ বোর্ড
+            </button>
+            <button onClick={() => { setActiveTab('my_att'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'my_att' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FaClipboardList className={activeTab === 'my_att' ? 'text-primary' : 'text-gray-400'} /> আমার হাজিরা
+            </button>
+            <button onClick={() => { setActiveTab('exams'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'exams' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FaQuestionCircle className={activeTab === 'exams' ? 'text-primary' : 'text-gray-400'} /> প্রশ্ন তৈরি (MCQ)
+            </button>
+            <button onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'profile' ? 'bg-[#e0f2fe] text-primary font-bold shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FaUserCog className={activeTab === 'profile' ? 'text-primary' : 'text-gray-400'} /> আমার প্রোফাইল
+            </button>
+          </nav>
+          <div className="p-4 border-t border-gray-100">
+            <button onClick={handleLogout} className="w-full bg-red-50 text-red-600 px-4 py-3 rounded-xl font-semibold hover:bg-red-100 transition-colors border border-red-100 flex justify-center items-center gap-2">
+              <FaSignOutAlt className="w-5 h-5" /> লগআউট
+            </button>
+          </div>
+        </div>
+
+        {/* Backdrop overlay */}
+        {isSidebarOpen && (
+          <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)}></div>
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 w-full min-w-0 pb-12">
+          <div className="hidden md:flex justify-between items-center mb-8 pt-8 px-8">
+            <h1 className="text-3xl font-bold text-gray-900">টিচার ড্যাশবোর্ড</h1>
+            <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold shadow-sm">
+              টিচার প্যানেল
+            </div>
+          </div>
+          <div className="p-4 md:p-8 overflow-y-auto bg-gray-50 h-[calc(100vh-100px)] md:h-auto">
         
         {activeTab === 'routine' && (
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
@@ -362,6 +394,8 @@ const TeacherDashboard = () => {
             </form>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

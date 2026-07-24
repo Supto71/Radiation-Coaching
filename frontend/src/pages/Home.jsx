@@ -1,6 +1,43 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Home = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const features = [
+    {
+      id: 1,
+      title: "অভাবনীয় সাফল্য",
+      desc: "প্রতিষ্ঠালগ্ন থেকে সরকারি বৃত্তি, গোল্ডেন A+ সহ শতভাগ পাশ",
+      number: "১"
+    },
+    {
+      id: 2,
+      title: "স্মার্ট এক্সাম সিস্টেম",
+      desc: "আমাদের রয়েছে অত্যাধুনিক অনলাইন পরীক্ষা পদ্ধতি। ঘরে বসেই পরীক্ষা দিন এবং সাথে সাথে রেজাল্ট পেয়ে যান।",
+      number: "২"
+    },
+    {
+      id: 3,
+      title: "অভিজ্ঞ শিক্ষকমণ্ডলী",
+      desc: "দেশের সেরা বিশ্ববিদ্যালয় থেকে আগত বিষয়ভিত্তিক বিশেষজ্ঞ শিক্ষকদের নির্দেশনায় আপনার প্রস্তুতি হবে ১০০ ভাগ নির্ভুল।",
+      number: "৩"
+    },
+    {
+      id: 4,
+      title: "স্পেশাল লেকচার শিট",
+      desc: "সহজ ও সাবলীল ভাষায় তৈরি স্পেশাল লেকচার শিট যা পরীক্ষায় ভালো ফলাফল করতে দারুণ সহায়তা করবে।",
+      number: "৪"
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % features.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [features.length]);
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-76px)] bg-[#f4f7fb] overflow-hidden">
       
@@ -65,64 +102,60 @@ const Home = () => {
             </p>
           </div>
           
-          <div className="flex flex-col gap-6">
+          <div className="relative max-w-3xl mx-auto pb-12">
+            <div className="overflow-hidden rounded-3xl">
+              <div 
+                className="flex transition-transform duration-700 ease-in-out"
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              >
+                {features.map((feature) => (
+                  <div key={feature.id} className="w-full shrink-0 px-2">
+                    <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-center text-center md:text-left shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all min-h-[220px]">
+                      <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
+                      
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-[#00b4d8] rounded-2xl flex items-center justify-center shrink-0 mb-6 md:mb-0 md:mr-8 shadow-md shadow-cyan-200">
+                        <span className="text-white font-bold text-2xl md:text-3xl">{feature.number}</span>
+                      </div>
+                      
+                      <div className="relative z-10 flex-1">
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3">{feature.title}</h3>
+                        <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+                          {feature.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Slider Dots */}
+            <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-3">
+              {features.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentSlide === index ? "bg-[#00b4d8] w-8" : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
             
-            {/* Feature Card 1 */}
-            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-200">
-              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
-                <span className="text-white font-bold text-xl">১</span>
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-lg font-bold text-gray-800 mb-1">স্মার্ট এক্সাম সিস্টেম</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  আমাদের রয়েছে অত্যাধুনিক অনলাইন পরীক্ষা পদ্ধতি। ঘরে বসেই পরীক্ষা দিন এবং সাথে সাথে রেজাল্ট পেয়ে যান।
-                </p>
-              </div>
-            </div>
-
-            {/* Feature Card 2 */}
-            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-300">
-              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
-                <span className="text-white font-bold text-xl">২</span>
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-lg font-bold text-gray-800 mb-1">অভিজ্ঞ শিক্ষকমণ্ডলী</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  দেশের সেরা বিশ্ববিদ্যালয় থেকে আগত বিষয়ভিত্তিক বিশেষজ্ঞ শিক্ষকদের নির্দেশনায় আপনার প্রস্তুতি হবে ১০০ ভাগ নির্ভুল।
-                </p>
-              </div>
-            </div>
-
-            {/* Feature Card 3 */}
-            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-400">
-              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
-                <span className="text-white font-bold text-xl">৩</span>
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-lg font-bold text-gray-800 mb-1">স্পেশাল লেকচার শিট</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  সহজ ও সাবলীল ভাষায় তৈরি স্পেশাল লেকচার শিট যা পরীক্ষায় ভালো ফলাফল করতে দারুণ সহায়তা করবে।
-                </p>
-              </div>
-            </div>
-
-            {/* Feature Card 4 */}
-            <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 md:p-8 flex items-center shadow-lg relative overflow-hidden group hover:shadow-[0_15px_40px_rgba(0,180,216,0.15)] transition-all animate-fade-in-up delay-[500ms]">
-              <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-32 h-32 bg-[#e0f2fe] rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-              <div className="w-12 h-12 bg-[#00b4d8] rounded-xl flex items-center justify-center shrink-0 mr-6 shadow-md shadow-cyan-200">
-                <span className="text-white font-bold text-xl">৪</span>
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-lg font-bold text-gray-800 mb-1">অভাবনীয় সাফল্য</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  প্রতিষ্ঠালগ্ন থেকে সরকারি বৃত্তি, গোল্ডেন A+ সহ শতভাগ পাশ
-                </p>
-              </div>
-            </div>
-
+            {/* Navigation Arrows */}
+            <button 
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + features.length) % features.length)}
+              className="absolute -left-4 md:-left-12 top-[45%] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/80 rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:bg-[#00b4d8] hover:text-white transition-all z-10 opacity-70 hover:opacity-100"
+            >
+              &#10094;
+            </button>
+            <button 
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % features.length)}
+              className="absolute -right-4 md:-right-12 top-[45%] -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/80 rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:bg-[#00b4d8] hover:text-white transition-all z-10 opacity-70 hover:opacity-100"
+            >
+              &#10095;
+            </button>
           </div>
         </div>
       </section>
