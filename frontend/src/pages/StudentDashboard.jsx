@@ -204,9 +204,10 @@ const StudentDashboard = () => {
               </button>
             ))}
           </div>
+        </div>
 
-          {/* Tab Content */}
-          <div className="flex-1 w-full p-4 md:p-8">
+        {/* Tab Content */}
+        <div className="flex-1 w-full p-4 md:p-8">
             
             {/* Backdrop overlay */}
             {isSidebarOpen && (
@@ -486,8 +487,7 @@ const StudentDashboard = () => {
               </div>
             )}
 
-          </div>
-          </div>
+        </div>
       </div>
     </div>
   );
