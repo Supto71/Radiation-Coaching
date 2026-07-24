@@ -230,7 +230,7 @@ const StudentDashboard = () => {
                       <div key={date} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
                           <h4 className="font-bold text-gray-800 text-lg">
-                            তারিখ: {new Date(date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            তারিখ: {date && date !== "undefined" && date !== "null" ? new Date(date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }) : 'অজানা তারিখ'}
                           </h4>
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -310,7 +310,7 @@ const StudentDashboard = () => {
                             }`}>{a.is_present ? '✓' : '✗'}</span>
                             <div>
                               <p className="font-semibold text-gray-900 text-sm">
-                                {new Date(a.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                {a.date && a.date !== "undefined" && a.date !== "null" ? new Date(a.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }) : 'অজানা তারিখ'}
                               </p>
                               <p className="text-xs text-gray-500">{a.class_level} &bull; {a.branch}</p>
                             </div>
@@ -355,9 +355,9 @@ const StudentDashboard = () => {
                                 পেইড
                               </span>
                               {fee.payment_date && (
-                                <p className="text-xs text-green-600 font-medium">
-                                  {new Date(fee.payment_date).toLocaleDateString('bn-BD')}
-                                </p>
+                                <div className="text-gray-900 font-medium">
+                                  {fee.payment_date && fee.payment_date !== "undefined" && fee.payment_date !== "null" ? new Date(fee.payment_date).toLocaleDateString('bn-BD') : 'N/A'}
+                                </div>
                               )}
                             </div>
                           ) : (
@@ -428,7 +428,7 @@ const StudentDashboard = () => {
                           <h4 className="font-bold text-lg text-gray-900">{res.exam?.title || 'Unknown Exam'}</h4>
                           <p className="text-sm text-gray-500">{res.exam?.subject || ''}</p>
                           <p className="text-xs text-gray-400 mt-1">
-                            {new Date(res.taken_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {res.taken_at && res.taken_at !== "undefined" && res.taken_at !== "null" ? new Date(res.taken_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'অজানা তারিখ'}
                           </p>
                         </div>
                         <div className="flex gap-4">
@@ -473,7 +473,7 @@ const StudentDashboard = () => {
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-bold text-lg text-gray-900">{notice.title}</h3>
                           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                            {notice.custom_date ? new Date(notice.custom_date).toLocaleDateString('bn-BD') : new Date(notice.created_at).toLocaleDateString('bn-BD')}
+                            {notice.custom_date && notice.custom_date.trim() !== "" ? new Date(notice.custom_date).toLocaleDateString('bn-BD') : (notice.created_at ? new Date(notice.created_at).toLocaleDateString('bn-BD') : 'অজানা তারিখ')}
                           </span>
                         </div>
                         <p className="text-gray-600 whitespace-pre-wrap mt-2 text-sm leading-relaxed">{notice.content}</p>

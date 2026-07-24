@@ -10,7 +10,7 @@ class StudentBase(BaseModel):
     gender: Optional[str] = "ছেলে"
     father_name: Optional[str] = None
     mother_name: Optional[str] = None
-    guardian_phone: str # Required now
+    guardian_phone: Optional[str] = None
 
 class StudentCreate(StudentBase):
     student_uid: Optional[str] = None

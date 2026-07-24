@@ -120,13 +120,13 @@ class ExamResult(ExamResultBase):
 
 # Routine Schemas
 class RoutineBase(BaseModel):
-    date: str
-    start_time: str
-    end_time: str
-    branch: str
-    class_level: str
-    class_name: str
-    teacher_name: str
+    date: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    branch: Optional[str] = None
+    class_level: Optional[str] = None
+    class_name: Optional[str] = None
+    teacher_name: Optional[str] = None
 
 class RoutineCreate(RoutineBase):
     pass
