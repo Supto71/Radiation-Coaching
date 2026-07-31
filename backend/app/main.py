@@ -14,11 +14,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from .api import auth, dashboard, students, attendance, teachers
+from .api import auth, dashboard, students, attendance, teachers, notifications
 from .db.database import engine, Base
 from .models import student as student_model        # ensure table is created
 from .models import attendance as attendance_model  # ensure table is created
 from .models import teacher as teacher_model        # ensure table is created
+from .models import notification as notification_model # ensure table is created
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -65,6 +66,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(students.router, prefix="/api/students", tags=["students"])
 app.include_router(attendance.router, prefix="/api/attendance", tags=["attendance"])
 app.include_router(teachers.router, prefix="/api/teachers", tags=["teachers"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 
 import os
 from fastapi.staticfiles import StaticFiles

@@ -6,6 +6,7 @@ from datetime import date
 from ..db.database import get_db
 from ..models.attendance import Attendance as AttendanceModel
 from ..models.student import Student as StudentModel
+from ..models.notification import Notification as NotificationModel
 from ..schemas.attendance import (
     AttendanceBulkCreate, AttendanceRecord, AttendanceWithStudent
 )
@@ -28,11 +29,22 @@ def mark_attendance_bulk(payload: AttendanceBulkCreate, db: Session = Depends(ge
         ).first()
 
         if existing:
+            was_present = existing.is_present
             existing.is_present = entry.is_present
             existing.marked_by = payload.marked_by or "admin"
             db.commit()
             db.refresh(existing)
             results.append(existing)
+            
+            # Notify if changed to absent
+            if was_present and not entry.is_present:
+                notif = NotificationModel(
+                    student_id=entry.student_id,
+                    title="অনুপস্থিতি এলার্ট",
+                    message=f"আপনি {att_date.strftime('%d-%m-%Y')} তারিখে ক্লাসে অনুপস্থিত ছিলেন। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।"
+                )
+                db.add(notif)
+                db.commit()
         else:
             new_att = AttendanceModel(
                 student_id=entry.student_id,
@@ -46,6 +58,16 @@ def mark_attendance_bulk(payload: AttendanceBulkCreate, db: Session = Depends(ge
             db.commit()
             db.refresh(new_att)
             results.append(new_att)
+            
+            # Notify if absent initially
+            if not entry.is_present:
+                notif = NotificationModel(
+                    student_id=entry.student_id,
+                    title="অনুপস্থিতি এলার্ট",
+                    message=f"আপনি {att_date.strftime('%d-%m-%Y')} তারিখে ক্লাসে অনুপস্থিত ছিলেন। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।"
+                )
+                db.add(notif)
+                db.commit()
 
     return results
 

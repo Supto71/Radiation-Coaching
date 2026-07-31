@@ -21,6 +21,8 @@ const StudentDashboard = () => {
   const [resultsLoading, setResultsLoading] = useState(true);
   const [notices, setNotices] = useState([]);
   const [noticesLoading, setNoticesLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
 
   useEffect(() => {
     // Load student from localStorage
@@ -135,12 +137,28 @@ const StudentDashboard = () => {
       }
     };
 
+    // Fetch Notifications
+    const fetchNotifications = async () => {
+      setNotificationsLoading(true);
+      try {
+        const res = await fetch(`/api/notifications/${encodeURIComponent(student.student_uid)}`);
+        if (res.ok) {
+          setNotifications(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      } finally {
+        setNotificationsLoading(false);
+      }
+    };
+
     fetchRoutines();
     fetchAttendance();
     fetchFees();
     fetchExams();
     fetchResults();
     fetchNotices();
+    fetchNotifications();
   }, [student]);
 
   const handleLogout = () => {
@@ -161,8 +179,11 @@ const StudentDashboard = () => {
     { id: 'fees', label: 'পেমেন্ট হিস্ট্রি' },
     { id: 'exams', label: 'পরীক্ষা' },
     { id: 'results', label: 'ফলাফল' },
-    { id: 'notices', label: 'নোটিশ বোর্ড' }
+    { id: 'notices', label: 'নোটিশ বোর্ড' },
+    { id: 'notifications', label: 'নোটিফিকেশন' }
   ];
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -177,9 +198,21 @@ const StudentDashboard = () => {
           </button>
           <h1 className="text-xl font-bold text-gray-900">স্টুডেন্ট ড্যাশবোর্ড</h1>
         </div>
-        <button onClick={handleLogout} className="text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
-          লগআউট
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => { setActiveTab('notifications'); setIsSidebarOpen(false); }} className="relative text-gray-600 hover:text-primary transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          <button onClick={handleLogout} className="text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+            লগআউট
+          </button>
+        </div>
       </div>
 
       <div className="flex container mx-auto px-0 md:px-4 max-w-[1400px]">
@@ -520,6 +553,43 @@ const StudentDashboard = () => {
                         {notice.image && (
                           <img src={notice.image} alt="Notice Image" className="mt-4 max-h-64 rounded-lg border border-gray-200 object-contain" />
                         )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* NOTIFICATIONS TAB */}
+            {activeTab === 'notifications' && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold mb-4">আমার নোটিফিকেশন</h2>
+                {notificationsLoading ? (
+                  <div className="text-center py-12 text-gray-400 animate-pulse">লোড হচ্ছে...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500">
+                    কোনো নতুন নোটিফিকেশন নেই।
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {notifications.map(notif => (
+                      <div key={notif.id} 
+                           onClick={async () => {
+                             if (!notif.is_read) {
+                               try {
+                                 await fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' });
+                                 setNotifications(prev => prev.map(n => n.id === notif.id ? {...n, is_read: true} : n));
+                               } catch (err) {}
+                             }
+                           }}
+                           className={`p-4 rounded-xl border transition-colors cursor-pointer ${notif.is_read ? 'bg-white border-gray-100' : 'bg-[#00b4d8]/5 border-[#00b4d8]/20 shadow-sm'}`}>
+                        <div className="flex justify-between items-start mb-1">
+                          <h3 className={`text-sm font-bold ${notif.is_read ? 'text-gray-700' : 'text-gray-900'}`}>{notif.title}</h3>
+                          <span className="text-[10px] text-gray-400">
+                            {new Date(notif.created_at).toLocaleDateString('bn-BD', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className={`text-sm ${notif.is_read ? 'text-gray-500' : 'text-gray-800'}`}>{notif.message}</p>
                       </div>
                     ))}
                   </div>
