@@ -743,6 +743,7 @@ const FeeTrackerTab = () => {
   const [feeViewMode, setFeeViewMode] = useState('all'); // 'all', 'dues', 'history'
   const [showForm, setShowForm] = useState(false);
   const [editingFeeId, setEditingFeeId] = useState(null);
+  const [editingFullFeeId, setEditingFullFeeId] = useState(null);
   const [editAmount, setEditAmount] = useState('');
   const [msg, setMsg] = useState({ text: '', type: 'success' });
   const [saving, setSaving] = useState(false);
@@ -782,19 +783,32 @@ const FeeTrackerTab = () => {
   useEffect(() => { fetchFees(); fetchAllFees(); fetchStudents(); }, [fetchFees, fetchAllFees]);
 
   const handleAddFee = async () => {
-    if (!form.student_id || !form.amount || !form.month) {
+    if ((!editingFullFeeId && !form.student_id) || !form.amount || !form.month) {
       setMsg({ text: 'সকল ফিল্ড পূরণ করুন!', type: 'error' }); return;
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/dashboard/fees', {
-        method: 'POST',
+      const url = editingFullFeeId ? `/api/dashboard/fees/${editingFullFeeId}` : '/api/dashboard/fees';
+      const method = editingFullFeeId ? 'PATCH' : 'POST';
+      const bodyData = { 
+        amount: parseFloat(form.amount),
+        month: form.month,
+        is_paid: form.is_paid
+      };
+      if (!editingFullFeeId) {
+        bodyData.student_id = parseInt(form.student_id);
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, student_id: parseInt(form.student_id), amount: parseFloat(form.amount) })
+        body: JSON.stringify(bodyData)
       });
       if (res.ok) {
-        setMsg({ text: 'ফি রেকর্ড সফলভাবে যোগ হয়েছে!', type: 'success' });
+        setMsg({ text: editingFullFeeId ? 'ফি রেকর্ড আপডেট হয়েছে!' : 'ফি রেকর্ড সফলভাবে যোগ হয়েছে!', type: 'success' });
         setShowForm(false);
+        setEditingFullFeeId(null);
+        setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
         fetchFees(); fetchAllFees();
       } else {
         const errorData = await res.json().catch(() => ({}));
@@ -897,7 +911,11 @@ const FeeTrackerTab = () => {
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <h2 className="text-xl font-bold text-gray-900">ফি ট্র্যাকার</h2>
-        <button onClick={() => setShowForm(!showForm)}
+        <button onClick={() => {
+            setEditingFullFeeId(null);
+            setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
+            setShowForm(!showForm);
+          }}
           className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm">
           <PlusIcon /> নতুন ফি এন্ট্রি
         </button>
@@ -924,14 +942,23 @@ const FeeTrackerTab = () => {
       {/* Add Fee Form */}
       {showForm && (
         <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">
-          <h3 className="font-bold text-lg mb-4 text-gray-800">নতুন ফি এন্ট্রি</h3>
+          <h3 className="font-bold text-lg mb-4 text-gray-800">{editingFullFeeId ? 'ফি রেকর্ড এডিট করুন' : 'নতুন ফি এন্ট্রি'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SearchableStudentSelect
-              students={students}
-              fees={allFees}
-              value={form.student_id}
-              onChange={val => setForm({ ...form, student_id: val })}
-            />
+            {!editingFullFeeId ? (
+              <SearchableStudentSelect
+                students={students}
+                fees={allFees}
+                value={form.student_id}
+                onChange={val => setForm({ ...form, student_id: val })}
+              />
+            ) : (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">স্টুডেন্ট</label>
+                <div className="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-100 text-gray-600 font-medium">
+                  {students.find(s => s.id === parseInt(form.student_id))?.name || form.student_id} (পরিবর্তনযোগ্য নয়)
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">মাস *</label>
               <input type="month" value={form.month} onChange={e => setForm({ ...form, month: e.target.value })}
@@ -952,9 +979,9 @@ const FeeTrackerTab = () => {
           <div className="flex gap-3 mt-5">
             <button onClick={handleAddFee} disabled={saving}
               className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
-              {saving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
+              {saving ? 'সেভ হচ্ছে...' : (editingFullFeeId ? 'আপডেট করুন' : 'সেভ করুন')}
             </button>
-            <button onClick={() => setShowForm(false)}
+            <button onClick={() => { setShowForm(false); setEditingFullFeeId(null); setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false }); }}
               className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
               বাতিল
             </button>
@@ -1069,7 +1096,15 @@ const FeeTrackerTab = () => {
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
                       )}
                     </td>
-                    <td className="p-4 flex gap-2 items-center h-full">
+                    <td className="p-4 flex gap-2 items-center h-full flex-wrap">
+                      <button onClick={() => {
+                        setEditingFullFeeId(f.id);
+                        setForm({ student_id: f.student_id.toString(), amount: f.amount.toString(), month: f.month, is_paid: f.is_paid });
+                        setShowForm(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }} className="text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1.5 rounded-lg text-sm font-semibold transition-colors" title="এডিট করুন">
+                        এডিট
+                      </button>
                       {!f.is_paid && (
                         <button onClick={() => handleMarkPaid(f.id)}
                           className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors font-semibold">
