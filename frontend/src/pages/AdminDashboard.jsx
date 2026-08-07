@@ -1188,6 +1188,92 @@ const FeeTrackerTab = () => {
           )}
         </div>
       )}
+
+      {/* History View */}
+      {feeViewMode === 'history' && (
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <div className="mb-6 max-w-md">
+            <h3 className="font-bold text-lg mb-4 text-gray-800">স্টুডেন্ট নির্বাচন করুন</h3>
+            <SearchableStudentSelect
+              students={students}
+              fees={allFees}
+              value={historyStudent ? historyStudent.toString() : ''}
+              onChange={val => setHistoryStudent(val ? parseInt(val) : null)}
+            />
+          </div>
+
+          {historyStudent ? (
+            <div className="mt-6">
+              <h4 className="font-bold text-gray-700 mb-3 border-b pb-2">
+                পেমেন্ট হিস্ট্রি - {students.find(s => s.id === historyStudent)?.name} ({students.find(s => s.id === historyStudent)?.uid})
+              </h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse mt-2">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-600 text-sm border-b">
+                      <th className="p-4 font-bold">তারিখ / মাস</th>
+                      <th className="p-4 font-bold">ফি তথ্য</th>
+                      <th className="p-4 font-bold">স্ট্যাটাস</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {allFees.filter(f => f.student_id === historyStudent).length > 0 ? (
+                      allFees
+                        .filter(f => f.student_id === historyStudent)
+                        .sort((a, b) => b.month.localeCompare(a.month))
+                        .map(f => (
+                          <tr key={f.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="p-4 text-sm font-medium text-gray-700">{f.month}</td>
+                            <td className="p-4 font-bold text-gray-900">
+                              <div className="flex flex-col gap-1 text-sm">
+                                <div className="flex items-center justify-between min-w-[120px]">
+                                  <span className="text-gray-600">মোট ফি:</span>
+                                  <span>৳{f.amount}</span>
+                                </div>
+                                {(f.due_amount > 0 || f.paid_amount > 0) && (
+                                  <>
+                                    <div className="flex justify-between text-red-600 font-semibold border-t border-gray-100 pt-1 mt-1">
+                                      <span>বকেয়া:</span>
+                                      <span>৳{f.due_amount || 0}</span>
+                                    </div>
+                                    <div className="flex justify-between text-green-600 font-semibold">
+                                      <span>পরিশোধ:</span>
+                                      <span>৳{f.paid_amount || 0}</span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              {f.is_paid ? (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                  ✓ পরিশোধিত
+                                  {f.payment_date && <span className="ml-1 opacity-70">({f.payment_date})</span>}
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="text-center py-8 text-gray-400 font-medium">
+                          এই স্টুডেন্টের কোনো ফি রেকর্ড নেই
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+             <div className="text-center py-10 text-gray-400 font-medium bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                হিস্ট্রি দেখতে উপরের অপশন থেকে একজন স্টুডেন্ট নির্বাচন করুন
+             </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
