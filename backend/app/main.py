@@ -33,39 +33,39 @@ try:
             try:
                 conn.execute(text('ALTER TABLE fee_records ADD CONSTRAINT fee_records_student_id_fkey FOREIGN KEY (student_id) REFERENCES students(id);'))
             except Exception:
-                pass
+                conn.rollback()
             conn.execute(text('ALTER TABLE exam_results DROP CONSTRAINT IF EXISTS exam_results_student_id_fkey CASCADE;'))
             try:
                 conn.execute(text('ALTER TABLE exam_results ADD CONSTRAINT exam_results_student_id_fkey FOREIGN KEY (student_id) REFERENCES students(id);'))
             except Exception:
-                pass
+                conn.rollback()
             conn.execute(text('ALTER TABLE exam_results DROP CONSTRAINT IF EXISTS exam_results_exam_id_fkey CASCADE;'))
             try:
                 conn.execute(text('ALTER TABLE exam_results ADD CONSTRAINT exam_results_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES exams(id);'))
             except Exception:
-                pass
+                conn.rollback()
             
         # Add gender column to students table if it doesn't exist (works for both sqlite and postgres)
         try:
             conn.execute(text('ALTER TABLE students ADD COLUMN gender VARCHAR DEFAULT \'ছেলে\';'))
         except Exception:
-            pass
+            conn.rollback()
             
         # Add due_amount and paid_amount to fee_records table
         try:
             conn.execute(text('ALTER TABLE fee_records ADD COLUMN due_amount FLOAT DEFAULT 0.0;'))
         except Exception:
-            pass
+            conn.rollback()
         try:
             conn.execute(text('ALTER TABLE fee_records ADD COLUMN paid_amount FLOAT DEFAULT 0.0;'))
         except Exception:
-            pass
+            conn.rollback()
             
         # Update legacy branch names
         try:
             conn.execute(text('UPDATE students SET branch = \'দ্বিতীয় শাখা\' WHERE branch = \'বালিকা শাখা\';'))
         except Exception:
-            pass
+            conn.rollback()
 
         conn.commit()
 except Exception as e:
