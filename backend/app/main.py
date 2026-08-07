@@ -98,6 +98,19 @@ if os.path.exists(STATIC_DIR):
     def serve_react_app(catchall: str):
         if catchall.startswith("api/"):
             return {"detail": "Not Found"}
+
+@app.get("/api/fix_db")
+def fix_database():
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text('ALTER TABLE students ADD COLUMN monthly_fee FLOAT DEFAULT 0.0;'))
+            conn.execute(text('ALTER TABLE fee_records ADD COLUMN due_amount FLOAT DEFAULT 0.0;'))
+            conn.execute(text('ALTER TABLE fee_records ADD COLUMN paid_amount FLOAT DEFAULT 0.0;'))
+            conn.commit()
+        return {"status": "success", "message": "Database columns added successfully!"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
         
         # Check if the requested file exists in the static directory (e.g. images in public folder)
         file_path = os.path.join(STATIC_DIR, catchall)
