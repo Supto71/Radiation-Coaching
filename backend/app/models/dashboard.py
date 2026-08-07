@@ -23,6 +23,8 @@ class FeeRecord(Base):
     month = Column(String) # e.g. "July 2026"
     is_paid = Column(Boolean, default=False)
     payment_date = Column(Date, nullable=True)
+    due_amount = Column(Float, default=0.0)
+    paid_amount = Column(Float, default=0.0)
 class Exam(Base):
     __tablename__ = "exams"
     

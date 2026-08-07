@@ -753,7 +753,7 @@ const FeeTrackerTab = () => {
   const [allFees, setAllFees] = useState([]); // unfiltered, for history
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
+  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth, is_paid: false, due_amount: '0', paid_amount: '0' });
 
   const fetchFees = useCallback(async () => {
     setLoading(true);
@@ -793,7 +793,9 @@ const FeeTrackerTab = () => {
       const bodyData = { 
         amount: parseFloat(form.amount),
         month: form.month,
-        is_paid: form.is_paid
+        is_paid: form.is_paid,
+        due_amount: parseFloat(form.due_amount) || 0,
+        paid_amount: parseFloat(form.paid_amount) || 0
       };
       if (!editingFullFeeId) {
         bodyData.student_id = parseInt(form.student_id);
@@ -808,7 +810,7 @@ const FeeTrackerTab = () => {
         setMsg({ text: editingFullFeeId ? 'ফি রেকর্ড আপডেট হয়েছে!' : 'ফি রেকর্ড সফলভাবে যোগ হয়েছে!', type: 'success' });
         setShowForm(false);
         setEditingFullFeeId(null);
-        setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
+        setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false, due_amount: '0', paid_amount: '0' });
         fetchFees(); fetchAllFees();
       } else {
         const errorData = await res.json().catch(() => ({}));
@@ -913,7 +915,7 @@ const FeeTrackerTab = () => {
         <h2 className="text-xl font-bold text-gray-900">ফি ট্র্যাকার</h2>
         <button onClick={() => {
             setEditingFullFeeId(null);
-            setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
+            setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false, due_amount: '0', paid_amount: '0' });
             setShowForm(!showForm);
           }}
           className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm">
@@ -965,10 +967,22 @@ const FeeTrackerTab = () => {
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">পরিমাণ (টাকা) *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">মোট ফি (টাকা) *</label>
               <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
                 placeholder="৫০০" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">বকেয়া (টাকা)</label>
+              <input type="number" value={form.due_amount} onChange={e => setForm({ ...form, due_amount: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="০" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">পরিশোধ (টাকা)</label>
+              <input type="number" value={form.paid_amount} onChange={e => setForm({ ...form, paid_amount: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="০" />
             </div>
             <div className="flex items-center gap-3 mt-6">
               <input type="checkbox" id="isPaid" checked={form.is_paid} onChange={e => setForm({ ...form, is_paid: e.target.checked })}
@@ -981,7 +995,7 @@ const FeeTrackerTab = () => {
               className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
               {saving ? 'সেভ হচ্ছে...' : (editingFullFeeId ? 'আপডেট করুন' : 'সেভ করুন')}
             </button>
-            <button onClick={() => { setShowForm(false); setEditingFullFeeId(null); setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false }); }}
+            <button onClick={() => { setShowForm(false); setEditingFullFeeId(null); setForm({ student_id: '', amount: '500', month: currentMonth, is_paid: false, due_amount: '0', paid_amount: '0' }); }}
               className="bg-white border border-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-50 transition-colors">
               বাতিল
             </button>
@@ -1054,7 +1068,7 @@ const FeeTrackerTab = () => {
                 <tr className="bg-gray-50 text-gray-600 text-sm border-b">
                   <th className="p-4 font-bold">তারিখ / মাস</th>
                   <th className="p-4 font-bold">আইডি & নাম</th>
-                  <th className="p-4 font-bold">পরিমাণ</th>
+                  <th className="p-4 font-bold">ফি তথ্য</th>
                   <th className="p-4 font-bold">স্ট্যাটাস</th>
                   <th className="p-4 font-bold">অ্যাকশন</th>
                 </tr>
@@ -1076,12 +1090,29 @@ const FeeTrackerTab = () => {
                           <button onClick={() => setEditingFeeId(null)} className="text-red-500 font-bold hover:bg-red-50 p-1 rounded transition-colors">✗</button>
                         </div>
                       ) : (
-                        <div className="flex gap-2 items-center">
-                          <span>৳{f.amount}</span>
-                          {!f.is_paid && (
-                            <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="পরিমাণ এডিট করুন">
-                              ✎
-                            </button>
+                        <div className="flex flex-col gap-1 text-sm">
+                          <div className="flex items-center justify-between min-w-[120px]">
+                            <span className="text-gray-600">মোট ফি:</span>
+                            <div className="flex items-center gap-1">
+                              <span>৳{f.amount}</span>
+                              {!f.is_paid && (
+                                <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="পরিমাণ এডিট করুন">
+                                  ✎
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          {(f.due_amount > 0 || f.paid_amount > 0) && (
+                            <>
+                              <div className="flex justify-between text-red-600 font-semibold border-t border-gray-100 pt-1 mt-1">
+                                <span>বকেয়া:</span>
+                                <span>৳{f.due_amount || 0}</span>
+                              </div>
+                              <div className="flex justify-between text-green-600 font-semibold">
+                                <span>পরিশোধ:</span>
+                                <span>৳{f.paid_amount || 0}</span>
+                              </div>
+                            </>
                           )}
                         </div>
                       )}
@@ -1099,7 +1130,7 @@ const FeeTrackerTab = () => {
                     <td className="p-4 flex gap-2 items-center h-full flex-wrap">
                       <button onClick={() => {
                         setEditingFullFeeId(f.id);
-                        setForm({ student_id: f.student_id.toString(), amount: f.amount.toString(), month: f.month, is_paid: f.is_paid });
+                        setForm({ student_id: f.student_id.toString(), amount: f.amount.toString(), month: f.month, is_paid: f.is_paid, due_amount: (f.due_amount || 0).toString(), paid_amount: (f.paid_amount || 0).toString() });
                         setShowForm(true);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }} className="text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1.5 rounded-lg text-sm font-semibold transition-colors" title="এডিট করুন">

@@ -51,6 +51,16 @@ try:
         except Exception:
             pass
             
+        # Add due_amount and paid_amount to fee_records table
+        try:
+            conn.execute(text('ALTER TABLE fee_records ADD COLUMN due_amount FLOAT DEFAULT 0.0;'))
+        except Exception:
+            pass
+        try:
+            conn.execute(text('ALTER TABLE fee_records ADD COLUMN paid_amount FLOAT DEFAULT 0.0;'))
+        except Exception:
+            pass
+            
         # Update legacy branch names
         try:
             conn.execute(text('UPDATE students SET branch = \'দ্বিতীয় শাখা\' WHERE branch = \'বালিকা শাখা\';'))

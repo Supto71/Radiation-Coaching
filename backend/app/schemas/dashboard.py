@@ -33,11 +33,15 @@ class FeeRecordBase(BaseModel):
     month: str
     is_paid: bool = False
     payment_date: Optional[date] = None
+    due_amount: float = 0.0
+    paid_amount: float = 0.0
 
 class FeeRecordUpdate(BaseModel):
     amount: Optional[float] = None
     month: Optional[str] = None
     is_paid: Optional[bool] = None
+    due_amount: Optional[float] = None
+    paid_amount: Optional[float] = None
 
 class FeeRecordCreate(FeeRecordBase):
     student_id: int

@@ -142,6 +142,10 @@ def update_fee_record(fee_id: int, fee_update: schemas.FeeRecordUpdate, db: Sess
     
     if fee_update.amount is not None:
         fee.amount = fee_update.amount
+    if fee_update.due_amount is not None:
+        fee.due_amount = fee_update.due_amount
+    if fee_update.paid_amount is not None:
+        fee.paid_amount = fee_update.paid_amount
     if fee_update.month is not None:
         fee.month = fee_update.month
     if fee_update.is_paid is not None:
