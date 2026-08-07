@@ -50,6 +50,12 @@ try:
             conn.execute(text('ALTER TABLE students ADD COLUMN gender VARCHAR DEFAULT \'ছেলে\';'))
         except Exception:
             conn.rollback()
+
+        # Add monthly_fee column to students table if it doesn't exist
+        try:
+            conn.execute(text('ALTER TABLE students ADD COLUMN monthly_fee FLOAT DEFAULT 0.0;'))
+        except Exception:
+            conn.rollback()
             
         # Add due_amount and paid_amount to fee_records table
         try:

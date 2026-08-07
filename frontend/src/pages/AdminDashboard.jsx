@@ -103,7 +103,7 @@ const StudentDatabaseTab = ({ role }) => {
         setMsg({ text: `স্টুডেন্ট সফলভাবে ${editingStudentId ? 'আপডেট' : 'যোগ'} করা হয়েছে!`, type: 'success' });
         setShowForm(false);
         setEditingStudentId(null);
-        setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+        setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '', monthly_fee: '0' });
         fetchStudents();
       } else {
         setMsg({ text: `${editingStudentId ? 'আপডেট' : 'যোগ'} করতে সমস্যা হয়েছে।`, type: 'error' });
@@ -126,7 +126,7 @@ const StudentDatabaseTab = ({ role }) => {
         <button
           onClick={() => {
             setEditingStudentId(null);
-            setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+            setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '', monthly_fee: '0' });
             setShowForm(!showForm);
           }}
           className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm"
@@ -201,6 +201,12 @@ const StudentDatabaseTab = ({ role }) => {
               <input type="tel" value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
                 placeholder="০১XXXXXXXXX" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">মাসিক ফি (৳)</label>
+              <input type="number" value={form.monthly_fee} onChange={e => setForm({ ...form, monthly_fee: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                placeholder="৫০০" />
             </div>
           </div>
           <div className="flex gap-3 mt-5">
@@ -951,7 +957,11 @@ const FeeTrackerTab = () => {
                 students={students}
                 fees={allFees}
                 value={form.student_id}
-                onChange={val => setForm({ ...form, student_id: val })}
+                onChange={val => {
+                  const student = students.find(s => s.id === parseInt(val));
+                  const defaultAmount = student?.monthly_fee ? student.monthly_fee.toString() : '500';
+                  setForm({ ...form, student_id: val, amount: defaultAmount, due_amount: defaultAmount });
+                }}
               />
             ) : (
               <div>
@@ -1961,6 +1971,131 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
   );
 };
 
+// ─── Individual Fees Tab ──────────────────────────────────────────────────────────
+const IndividualFeesTab = () => {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterClass, setFilterClass] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editFee, setEditFee] = useState('');
+  const [msg, setMsg] = useState({ text: '', type: 'success' });
+
+  const fetchStudents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/students/');
+      if (res.ok) setStudents(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchStudents(); }, [fetchStudents]);
+
+  const handleUpdateFee = async (id, currentData) => {
+    try {
+      const res = await fetch(`/api/students/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...currentData, monthly_fee: parseFloat(editFee) || 0 })
+      });
+      if (res.ok) {
+        setMsg({ text: 'ফি সফলভাবে আপডেট হয়েছে!', type: 'success' });
+        setEditingId(null);
+        fetchStudents();
+      } else {
+        setMsg({ text: 'আপডেট করতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch (e) {
+      setMsg({ text: 'সার্ভার এরর!', type: 'error' });
+    }
+    setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
+  };
+
+  const filteredStudents = students.filter(s => {
+    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || (s.student_uid || '').toLowerCase().includes(search.toLowerCase());
+    const matchClass = filterClass ? s.class_level === filterClass : true;
+    return matchSearch && matchClass;
+  });
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-900">ইন্ডিভিজুয়াল ফি ডেটাবেজ</h2>
+      </div>
+
+      <Alert message={msg.text} type={msg.type} />
+
+      <div className="flex flex-col md:flex-row gap-3 mb-5">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none bg-white"
+            placeholder="স্টুডেন্টের নাম বা আইডি দিয়ে খুঁজুন..." />
+        </div>
+        <select value={filterClass} onChange={e => setFilterClass(e.target.value)}
+          className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
+          <option value="">সব শ্রেণি</option>
+          {CLASS_LEVELS.map(cl => <option key={cl.value} value={cl.value}>{cl.label}</option>)}
+        </select>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+        {loading ? (
+          <div className="text-center py-12 text-gray-400 animate-pulse font-medium">লোড হচ্ছে...</div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
+            কোনো শিক্ষার্থী পাওয়া যায়নি।
+          </div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
+                <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                <th className="p-4 font-bold">নাম</th>
+                <th className="p-4 font-bold">শাখা ও শ্রেণি</th>
+                <th className="p-4 font-bold">নির্ধারিত মাসিক ফি</th>
+                <th className="p-4 font-bold">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStudents.map(s => (
+                <tr key={s.id} className="border-b border-gray-50 hover:bg-blue-50/40 transition-colors">
+                  <td className="p-4"><span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg text-sm">{s.student_uid}</span></td>
+                  <td className="p-4 font-semibold text-gray-900">{s.name}</td>
+                  <td className="p-4 text-gray-600 text-sm">{s.branch} • {s.class_level}</td>
+                  <td className="p-4">
+                    {editingId === s.id ? (
+                      <input type="number" value={editFee} onChange={e => setEditFee(e.target.value)}
+                        className="w-24 border border-primary rounded-lg p-1.5 focus:outline-none focus:ring-2 focus:ring-primary"
+                        autoFocus />
+                    ) : (
+                      <span className="font-bold text-gray-800 text-lg">৳{s.monthly_fee || 0}</span>
+                    )}
+                  </td>
+                  <td className="p-4">
+                    {editingId === s.id ? (
+                      <div className="flex gap-2">
+                        <button onClick={() => handleUpdateFee(s.id, s)} className="text-green-600 font-bold hover:bg-green-50 p-1.5 rounded transition-colors text-sm">সেভ</button>
+                        <button onClick={() => setEditingId(null)} className="text-red-500 font-bold hover:bg-red-50 p-1.5 rounded transition-colors text-sm">বাতিল</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setEditingId(s.id); setEditFee(s.monthly_fee?.toString() || '0'); }}
+                        className="text-blue-500 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors text-sm font-semibold">
+                        এডিট
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const staffRole = localStorage.getItem('staff_role') || 'teacher';
   const [activeTab, setActiveTab] = useState('notices');
@@ -2253,6 +2388,7 @@ const AdminDashboard = () => {
     { id: 'teacher_att', label: 'টিচার হাজিরা' },
     { id: 'teachers', label: 'শিক্ষক ম্যানেজমেন্ট' },
     { id: 'routines', label: 'রুটিন আপডেট' },
+    { id: 'individual_fees', label: 'ইন্ডিভিজুয়াল ফি ডেটাবেজ' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
     { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' }
@@ -2397,6 +2533,7 @@ const AdminDashboard = () => {
             {activeTab === 'attendance' && <AttendanceTab role={staffRole} />}
             {activeTab === 'teacher_att' && <TeacherAttendanceTab records={teacherAttendanceRecords} fetchRecords={fetchTeacherAttendance} />}
             {activeTab === 'teachers' && <TeacherManagementTab />}
+            {activeTab === 'individual_fees' && <IndividualFeesTab />}
             {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
             {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
             {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}

@@ -11,6 +11,7 @@ class StudentBase(BaseModel):
     father_name: Optional[str] = None
     mother_name: Optional[str] = None
     guardian_phone: Optional[str] = None
+    monthly_fee: Optional[float] = 0.0
 
 class StudentCreate(StudentBase):
     student_uid: Optional[str] = None

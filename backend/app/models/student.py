@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Float
 from datetime import datetime
 from ..db.database import Base
 
@@ -15,4 +15,5 @@ class Student(Base):
     father_name = Column(String, nullable=True)
     mother_name = Column(String, nullable=True)
     guardian_phone = Column(String, nullable=True) # Make this required conceptually but keep DB backward compatible if needed
+    monthly_fee = Column(Float, nullable=True, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
