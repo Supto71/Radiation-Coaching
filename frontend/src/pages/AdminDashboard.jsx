@@ -2021,7 +2021,7 @@ const IndividualFeesTab = () => {
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h2 className="text-xl font-bold text-gray-900">ইন্ডিভিজুয়াল ফি ডেটাবেজ</h2>
+        <h2 className="text-xl font-bold text-gray-900">ফি ডেটাবেজ</h2>
       </div>
 
       <Alert message={msg.text} type={msg.type} />
@@ -2388,7 +2388,7 @@ const AdminDashboard = () => {
     { id: 'teacher_att', label: 'টিচার হাজিরা' },
     { id: 'teachers', label: 'শিক্ষক ম্যানেজমেন্ট' },
     { id: 'routines', label: 'রুটিন আপডেট' },
-    { id: 'individual_fees', label: 'ইন্ডিভিজুয়াল ফি ডেটাবেজ' },
+    { id: 'individual_fees', label: 'ফি ডেটাবেজ' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
     { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' }
