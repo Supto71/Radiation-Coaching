@@ -87,18 +87,6 @@ app.include_router(notifications.router, prefix="/api/notifications", tags=["not
 import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-
-# Serve React Frontend if it exists (for full-stack deployment)
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
-
-if os.path.exists(STATIC_DIR):
-    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
-    
-    @app.get("/{catchall:path}")
-    def serve_react_app(catchall: str):
-        if catchall.startswith("api/"):
-            return {"detail": "Not Found"}
-
 @app.get("/api/fix_db")
 def fix_database():
     try:
@@ -111,6 +99,17 @@ def fix_database():
         return {"status": "success", "message": "Database columns added successfully!"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+# Serve React Frontend if it exists (for full-stack deployment)
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+
+if os.path.exists(STATIC_DIR):
+    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
+    
+    @app.get("/{catchall:path}")
+    def serve_react_app(catchall: str):
+        if catchall.startswith("api/"):
+            return {"detail": "Not Found"}
         
         # Check if the requested file exists in the static directory (e.g. images in public folder)
         file_path = os.path.join(STATIC_DIR, catchall)
