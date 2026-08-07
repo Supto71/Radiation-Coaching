@@ -650,7 +650,7 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
 
   const selectedStudent = students.find(s => s.id.toString() === value?.toString());
   const filteredStudents = students.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    (s.name || '').toLowerCase().includes(search.toLowerCase()) ||
     (s.student_uid || '').toLowerCase().includes(search.toLowerCase())
   );
 
@@ -905,7 +905,7 @@ const FeeTrackerTab = () => {
   // History: filtered students list for search
   const historyFilteredStudents = historySearch
     ? students.filter(s =>
-        s.name.toLowerCase().includes(historySearch.toLowerCase()) ||
+        (s.name || '').toLowerCase().includes(historySearch.toLowerCase()) ||
         (s.student_uid || '').toLowerCase().includes(historySearch.toLowerCase())
       ).slice(0, 8)
     : [];
@@ -1726,7 +1726,7 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
 
   const filteredRecords = records
     .filter(r => r.date.startsWith(filterMonth))
-    .filter(r => !searchTeacher || r.teacher_name.toLowerCase().includes(searchTeacher.toLowerCase()));
+    .filter(r => !searchTeacher || (r.teacher_name || '').toLowerCase().includes(searchTeacher.toLowerCase()));
 
   const summaryMap = {};
   records.filter(r => r.date.startsWith(filterMonth)).forEach(r => {
@@ -2013,7 +2013,7 @@ const IndividualFeesTab = () => {
   };
 
   const filteredStudents = students.filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || (s.student_uid || '').toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (s.name || '').toLowerCase().includes(search.toLowerCase()) || (s.student_uid || '').toLowerCase().includes(search.toLowerCase());
     const matchClass = filterClass ? s.class_level === filterClass : true;
     return matchSearch && matchClass;
   });
