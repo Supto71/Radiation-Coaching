@@ -2099,6 +2099,7 @@ const IndividualFeesTab = () => {
 const LeaderboardTab = () => {
   const [exams, setExams] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -2147,18 +2148,34 @@ const LeaderboardTab = () => {
       </div>
       
       <div className="p-6">
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">পরীক্ষা নির্বাচন করুন</label>
-          <select 
-            value={selectedExamId}
-            onChange={handleExamChange}
-            className="w-full md:w-1/3 px-4 py-2 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
-          >
-            <option value="">-- নির্বাচন করুন --</option>
-            {exams.map(exam => (
-              <option key={exam.id} value={exam.id}>{exam.title} ({exam.subject})</option>
-            ))}
-          </select>
+        <div className="mb-6 flex flex-col md:flex-row gap-4">
+          <div className="w-full md:w-1/3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">পরীক্ষা নির্বাচন করুন</label>
+            <select 
+              value={selectedExamId}
+              onChange={handleExamChange}
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+            >
+              <option value="">-- নির্বাচন করুন --</option>
+              {exams.map(exam => (
+                <option key={exam.id} value={exam.id}>{exam.title} ({exam.subject})</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="w-full md:w-1/3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">ক্লাস অনুযায়ী ফিল্টার</label>
+            <select 
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+            >
+              <option value="">-- সকল ক্লাস --</option>
+              {CLASS_LEVELS.map(c => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {loading ? (
@@ -2177,7 +2194,7 @@ const LeaderboardTab = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 text-sm">
-                {leaderboard.map((result, index) => (
+                {(selectedClass ? leaderboard.filter(r => r.class_level === selectedClass) : leaderboard).map((result, index) => (
                   <tr key={result.id} className="hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-4 text-gray-800 font-semibold">
                       {index === 0 ? '🥇 ১' : index === 1 ? '🥈 ২' : index === 2 ? '🥉 ৩' : index + 1}
