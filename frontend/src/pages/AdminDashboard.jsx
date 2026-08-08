@@ -2096,6 +2096,116 @@ const IndividualFeesTab = () => {
   );
 };
 
+const LeaderboardTab = () => {
+  const [exams, setExams] = useState([]);
+  const [selectedExamId, setSelectedExamId] = useState('');
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchExams();
+  }, []);
+
+  const fetchExams = async () => {
+    try {
+      const res = await fetch('/api/dashboard/exams');
+      if (res.ok) setExams(await res.json());
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchLeaderboard = async (examId) => {
+    if (!examId) {
+      setLeaderboard([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/results/leaderboard/${examId}`);
+      if (res.ok) {
+        setLeaderboard(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExamChange = (e) => {
+    const examId = e.target.value;
+    setSelectedExamId(examId);
+    fetchLeaderboard(examId);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 to-white">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">ফলাফল লিডারবোর্ড</h2>
+          <p className="text-sm text-gray-500 mt-1">শিক্ষার্থীদের পরীক্ষার ফলাফল এবং র‍্যাঙ্কিং</p>
+        </div>
+      </div>
+      
+      <div className="p-6">
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">পরীক্ষা নির্বাচন করুন</label>
+          <select 
+            value={selectedExamId}
+            onChange={handleExamChange}
+            className="w-full md:w-1/3 px-4 py-2 border rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+          >
+            <option value="">-- নির্বাচন করুন --</option>
+            {exams.map(exam => (
+              <option key={exam.id} value={exam.id}>{exam.title} ({exam.subject})</option>
+            ))}
+          </select>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-10 text-gray-500">লোড হচ্ছে...</div>
+        ) : leaderboard.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50 text-gray-600 text-sm">
+                <tr>
+                  <th className="py-3 px-4 font-medium rounded-tl-lg">র‍্যাঙ্ক</th>
+                  <th className="py-3 px-4 font-medium">শিক্ষার্থীর নাম</th>
+                  <th className="py-3 px-4 font-medium">আইডি</th>
+                  <th className="py-3 px-4 font-medium">ক্লাস</th>
+                  <th className="py-3 px-4 font-medium">স্কোর</th>
+                  <th className="py-3 px-4 font-medium rounded-tr-lg">সঠিক/ভুল</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-sm">
+                {leaderboard.map((result, index) => (
+                  <tr key={result.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-3 px-4 text-gray-800 font-semibold">
+                      {index === 0 ? '🥇 ১' : index === 1 ? '🥈 ২' : index === 2 ? '🥉 ৩' : index + 1}
+                    </td>
+                    <td className="py-3 px-4 text-gray-800 font-medium">{result.student_name}</td>
+                    <td className="py-3 px-4 text-gray-500">{result.student_uid}</td>
+                    <td className="py-3 px-4 text-gray-600">{result.class_level || '-'}</td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {result.score}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-500">
+                      <span className="text-green-600">{result.total_correct}</span> / <span className="text-red-500">{result.total_wrong}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          selectedExamId && <div className="text-center py-10 text-gray-500">কোনো ফলাফল পাওয়া যায়নি।</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const staffRole = localStorage.getItem('staff_role') || 'teacher';
   const [activeTab, setActiveTab] = useState('notices');
@@ -2391,7 +2501,8 @@ const AdminDashboard = () => {
     { id: 'individual_fees', label: 'ফি ডেটাবেজ' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
-    { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' }
+    { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' },
+    { id: 'leaderboard', label: 'ফলাফল লিডারবোর্ড' }
   ];
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -2537,6 +2648,7 @@ const AdminDashboard = () => {
             {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
             {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
             {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}
+            {activeTab === 'leaderboard' && <LeaderboardTab />}
           </div>
           </div>
         </div>

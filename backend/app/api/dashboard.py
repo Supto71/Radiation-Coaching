@@ -261,6 +261,30 @@ def submit_exam_result(result: schemas.ExamResultCreate, student_id: int, db: Se
     db.refresh(db_result)
     return db_result
 
+@router.get("/results/leaderboard/{exam_id}", response_model=List[schemas.ExamResultLeaderboard])
+def get_exam_leaderboard(exam_id: int, db: Session = Depends(get_db)):
+    results = db.query(db_models.ExamResult, StudentModel).join(
+        StudentModel, db_models.ExamResult.student_id == StudentModel.id
+    ).filter(db_models.ExamResult.exam_id == exam_id).order_by(
+        db_models.ExamResult.score.desc()
+    ).all()
+
+    leaderboard = []
+    for res, student in results:
+        leaderboard.append({
+            "id": res.id,
+            "student_id": student.id,
+            "student_name": student.name if student and student.name else "অজানা",
+            "student_uid": student.student_uid if student and student.student_uid else "",
+            "class_level": student.class_level,
+            "branch": student.branch,
+            "score": res.score,
+            "total_correct": res.total_correct,
+            "total_wrong": res.total_wrong,
+            "taken_at": res.taken_at
+        })
+    return leaderboard
+
 # --- ROUTINE ---
 @router.get("/routines", response_model=List[schemas.Routine])
 def get_routines(branch: str = None, class_level: str = None, db: Session = Depends(get_db)):

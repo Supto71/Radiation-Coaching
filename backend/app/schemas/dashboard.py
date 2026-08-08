@@ -122,6 +122,21 @@ class ExamResult(ExamResultBase):
     class Config:
         from_attributes = True
 
+class ExamResultLeaderboard(BaseModel):
+    id: int
+    student_id: int
+    student_name: str
+    student_uid: str
+    class_level: Optional[str] = None
+    branch: Optional[str] = None
+    score: float
+    total_correct: int
+    total_wrong: int
+    taken_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # Routine Schemas
 class RoutineBase(BaseModel):
     date: Optional[str] = None
