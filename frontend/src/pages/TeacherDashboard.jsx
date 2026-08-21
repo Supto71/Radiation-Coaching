@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave, FaUserCog } from 'react-icons/fa';
+import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave, FaUserCog, FaTrash, FaBroom, FaEye } from 'react-icons/fa';
+import FormattedQuestion from '../components/FormattedQuestion';
+import { stripHtml } from '../utils/textUtils';
 
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState('routine');
@@ -27,6 +29,8 @@ const TeacherDashboard = () => {
   const [examSubject, setExamSubject] = useState('');
   const [examDuration, setExamDuration] = useState(30);
   const [selectedExamId, setSelectedExamId] = useState(null);
+  const [selectedExamDetails, setSelectedExamDetails] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   // Question Form
   const [qText, setQText] = useState('');
@@ -68,6 +72,46 @@ const TeacherDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
+  const loadExamQuestions = async (examId) => {
+    if (!examId) {
+      setSelectedExamDetails(null);
+      return;
+    }
+    try {
+      const res = await axios.get(`/api/dashboard/exams/${examId}`);
+      setSelectedExamDetails(res.data);
+    } catch (err) {
+      console.error('Error fetching exam questions', err);
+    }
+  };
+
+  const handleSelectExam = (examId) => {
+    setSelectedExamId(examId);
+    if (examId) {
+      loadExamQuestions(examId);
+    } else {
+      setSelectedExamDetails(null);
+    }
+  };
+
+  const handleCleanAllHtml = () => {
+    setQText(prev => stripHtml(prev));
+    setQOptions(prev => prev.map(opt => stripHtml(opt)));
+  };
+
+  const deleteQuestion = async (qId) => {
+    if (!window.confirm('আপনি কি এই প্রশ্নটি মুছে ফেলতে চান?')) return;
+    try {
+      await axios.delete(`/api/dashboard/questions/${qId}`);
+      alert('প্রশ্নটি মুছে ফেলা হয়েছে।');
+      if (selectedExamId) {
+        loadExamQuestions(selectedExamId);
+      }
+      fetchExams();
+    } catch (err) {
+      alert('প্রশ্ন মুছতে সমস্যা হয়েছে!');
+    }
+  };
 
   const submitMyAttendance = async (e) => {
     e.preventDefault();
@@ -105,16 +149,23 @@ const TeacherDashboard = () => {
   const addQuestion = async (e) => {
     e.preventDefault();
     if (!selectedExamId) return alert('আগে পরীক্ষা নির্বাচন করুন!');
-    if (qOptions.some(opt => opt.trim() === '')) return alert('সবগুলো অপশন পূরণ করুন!');
+    
+    // Automatically strip HTML tags and decode entities
+    const cleanText = stripHtml(qText).trim();
+    const cleanOpts = qOptions.map(opt => stripHtml(opt).trim());
+
+    if (!cleanText) return alert('অনুগ্রহ করে প্রশ্নটি লিখুন!');
+    if (cleanOpts.some(opt => opt === '')) return alert('সবগুলো অপশন পূরণ করুন!');
     
     try {
       await axios.post(`/api/dashboard/exams/${selectedExamId}/questions`, {
-        text: qText,
-        options: JSON.stringify(qOptions),
+        text: cleanText,
+        options: JSON.stringify(cleanOpts),
         correct_answer: qCorrect
       });
-      alert('প্রশ্ন যোগ হয়েছে!');
+      alert('প্রশ্ন সফলভাবে যোগ হয়েছে!');
       setQText(''); setQOptions(['', '', '', '']); setQCorrect(0);
+      loadExamQuestions(selectedExamId);
       fetchExams();
     } catch (err) { alert('প্রশ্ন যোগ করতে সমস্যা হয়েছে!'); }
   };
@@ -332,11 +383,24 @@ const TeacherDashboard = () => {
 
             {/* Add Questions */}
             <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
-              <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2"><FaQuestionCircle className="text-primary"/> প্রশ্ন যোগ করুন (Add Questions)</h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <FaQuestionCircle className="text-primary"/> প্রশ্ন যোগ ও ম্যানেজ করুন
+                </h3>
+                {selectedExamDetails?.questions && (
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full self-start sm:self-auto">
+                    মোট প্রশ্ন: {selectedExamDetails.questions.length}টি
+                  </span>
+                )}
+              </div>
               
               <div className="mb-8">
                 <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">যে পরীক্ষার প্রশ্ন বানাবেন সেটি নির্বাচন করুন:</label>
-                <select value={selectedExamId || ''} onChange={e => setSelectedExamId(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50">
+                <select 
+                  value={selectedExamId || ''} 
+                  onChange={e => handleSelectExam(e.target.value)} 
+                  className="w-full border border-gray-200 rounded-xl p-3.5 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50 font-medium"
+                >
                   <option value="">-- পরীক্ষা নির্বাচন করুন --</option>
                   {exams.map(ex => (
                     <option key={ex.id} value={ex.id}>{ex.title} ({ex.subject})</option>
@@ -345,30 +409,181 @@ const TeacherDashboard = () => {
               </div>
 
               {selectedExamId && (
-                <form onSubmit={addQuestion} className="space-y-6 animate-fade-in bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">প্রশ্ন:</label>
-                    <textarea placeholder="এখানে প্রশ্নটি লিখুন..." required value={qText} onChange={e => setQText(e.target.value)} className="w-full border border-gray-200 rounded-xl p-4 outline-none focus:border-primary focus:ring-1 focus:ring-primary min-h-[120px] text-gray-700 resize-none" />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-3 ml-1">অপশনসমূহ (সঠিক উত্তরের বাম পাশে টিক দিন):</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {qOptions.map((opt, i) => (
-                        <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${qCorrect === i ? 'border-green-500 bg-green-50/50' : 'border-gray-200 bg-white'}`}>
-                          <input type="radio" name="correctOpt" checked={qCorrect === i} onChange={() => setQCorrect(i)} className="w-5 h-5 accent-green-600 cursor-pointer" />
-                          <input type="text" placeholder={`অপশন ${i + 1}`} value={opt} onChange={e => { const newOpts = [...qOptions]; newOpts[i] = e.target.value; setQOptions(newOpts); }} className="w-full bg-transparent outline-none p-1 text-gray-700 font-medium" required />
-                        </div>
-                      ))}
+                <div className="space-y-8 animate-fade-in">
+                  <form onSubmit={addQuestion} className="space-y-6 bg-gray-50 p-6 md:p-7 rounded-2xl border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-bold text-gray-800 ml-1">
+                        প্রশ্ন লিখুন (বড় প্রশ্ন উপর-নিচে স্বাভাবিকভাবে সাজানো থাকবে):
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleCleanAllHtml}
+                        className="text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                        title="HTML কোড বা ট্যাগ থাকলে সাধারণ টেক্সটে রূপান্তর করুন"
+                      >
+                        <FaBroom className="text-amber-600" /> HTML ট্যাগ মুছুন
+                      </button>
                     </div>
+
+                    <div>
+                      <textarea 
+                        placeholder="এখানে প্রশ্নটি লিখুন... (কোনো প্রকার HTML ট্যাগ ছাড়া স্বাভাবিক টেক্সট)" 
+                        required 
+                        rows={4}
+                        value={qText} 
+                        onChange={e => setQText(e.target.value)}
+                        onPaste={e => {
+                          const pasted = e.clipboardData?.getData('text/plain') || '';
+                          if (pasted.includes('<') && pasted.includes('>')) {
+                            e.preventDefault();
+                            const cleaned = stripHtml(pasted);
+                            const start = e.target.selectionStart;
+                            const end = e.target.selectionEnd;
+                            const next = qText.substring(0, start) + cleaned + qText.substring(end);
+                            setQText(next);
+                          }
+                        }}
+                        className="w-full border border-gray-200 rounded-xl p-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[100px] text-gray-800 bg-white leading-relaxed break-words whitespace-pre-wrap resize-y" 
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-3 ml-1">
+                        অপশনসমূহ (সঠিক উত্তরের বাম পাশে গোল বাটনে টিক দিন):
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {qOptions.map((opt, i) => (
+                          <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border-2 transition-all ${qCorrect === i ? 'border-green-500 bg-green-50/70' : 'border-gray-200 bg-white'}`}>
+                            <input 
+                              type="radio" 
+                              name="correctOpt" 
+                              checked={qCorrect === i} 
+                              onChange={() => setQCorrect(i)} 
+                              className="w-5 h-5 mt-1 accent-green-600 cursor-pointer flex-shrink-0" 
+                            />
+                            <textarea
+                              rows={2}
+                              placeholder={`অপশন ${i + 1}`} 
+                              value={opt} 
+                              onChange={e => { 
+                                const newOpts = [...qOptions]; 
+                                newOpts[i] = e.target.value; 
+                                setQOptions(newOpts); 
+                              }} 
+                              onPaste={e => {
+                                const pasted = e.clipboardData?.getData('text/plain') || '';
+                                if (pasted.includes('<') && pasted.includes('>')) {
+                                  e.preventDefault();
+                                  const cleaned = stripHtml(pasted);
+                                  const newOpts = [...qOptions];
+                                  newOpts[i] = cleaned;
+                                  setQOptions(newOpts);
+                                }
+                              }}
+                              className="w-full bg-transparent outline-none p-1 text-gray-800 font-medium leading-relaxed break-words resize-none" 
+                              required 
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Real-time Preview */}
+                    {(qText.trim() || qOptions.some(o => o.trim())) && (
+                      <div className="bg-white p-5 rounded-xl border border-blue-200 shadow-sm space-y-3">
+                        <div className="text-xs font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <FaEye /> লাইভ প্রিভিউ (শিক্ষার্থীরা যেভাবে দেখবে)
+                        </div>
+                        <div className="text-base font-semibold text-gray-900 break-words leading-relaxed">
+                          <FormattedQuestion content={qText || 'প্রশ্ন এখানে দেখা যাবে...'} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                          {qOptions.map((opt, i) => (
+                            <div key={i} className={`p-2.5 rounded-lg border text-sm flex items-start gap-2 break-words ${qCorrect === i ? 'bg-green-50 border-green-300 text-green-900 font-medium' : 'bg-gray-50 border-gray-200 text-gray-700'}`}>
+                              <span className="font-bold flex-shrink-0">{String.fromCharCode(65 + i)}.</span>
+                              <FormattedQuestion content={opt || `অপশন ${i + 1}`} className="flex-1 min-w-0" />
+                              {qCorrect === i && <span className="text-xs bg-green-600 text-white px-1.5 py-0.5 rounded font-bold ml-auto flex-shrink-0">সঠিক</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="pt-2">
+                      <button type="submit" className="w-full md:w-auto bg-green-600 text-white px-10 py-3.5 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
+                        <FaSave /> প্রশ্ন সেভ করুন
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* List of existing questions in this exam */}
+                  <div className="pt-4 border-t border-gray-100">
+                    <h4 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-primary rounded-full"></span>
+                      এই পরীক্ষার সংরক্ষিত প্রশ্নসমূহ ({selectedExamDetails?.questions?.length || 0}টি)
+                    </h4>
+
+                    {selectedExamDetails?.questions && selectedExamDetails.questions.length > 0 ? (
+                      <div className="space-y-4">
+                        {selectedExamDetails.questions.map((q, idx) => {
+                          let opts = [];
+                          try {
+                            opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+                          } catch (e) {
+                            opts = [];
+                          }
+
+                          return (
+                            <div key={q.id || idx} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative group hover:border-primary/40 transition-colors">
+                              <div className="flex items-start justify-between gap-4 mb-3">
+                                <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                                  <span className="bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-lg mt-0.5 flex-shrink-0">
+                                    #{idx + 1}
+                                  </span>
+                                  <FormattedQuestion content={q.text} className="text-base font-bold text-gray-900 leading-relaxed flex-1" />
+                                </div>
+                                <button 
+                                  onClick={() => deleteQuestion(q.id)}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0 flex items-center gap-1 text-xs font-bold"
+                                  title="প্রশ্ন মুছুন"
+                                >
+                                  <FaTrash /> মুছুন
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-8">
+                                {Array.isArray(opts) && opts.map((opt, i) => (
+                                  <div 
+                                    key={i} 
+                                    className={`p-2.5 rounded-lg border text-sm flex items-start gap-2 break-words ${
+                                      q.correct_answer === i 
+                                        ? 'bg-green-50 border-green-300 text-green-900 font-semibold' 
+                                        : 'bg-gray-50 border-gray-100 text-gray-700'
+                                    }`}
+                                  >
+                                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                      q.correct_answer === i ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+                                    }`}>
+                                      {String.fromCharCode(65 + i)}
+                                    </span>
+                                    <FormattedQuestion content={opt} className="flex-1 min-w-0 leading-relaxed" />
+                                    {q.correct_answer === i && (
+                                      <span className="text-[11px] bg-green-600 text-white px-1.5 py-0.5 rounded font-bold ml-auto flex-shrink-0">✓ সঠিক</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-500 text-sm">
+                        এই পরীক্ষায় এখনও কোনো প্রশ্ন যোগ করা হয়নি। উপরের ফরম থেকে প্রশ্ন যোগ করুন।
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="pt-2">
-                    <button type="submit" className="w-full md:w-auto bg-green-600 text-white px-10 py-3.5 rounded-xl font-bold hover:bg-green-700 shadow-lg shadow-green-200 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
-                      <FaSave /> প্রশ্ন সেভ করুন
-                    </button>
-                  </div>
-                </form>
+                </div>
               )}
             </div>
           </div>

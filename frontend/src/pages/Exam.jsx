@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import FormattedQuestion from '../components/FormattedQuestion';
 
 const Exam = () => {
   const [searchParams] = useSearchParams();
@@ -590,12 +591,12 @@ const Exam = () => {
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-gray-100">
-                      <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-start gap-2">
-                        <span className="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded-lg font-bold mt-0.5">
+                      <div className="text-base sm:text-lg font-semibold text-gray-900 flex items-start gap-2 max-w-full flex-1 min-w-0">
+                        <span className="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded-lg font-bold mt-0.5 flex-shrink-0">
                           #{idx + 1}
                         </span>
-                        <span>{q.text}</span>
-                      </h4>
+                        <FormattedQuestion content={q.text} className="flex-1 font-semibold text-gray-900 leading-relaxed" />
+                      </div>
 
                       {/* Status Tag */}
                       <div className="flex-shrink-0">
@@ -676,9 +677,7 @@ const Exam = () => {
                               }`}>
                                 {String.fromCharCode(65 + optIdx)}
                               </span>
-                              <span className="text-sm sm:text-base leading-relaxed break-words">
-                                {option}
-                              </span>
+                              <FormattedQuestion content={option} className="text-sm sm:text-base leading-relaxed break-words flex-1 min-w-0" />
                             </div>
                             {badge}
                           </div>
@@ -739,10 +738,10 @@ const Exam = () => {
       <div className="flex-1 flex flex-col container mx-auto px-4 py-4 max-w-4xl w-full">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col flex-1">
           <div className="p-5 sm:p-8 flex-1">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6 leading-relaxed break-words whitespace-normal">
-              <span className="text-primary mr-1">{currentQuestionIndex + 1}.</span>
-              {currentQ.text}
-            </h3>
+            <div className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6 leading-relaxed break-words flex items-start gap-2 max-w-full">
+              <span className="text-primary font-bold flex-shrink-0">{currentQuestionIndex + 1}.</span>
+              <FormattedQuestion content={currentQ.text} className="flex-1 font-semibold text-gray-900 leading-relaxed" />
+            </div>
             
             <div className="space-y-3">
               {currentQ.options.map((option, idx) => {
@@ -759,11 +758,12 @@ const Exam = () => {
                     }`}>
                       {isSelected && <div className="w-3 h-3 bg-primary rounded-full"></div>}
                     </div>
-                    <span className={`text-base sm:text-lg leading-relaxed break-words whitespace-normal min-w-0 flex-1 ${
-                      isSelected ? 'text-primary font-medium' : 'text-gray-700'
-                    }`}>
-                      {option}
-                    </span>
+                    <FormattedQuestion 
+                      content={option} 
+                      className={`text-base sm:text-lg leading-relaxed break-words whitespace-normal min-w-0 flex-1 ${
+                        isSelected ? 'text-primary font-medium' : 'text-gray-700'
+                      }`} 
+                    />
                     
                     <input 
                       type="radio" 

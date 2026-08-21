@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import FormattedQuestion from '../components/FormattedQuestion';
+import { stripHtml } from '../utils/textUtils';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 const SearchIcon = () => (
@@ -1448,13 +1450,19 @@ const ExamManagementTab = () => {
   };
 
   const handleAddQuestion = async () => {
-    if (!newQuestion.text || !newQuestion.option1 || !newQuestion.option2) return alert('প্রশ্ন ও অন্তত দুটি অপশন দিন।');
+    const cleanedText = stripHtml(newQuestion.text).trim();
+    const opt1 = stripHtml(newQuestion.option1).trim();
+    const opt2 = stripHtml(newQuestion.option2).trim();
+    const opt3 = stripHtml(newQuestion.option3).trim();
+    const opt4 = stripHtml(newQuestion.option4).trim();
+
+    if (!cleanedText || !opt1 || !opt2) return alert('প্রশ্ন ও অন্তত দুটি অপশন দিন।');
     try {
-      const optionsArray = [newQuestion.option1, newQuestion.option2, newQuestion.option3, newQuestion.option4].filter(o => o);
+      const optionsArray = [opt1, opt2, opt3, opt4].filter(o => o);
       const res = await fetch(`/api/dashboard/exams/${selectedExamId}/questions`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: newQuestion.text,
+          text: cleanedText,
           options: JSON.stringify(optionsArray),
           correct_answer: parseInt(newQuestion.correct_answer)
         })
@@ -1514,38 +1522,131 @@ const ExamManagementTab = () => {
         <div className="lg:col-span-2 border rounded-xl overflow-hidden p-6 bg-white">
           {selectedExam ? (
             <div>
-              <h3 className="text-lg font-bold mb-4">{selectedExam.title} - প্রশ্নসমূহ</h3>
-              <div className="bg-gray-50 p-4 rounded-lg mb-6 border">
-                <h4 className="font-bold mb-3">নতুন প্রশ্ন যোগ করুন</h4>
-                <input type="text" placeholder="প্রশ্ন" value={newQuestion.text} onChange={e=>setNewQuestion({...newQuestion, text: e.target.value})} className="w-full p-2 mb-2 border rounded" />
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <input type="text" placeholder="অপশন ১" value={newQuestion.option1} onChange={e=>setNewQuestion({...newQuestion, option1: e.target.value})} className="p-2 border rounded" />
-                  <input type="text" placeholder="অপশন ২" value={newQuestion.option2} onChange={e=>setNewQuestion({...newQuestion, option2: e.target.value})} className="p-2 border rounded" />
-                  <input type="text" placeholder="অপশন ৩ (ঐচ্ছিক)" value={newQuestion.option3} onChange={e=>setNewQuestion({...newQuestion, option3: e.target.value})} className="p-2 border rounded" />
-                  <input type="text" placeholder="অপশন ৪ (ঐচ্ছিক)" value={newQuestion.option4} onChange={e=>setNewQuestion({...newQuestion, option4: e.target.value})} className="p-2 border rounded" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">{selectedExam.title} - প্রশ্নসমূহ</h3>
+                <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                  মোট {selectedExam.questions?.length || 0}টি প্রশ্ন
+                </span>
+              </div>
+              <div className="bg-gray-50 p-5 rounded-2xl mb-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-bold text-gray-800">নতুন প্রশ্ন যোগ করুন</h4>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewQuestion(prev => ({
+                        ...prev,
+                        text: stripHtml(prev.text),
+                        option1: stripHtml(prev.option1),
+                        option2: stripHtml(prev.option2),
+                        option3: stripHtml(prev.option3),
+                        option4: stripHtml(prev.option4)
+                      }));
+                    }}
+                    className="text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 px-2.5 py-1 rounded-lg font-bold transition-colors"
+                    title="HTML ট্যাগ মুছুন"
+                  >
+                    HTML ট্যাগ মুছুন
+                  </button>
                 </div>
-                <div className="flex items-center gap-4">
-                  <select value={newQuestion.correct_answer} onChange={e=>setNewQuestion({...newQuestion, correct_answer: e.target.value})} className="p-2 border rounded">
-                    <option value={0}>সঠিক: অপশন ১</option>
-                    <option value={1}>সঠিক: অপশন ২</option>
-                    <option value={2}>সঠিক: অপশন ৩</option>
-                    <option value={3}>সঠিক: অপশন ৪</option>
+                <textarea 
+                  rows={3}
+                  placeholder="প্রশ্ন লিখুন... (বড় প্রশ্ন উপর-নিচে স্বাভাবিকভাবে সাজানো থাকবে)" 
+                  value={newQuestion.text} 
+                  onChange={e=>setNewQuestion({...newQuestion, text: e.target.value})}
+                  onPaste={e => {
+                    const pasted = e.clipboardData?.getData('text/plain') || '';
+                    if (pasted.includes('<') && pasted.includes('>')) {
+                      e.preventDefault();
+                      const cleaned = stripHtml(pasted);
+                      const start = e.target.selectionStart;
+                      const end = e.target.selectionEnd;
+                      const next = newQuestion.text.substring(0, start) + cleaned + newQuestion.text.substring(end);
+                      setNewQuestion({ ...newQuestion, text: next });
+                    }
+                  }}
+                  className="w-full p-3 mb-3 border border-gray-300 rounded-xl leading-relaxed break-words whitespace-pre-wrap resize-y outline-none focus:border-primary bg-white text-gray-800" 
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <input 
+                    type="text" 
+                    placeholder="অপশন ১" 
+                    value={newQuestion.option1} 
+                    onChange={e=>setNewQuestion({...newQuestion, option1: e.target.value})} 
+                    className="p-2.5 border border-gray-300 rounded-xl outline-none focus:border-primary bg-white text-gray-800" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="অপশন ২" 
+                    value={newQuestion.option2} 
+                    onChange={e=>setNewQuestion({...newQuestion, option2: e.target.value})} 
+                    className="p-2.5 border border-gray-300 rounded-xl outline-none focus:border-primary bg-white text-gray-800" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="অপশন ৩ (ঐচ্ছিক)" 
+                    value={newQuestion.option3} 
+                    onChange={e=>setNewQuestion({...newQuestion, option3: e.target.value})} 
+                    className="p-2.5 border border-gray-300 rounded-xl outline-none focus:border-primary bg-white text-gray-800" 
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="অপশন ৪ (ঐচ্ছিক)" 
+                    value={newQuestion.option4} 
+                    onChange={e=>setNewQuestion({...newQuestion, option4: e.target.value})} 
+                    className="p-2.5 border border-gray-300 rounded-xl outline-none focus:border-primary bg-white text-gray-800" 
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <select value={newQuestion.correct_answer} onChange={e=>setNewQuestion({...newQuestion, correct_answer: e.target.value})} className="p-2.5 border border-gray-300 rounded-xl outline-none bg-white text-gray-800 font-medium">
+                    <option value={0}>সঠিক উত্তর: অপশন ১</option>
+                    <option value={1}>সঠিক উত্তর: অপশন ২</option>
+                    <option value={2}>সঠিক উত্তর: অপশন ৩</option>
+                    <option value={3}>সঠিক উত্তর: অপশন ৪</option>
                   </select>
-                  <button onClick={handleAddQuestion} className="bg-primary text-white px-4 py-2 rounded font-bold">+ যোগ করুন</button>
+                  <button onClick={handleAddQuestion} className="bg-primary text-white px-5 py-2.5 rounded-xl font-bold hover:bg-secondary transition-all shadow-sm">
+                    + প্রশ্ন যোগ করুন
+                  </button>
                 </div>
               </div>
               <div className="space-y-4">
                 {selectedExam.questions?.map((q, idx) => {
-                  const opts = JSON.parse(q.options);
+                  let opts = [];
+                  try {
+                    opts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+                  } catch (e) {
+                    opts = [];
+                  }
+
                   return (
-                    <div key={q.id} className="p-4 border rounded relative">
-                      <button onClick={() => handleDeleteQuestion(q.id)} className="absolute top-4 right-4 text-red-500 font-bold text-sm hover:underline">মুছুন</button>
-                      <div className="font-bold mb-2">{idx + 1}. {q.text}</div>
-                      <ol className="list-decimal pl-5 text-sm">
-                        {opts.map((opt, i) => (
-                          <li key={i} className={q.correct_answer === i ? 'text-green-600 font-bold' : ''}>{opt} {q.correct_answer === i && '✓'}</li>
+                    <div key={q.id} className="p-4 sm:p-5 border border-gray-200 rounded-2xl relative bg-white shadow-sm hover:border-primary/40 transition-colors">
+                      <button onClick={() => handleDeleteQuestion(q.id)} className="absolute top-4 right-4 text-red-500 font-bold text-xs hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors">
+                        মুছুন
+                      </button>
+                      <div className="flex items-start gap-2 mb-3 pr-16 max-w-full">
+                        <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded mt-0.5 flex-shrink-0">
+                          #{idx + 1}
+                        </span>
+                        <FormattedQuestion content={q.text} className="font-bold text-gray-900 leading-relaxed flex-1 break-words" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-6">
+                        {Array.isArray(opts) && opts.map((opt, i) => (
+                          <div 
+                            key={i} 
+                            className={`p-2.5 rounded-xl border text-sm flex items-start gap-2 break-words ${
+                              q.correct_answer === i ? 'bg-green-50 border-green-300 text-green-900 font-semibold' : 'bg-gray-50 border-gray-100 text-gray-700'
+                            }`}
+                          >
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                              q.correct_answer === i ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {String.fromCharCode(65 + i)}
+                            </span>
+                            <FormattedQuestion content={opt} className="flex-1 min-w-0 leading-relaxed" />
+                            {q.correct_answer === i && <span className="text-xs text-green-700 font-bold ml-auto flex-shrink-0">✓</span>}
+                          </div>
                         ))}
-                      </ol>
+                      </div>
                     </div>
                   );
                 })}
