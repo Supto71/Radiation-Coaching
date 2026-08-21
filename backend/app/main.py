@@ -50,6 +50,24 @@ try:
             conn.execute(text('ALTER TABLE students ADD COLUMN gender VARCHAR DEFAULT \'ছেলে\';'))
         except Exception:
             pass
+
+        # One attempt per student per exam (keep earliest result if duplicates already exist)
+        try:
+            conn.execute(text("""
+                DELETE FROM exam_results
+                WHERE id NOT IN (
+                    SELECT MIN(id) FROM exam_results GROUP BY student_id, exam_id
+                )
+            """))
+        except Exception:
+            pass
+        try:
+            conn.execute(text(
+                'CREATE UNIQUE INDEX IF NOT EXISTS uq_exam_results_student_exam '
+                'ON exam_results (student_id, exam_id)'
+            ))
+        except Exception:
+            pass
             
         # Update legacy branch names
         try:

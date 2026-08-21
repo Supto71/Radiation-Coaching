@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Date
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..db.database import Base
@@ -44,6 +44,9 @@ class Question(Base):
 
 class ExamResult(Base):
     __tablename__ = "exam_results"
+    __table_args__ = (
+        UniqueConstraint("student_id", "exam_id", name="uq_exam_results_student_exam"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("students.id"))

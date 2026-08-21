@@ -78,3 +78,21 @@ th {
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
 
+/* Print and Capture Protection */
+@media print {
+  html, body, #root, * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+}
+
+.no-select, .secure-exam-content {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+

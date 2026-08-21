@@ -182,10 +182,23 @@ def create_exam(exam: schemas.ExamCreate, db: Session = Depends(get_db)):
     return db_exam
 
 @router.get("/exams/{exam_id}", response_model=schemas.Exam)
-def get_exam(exam_id: int, db: Session = Depends(get_db)):
+def get_exam(exam_id: int, student_id: Optional[int] = None, db: Session = Depends(get_db)):
     exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=404, detail="Exam not found")
+
+    # One attempt per student ID: block reloading the exam after submission
+    if student_id is not None:
+        existing = db.query(db_models.ExamResult).filter(
+            db_models.ExamResult.student_id == student_id,
+            db_models.ExamResult.exam_id == exam_id
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=403,
+                detail="আপনি ইতিমধ্যে এই পরীক্ষায় অংশগ্রহণ করেছেন। একই আইডি দিয়ে আর একবার পরীক্ষা দেওয়া যাবে না।"
+            )
+
     questions = db.query(db_models.Question).filter(db_models.Question.exam_id == exam_id).all()
     exam.questions = questions
     return exam
@@ -251,9 +264,31 @@ def get_my_results(student_id: int, db: Session = Depends(get_db)):
 
 @router.post("/results", response_model=schemas.ExamResult)
 def submit_exam_result(result: schemas.ExamResultCreate, student_id: int, db: Session = Depends(get_db)):
+    # Enforce one attempt per student ID per exam
+    existing = db.query(db_models.ExamResult).filter(
+        db_models.ExamResult.student_id == student_id,
+        db_models.ExamResult.exam_id == result.exam_id
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="আপনি ইতিমধ্যে এই পরীক্ষায় অংশগ্রহণ করেছেন। একই আইডি দিয়ে আর একবার পরীক্ষা দেওয়া যাবে না।"
+        )
+
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == result.exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+
     db_result = db_models.ExamResult(**result.model_dump(), student_id=student_id)
     db.add(db_result)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="আপনি ইতিমধ্যে এই পরীক্ষায় অংশগ্রহণ করেছেন। একই আইডি দিয়ে আর একবার পরীক্ষা দেওয়া যাবে না।"
+        )
     db.refresh(db_result)
     return db_result
 
