@@ -112,10 +112,27 @@ const StudentDatabaseTab = ({ role }) => {
     finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('আপনি কি নিশ্চিত যে এই স্টুডেন্টকে মুছতে চান?')) return;
-    await fetch(`/api/students/${id}`, { method: 'DELETE' });
-    fetchStudents();
+  const handleDelete = async (id, name, studentUid) => {
+    const ok = window.confirm(
+      `আপনি কি নিশ্চিত যে "${name}" (${studentUid}) কে সম্পূর্ণ মুছে ফেলতে চান?\n\n` +
+      `এর ফলে এই শিক্ষার্থীর সব ডাটা (ফি, উপস্থিতি, পরীক্ষার ফলাফল) মুছে যাবে এবং এই আইডি দিয়ে আর লগইন করা যাবে না।`
+    );
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setMsg({ text: `"${name}" (${studentUid}) সফলভাবে রিমুভ করা হয়েছে।`, type: 'success' });
+        fetchStudents();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setMsg({ text: err.detail || 'শিক্ষার্থী মুছতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch {
+      setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' });
+    } finally {
+      setTimeout(() => setMsg({ text: '', type: 'success' }), 5000);
+    }
   };
 
   return (
@@ -356,8 +373,11 @@ const StudentDatabaseTab = ({ role }) => {
                           }} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-colors text-sm font-semibold">
                             এডিট
                           </button>
-                          <button onClick={() => handleDelete(s.id)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                          <button
+                            onClick={() => handleDelete(s.id, s.name, s.student_uid)}
+                            title="শিক্ষার্থী সম্পূর্ণ রিমুভ করুন"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                          >
                             <TrashIcon />
                           </button>
                         </div>

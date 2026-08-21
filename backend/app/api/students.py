@@ -72,12 +72,36 @@ def update_student(student_id: int, student: StudentUpdate, db: Session = Depend
 
 @router.delete("/{student_id}")
 def delete_student(student_id: int, db: Session = Depends(get_db)):
+    """Permanently remove a student and all related data so they cannot log in again."""
     student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
-    db.delete(student)
-    db.commit()
-    return {"message": "Student deleted successfully"}
+
+    from ..models.attendance import Attendance as AttendanceModel
+    from ..models.dashboard import FeeRecord, ExamResult
+    from ..models.notification import Notification as NotificationModel
+
+    removed_uid = student.student_uid
+    removed_name = student.name
+
+    try:
+        # Remove all related records first (avoids FK constraint failures)
+        db.query(AttendanceModel).filter(AttendanceModel.student_id == student_id).delete(synchronize_session=False)
+        db.query(FeeRecord).filter(FeeRecord.student_id == student_id).delete(synchronize_session=False)
+        db.query(ExamResult).filter(ExamResult.student_id == student_id).delete(synchronize_session=False)
+        db.query(NotificationModel).filter(NotificationModel.student_id == student_id).delete(synchronize_session=False)
+
+        db.delete(student)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"শিক্ষার্থী মুছতে ব্যর্থ: {str(e)}")
+
+    return {
+        "message": "Student and all related data deleted successfully",
+        "student_uid": removed_uid,
+        "name": removed_name,
+    }
 
 @router.post("/login", response_model=Student)
 def login_student(creds: StudentLogin, db: Session = Depends(get_db)):
