@@ -25,9 +25,17 @@ const Exam = () => {
       return;
     }
 
+    const studentStr = localStorage.getItem('student');
+    if (!studentStr) {
+      alert('পরীক্ষা দিতে হলে আগে লগইন করুন।');
+      navigate('/login');
+      return;
+    }
+    const student = JSON.parse(studentStr);
+
     const fetchExam = async () => {
       try {
-        const res = await fetch(`/api/dashboard/exams/${examId}`);
+        const res = await fetch(`/api/dashboard/exams/${examId}?student_id=${student.id}`);
         if (res.ok) {
           const data = await res.json();
           setExam(data);
@@ -40,11 +48,15 @@ const Exam = () => {
           setQuestions(parsedQuestions);
           setTimeLeft(data.duration_minutes * 60);
         } else {
-          alert('পরীক্ষাটি পাওয়া যায়নি।');
+          const errData = await res.json().catch(() => ({}));
+          const message = errData.detail || 'পরীক্ষাটি পাওয়া যায়নি।';
+          alert(message);
           navigate('/student/dashboard');
         }
       } catch (err) {
         console.error(err);
+        alert('পরীক্ষা লোড করতে সমস্যা হয়েছে।');
+        navigate('/student/dashboard');
       } finally {
         setLoading(false);
       }
@@ -162,17 +174,23 @@ const Exam = () => {
   };
 
   const handleSubmit = async () => {
+    if (submitting || submitted) return;
     setSubmitted(true);
     setSubmitting(true);
     const result = calculateScoreLocal();
     setScoreResult(result);
 
     const studentStr = localStorage.getItem('student');
-    if (!studentStr) return;
+    if (!studentStr) {
+      setSubmitting(false);
+      alert('লগইন সেশন পাওয়া যায়নি।');
+      navigate('/login');
+      return;
+    }
     const student = JSON.parse(studentStr);
 
     try {
-      await fetch(`/api/dashboard/results?student_id=${student.id}`, {
+      const res = await fetch(`/api/dashboard/results?student_id=${student.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -182,8 +200,13 @@ const Exam = () => {
           total_wrong: result.wrong
         })
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.detail || 'ফলাফল জমা দিতে সমস্যা হয়েছে।');
+      }
     } catch (err) {
       console.error('Failed to submit result', err);
+      alert('ফলাফল জমা দিতে সমস্যা হয়েছে।');
     } finally {
       setSubmitting(false);
     }
@@ -281,49 +304,54 @@ const Exam = () => {
   const currentQ = questions[currentQuestionIndex];
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex justify-between items-center sticky top-24 z-10">
-          <div>
-            <p className="text-sm text-gray-500 font-medium mb-1">প্রশ্ন {currentQuestionIndex + 1} / {questions.length}</p>
-            <div className="w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-300"
-                style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div className="flex items-center text-accent bg-accent/10 px-4 py-2 rounded-lg">
-            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="font-bold text-xl tracking-wider">{formatTime(timeLeft)}</span>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-4 py-3 flex justify-between items-center gap-4">
+        <div className="min-w-0">
+          <p className="text-sm text-gray-500 font-medium mb-1">প্রশ্ন {currentQuestionIndex + 1} / {questions.length}</p>
+          <div className="w-40 sm:w-48 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+            ></div>
           </div>
         </div>
+        
+        <div className="flex-shrink-0 flex items-center text-accent bg-accent/10 px-3 sm:px-4 py-2 rounded-lg">
+          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="font-bold text-lg sm:text-xl tracking-wider">{formatTime(timeLeft)}</span>
+        </div>
+      </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-          <div className="p-8 md:p-12">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-8 leading-relaxed">
-              {currentQuestionIndex + 1}. {currentQ.text}
+      <div className="flex-1 flex flex-col container mx-auto px-4 py-4 max-w-4xl w-full">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col flex-1">
+          <div className="p-5 sm:p-8 flex-1">
+            <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6 leading-relaxed break-words whitespace-normal">
+              <span className="text-primary mr-1">{currentQuestionIndex + 1}.</span>
+              {currentQ.text}
             </h3>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {currentQ.options.map((option, idx) => {
                 const isSelected = answers[currentQ.id] === idx;
                 return (
                   <label 
                     key={idx} 
-                    className={`flex items-center p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                    className={`flex items-start p-4 sm:p-5 rounded-xl border-2 cursor-pointer transition-all ${
                       isSelected ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                     }`}
                   >
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 flex-shrink-0 ${
+                    <div className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 ${
                       isSelected ? 'border-primary' : 'border-gray-300'
                     }`}>
                       {isSelected && <div className="w-3 h-3 bg-primary rounded-full"></div>}
                     </div>
-                    <span className={`text-lg ${isSelected ? 'text-primary font-medium' : 'text-gray-700'}`}>{option}</span>
+                    <span className={`text-base sm:text-lg leading-relaxed break-words whitespace-normal min-w-0 flex-1 ${
+                      isSelected ? 'text-primary font-medium' : 'text-gray-700'
+                    }`}>
+                      {option}
+                    </span>
                     
                     <input 
                       type="radio" 
@@ -337,11 +365,11 @@ const Exam = () => {
             </div>
           </div>
           
-          <div className="bg-gray-50 p-6 border-t border-gray-100 flex justify-between items-center">
+          <div className="flex-shrink-0 bg-gray-50 p-4 sm:p-6 border-t border-gray-100 flex justify-between items-center gap-3">
             <button
               disabled={currentQuestionIndex === 0}
               onClick={() => setCurrentQuestionIndex(prev => prev - 1)}
-              className="px-6 py-2.5 rounded-lg font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 sm:px-6 py-2.5 rounded-lg font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               পূর্ববর্তী
             </button>
@@ -349,14 +377,14 @@ const Exam = () => {
             {currentQuestionIndex < questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
-                className="px-8 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20"
+                className="px-6 sm:px-8 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20"
               >
                 পরবর্তী
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
-                className="px-8 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-600/30"
+                className="px-6 sm:px-8 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors shadow-lg shadow-green-600/30"
               >
                 সাবমিট করুন
               </button>
