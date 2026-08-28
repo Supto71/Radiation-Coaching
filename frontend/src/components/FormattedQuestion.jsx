@@ -18,7 +18,7 @@ const FormattedQuestion = ({ content, className = '' }) => {
     const cleanHtml = sanitizeHtmlForDisplay(stringContent);
     return (
       <div
-        className={`formatted-question-content break-words whitespace-normal leading-relaxed text-left [overflow-wrap:anywhere] max-w-full [&_p]:mb-2 [&_p:last-child]:mb-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-2 [&_table]:w-full [&_table]:border-collapse [&_sub]:text-[0.75em] [&_sup]:text-[0.75em] ${className}`}
+        className={`formatted-question-content break-words whitespace-normal leading-relaxed text-left [overflow-wrap:anywhere] max-w-full w-full min-w-0 [&_p]:mb-2 [&_p:last-child]:mb-0 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-2 [&_table]:w-full [&_table]:border-collapse [&_sub]:text-[0.75em] [&_sup]:text-[0.75em] ${className}`}
         dangerouslySetInnerHTML={{ __html: cleanHtml }}
       />
     );
@@ -28,7 +28,7 @@ const FormattedQuestion = ({ content, className = '' }) => {
   const decodedText = decodeHtmlEntities(stringContent);
 
   return (
-    <div className={`break-words whitespace-pre-wrap leading-relaxed text-left [overflow-wrap:anywhere] max-w-full ${className}`}>
+    <div className={`break-words whitespace-pre-wrap leading-relaxed text-left [overflow-wrap:anywhere] max-w-full w-full min-w-0 ${className}`}>
       {decodedText}
     </div>
   );

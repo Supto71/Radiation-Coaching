@@ -595,7 +595,7 @@ const Exam = () => {
                         <span className="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded-lg font-bold mt-0.5 flex-shrink-0">
                           #{idx + 1}
                         </span>
-                        <FormattedQuestion content={q.text} className="flex-1 font-semibold text-gray-900 leading-relaxed" />
+                        <FormattedQuestion content={q.text} className="flex-1 font-semibold text-gray-900 leading-relaxed break-words whitespace-normal min-w-0 w-full" />
                       </div>
 
                       {/* Status Tag */}
@@ -738,9 +738,9 @@ const Exam = () => {
       <div className="flex-1 flex flex-col container mx-auto px-4 py-4 max-w-4xl w-full">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col flex-1">
           <div className="p-5 sm:p-8 flex-1">
-            <div className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6 leading-relaxed break-words flex items-start gap-2 max-w-full">
+            <div className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-6 leading-relaxed break-words flex items-start gap-2 max-w-full min-w-0 w-full">
               <span className="text-primary font-bold flex-shrink-0">{currentQuestionIndex + 1}.</span>
-              <FormattedQuestion content={currentQ.text} className="flex-1 font-semibold text-gray-900 leading-relaxed" />
+              <FormattedQuestion content={currentQ.text} className="flex-1 font-semibold text-gray-900 leading-relaxed break-words whitespace-normal min-w-0 w-full" />
             </div>
             
             <div className="space-y-3">

@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, HTTPException, status
+# pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from typing import List, Optional
@@ -69,14 +71,14 @@ def delete_notice(notice_id: int, db: Session = Depends(get_db)):
 # --- FEES ---
 @router.get("/fees", response_model=List[schemas.FeeRecordWithStudent])
 def get_all_fees(
-    is_paid: Optional[bool] = None,
+    status: Optional[str] = None,
     month: Optional[str] = None,
     branch: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(db_models.FeeRecord)
-    if is_paid is not None:
-        query = query.filter(db_models.FeeRecord.is_paid == is_paid)
+    if status is not None:
+        query = query.filter(db_models.FeeRecord.status == status)
     if month:
         query = query.filter(db_models.FeeRecord.month == month)
     
@@ -92,8 +94,9 @@ def get_all_fees(
             student_id=record.student_id,
             amount=record.amount,
             month=record.month,
-            is_paid=record.is_paid,
-            payment_date=record.payment_date,
+            status=record.status,
+            paid_amount=record.paid_amount,
+            payment_history=record.payment_history,
             student_name=student.name if student and student.name else "অজানা",
             student_uid=student.student_uid if student and student.student_uid else "",
             student_branch=student.branch if student and student.branch else "",
@@ -109,10 +112,6 @@ def get_my_fees(student_id: int, db: Session = Depends(get_db)):
 def create_fee_record(fee: schemas.FeeRecordCreate, db: Session = Depends(get_db)):
     try:
         data = fee.model_dump()
-        if data.get('is_paid') and not data.get('payment_date'):
-            from datetime import date
-            data['payment_date'] = date.today()
-            
         db_fee = db_models.FeeRecord(**data)
         db.add(db_fee)
         db.commit()
@@ -124,12 +123,25 @@ def create_fee_record(fee: schemas.FeeRecordCreate, db: Session = Depends(get_db
         raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
 
 @router.patch("/fees/{fee_id}/pay", response_model=schemas.FeeRecord)
-def mark_fee_paid(fee_id: int, db: Session = Depends(get_db)):
+def add_fee_payment(fee_id: int, payment: schemas.FeePaymentCreate, db: Session = Depends(get_db)):
     fee = db.query(db_models.FeeRecord).filter(db_models.FeeRecord.id == fee_id).first()
     if not fee:
         raise HTTPException(status_code=404, detail="Fee record not found")
-    fee.is_paid = True
-    fee.payment_date = date.today()
+    
+    import json
+    history = json.loads(fee.payment_history or "[]")
+    history.append({"date": payment.date, "amount": payment.amount})
+    fee.payment_history = json.dumps(history)
+    
+    fee.paid_amount += payment.amount
+    
+    if fee.paid_amount >= fee.amount:
+        fee.status = "Paid"
+    elif fee.paid_amount > 0:
+        fee.status = "Partial"
+    else:
+        fee.status = "Due"
+        
     db.commit()
     db.refresh(fee)
     return fee

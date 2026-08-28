@@ -411,36 +411,50 @@ const StudentDashboard = () => {
                   <div className="text-center py-12 text-gray-500 animate-pulse">পেমেন্ট হিস্ট্রি লোড হচ্ছে...</div>
                 ) : fees.length > 0 ? (
                   <div className="space-y-3">
-                    {fees.map(fee => (
-                      <div key={fee.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${
-                        fee.is_paid ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'
+                    {fees.map(fee => {
+                      let paymentHistoryList = [];
+                      try { paymentHistoryList = JSON.parse(fee.payment_history || '[]'); } catch(e){}
+
+                      return (
+                      <div key={fee.id} className={`flex flex-col sm:flex-row sm:items-start justify-between p-4 rounded-xl border ${
+                        fee.status === 'Paid' ? 'bg-green-50 border-green-100' : fee.status === 'Partial' ? 'bg-yellow-50 border-yellow-100' : 'bg-red-50 border-red-100'
                       }`}>
                         <div className="mb-3 sm:mb-0">
                           <h4 className="font-bold text-gray-900">{fee.month}</h4>
-                          <p className="text-sm text-gray-600 font-medium mt-1">
-                            পরিমাণ: <span className="font-bold text-gray-900">{fee.amount} ৳</span>
+                          <p className="text-sm text-gray-600 font-medium mt-1 flex flex-col gap-1">
+                            <span>নির্ধারিত ফি: <span className="font-bold text-gray-900">{fee.amount} ৳</span></span>
+                            {fee.status === 'Partial' && <span className="text-red-500">বকেয়া: <span className="font-bold">{fee.amount - (fee.paid_amount || 0)} ৳</span></span>}
                           </p>
+                          {paymentHistoryList.length > 0 && (
+                            <div className="mt-2 text-xs text-gray-500">
+                              <p className="font-semibold text-gray-700">পেমেন্ট হিস্ট্রি:</p>
+                              {paymentHistoryList.map((p, idx) => (
+                                <div key={idx}>• {p.date}: {p.amount} ৳</div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          {fee.is_paid ? (
+                        <div className="flex items-center gap-3 mt-2 sm:mt-0">
+                          {fee.status === 'Paid' ? (
                             <div className="text-right">
                               <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold mb-1">
-                                পেইড
+                                সম্পূর্ণ পেইড
                               </span>
-                              {fee.payment_date && (
-                                <div className="text-gray-900 font-medium">
-                                  {fee.payment_date && fee.payment_date !== "undefined" && fee.payment_date !== "null" ? new Date(fee.payment_date).toLocaleDateString('bn-BD') : 'N/A'}
-                                </div>
-                              )}
+                            </div>
+                          ) : fee.status === 'Partial' ? (
+                            <div className="text-right">
+                              <span className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold mb-1">
+                                আংশিক পেইড
+                              </span>
                             </div>
                           ) : (
-                            <span className="inline-block bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">
+                            <span className="inline-block bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
                               আনপেইড
                             </span>
                           )}
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100 border-dashed text-gray-500">

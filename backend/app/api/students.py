@@ -84,12 +84,23 @@ def delete_student(student_id: int, db: Session = Depends(get_db)):
     removed_uid = student.student_uid
     removed_name = student.name
 
+    from sqlalchemy import inspect
+    inspector = inspect(db.bind)
+    tables = inspector.get_table_names()
+
+    # Remove all related records first (avoids FK constraint failures)
     try:
-        # Remove all related records first (avoids FK constraint failures)
-        db.query(AttendanceModel).filter(AttendanceModel.student_id == student_id).delete(synchronize_session=False)
-        db.query(FeeRecord).filter(FeeRecord.student_id == student_id).delete(synchronize_session=False)
-        db.query(ExamResult).filter(ExamResult.student_id == student_id).delete(synchronize_session=False)
-        db.query(NotificationModel).filter(NotificationModel.student_id == student_id).delete(synchronize_session=False)
+        if "attendance" in tables:
+            db.query(AttendanceModel).filter(AttendanceModel.student_id == student_id).delete(synchronize_session=False)
+            
+        if "fee_records" in tables:
+            db.query(FeeRecord).filter(FeeRecord.student_id == student_id).delete(synchronize_session=False)
+            
+        if "exam_results" in tables:
+            db.query(ExamResult).filter(ExamResult.student_id == student_id).delete(synchronize_session=False)
+            
+        if "notifications" in tables:
+            db.query(NotificationModel).filter(NotificationModel.student_id == student_id).delete(synchronize_session=False)
 
         db.delete(student)
         db.commit()

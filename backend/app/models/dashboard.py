@@ -21,8 +21,9 @@ class FeeRecord(Base):
     student_id = Column(Integer, ForeignKey("students.id"))
     amount = Column(Float)
     month = Column(String) # e.g. "July 2026"
-    is_paid = Column(Boolean, default=False)
-    payment_date = Column(Date, nullable=True)
+    status = Column(String, default="Due") # "Due", "Partial", "Paid"
+    paid_amount = Column(Float, default=0.0)
+    payment_history = Column(String, default="[]") # JSON array of payments
 class Exam(Base):
     __tablename__ = "exams"
     

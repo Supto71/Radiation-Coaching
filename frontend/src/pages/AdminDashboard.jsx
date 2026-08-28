@@ -759,7 +759,7 @@ const FeeTrackerTab = () => {
   const [fees, setFees] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterPaid, setFilterPaid] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [filterBranch, setFilterBranch] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
   const [feeViewMode, setFeeViewMode] = useState('all'); // 'all', 'dues', 'history'
@@ -772,22 +772,25 @@ const FeeTrackerTab = () => {
   const [historySearch, setHistorySearch] = useState('');
   const [historyStudent, setHistoryStudent] = useState(null);
   const [allFees, setAllFees] = useState([]); // unfiltered, for history
+  
+  // Payment Modal
+  const [paymentModal, setPaymentModal] = useState({ show: false, fee: null, amount: '', date: new Date().toISOString().slice(0, 10) });
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth, is_paid: false });
+  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth });
 
   const fetchFees = useCallback(async () => {
     setLoading(true);
     try {
       let url = '/api/dashboard/fees?';
-      if (filterPaid !== '') url += `is_paid=${filterPaid}&`;
+      if (filterStatus !== '') url += `status=${filterStatus}&`;
       if (filterBranch) url += `branch=${encodeURIComponent(filterBranch)}&`;
       if (filterMonth) url += `month=${encodeURIComponent(filterMonth)}&`;
       const res = await fetch(url);
       if (res.ok) setFees(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
-  }, [filterPaid, filterBranch, filterMonth]);
+  }, [filterStatus, filterBranch, filterMonth]);
 
   const fetchAllFees = useCallback(async () => {
     try {
@@ -826,9 +829,29 @@ const FeeTrackerTab = () => {
     finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
   };
 
-  const handleMarkPaid = async (feeId) => {
-    await fetch(`/api/dashboard/fees/${feeId}/pay`, { method: 'PATCH' });
-    fetchFees(); fetchAllFees();
+  const submitPayment = async () => {
+    if (!paymentModal.amount || !paymentModal.date) {
+      setMsg({ text: 'টাকার পরিমাণ এবং তারিখ দিন!', type: 'error' }); return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/dashboard/fees/${paymentModal.fee.id}/pay`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parseFloat(paymentModal.amount), date: paymentModal.date })
+      });
+      if (res.ok) {
+        setMsg({ text: 'পেমেন্ট সফলভাবে যোগ হয়েছে!', type: 'success' });
+        setPaymentModal({ show: false, fee: null, amount: '', date: '' });
+        fetchFees(); fetchAllFees();
+      } else {
+        setMsg({ text: 'পেমেন্ট যোগ করতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch {
+      setMsg({ text: 'সার্ভার এরর!', type: 'error' });
+    }
+    setSaving(false);
+    setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
   };
 
   const handleEditFeeAmount = async (feeId) => {
@@ -868,8 +891,8 @@ const FeeTrackerTab = () => {
     setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
   };
 
-  const totalPaidAmount = fees.filter(f => f.is_paid).reduce((sum, f) => sum + f.amount, 0);
-  const totalUnpaidAmount = fees.filter(f => !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
+  const totalPaidAmount = fees.reduce((sum, f) => sum + (f.paid_amount || 0), 0);
+  const totalUnpaidAmount = fees.reduce((sum, f) => sum + (f.amount - (f.paid_amount || 0)), 0);
 
   const displayedFees = fees;
 
@@ -881,7 +904,7 @@ const FeeTrackerTab = () => {
   };
 
   const studentDues = Object.values(fees.reduce((acc, fee) => {
-    if (!fee.is_paid) {
+    if (fee.status !== 'Paid') {
       if (!acc[fee.student_id]) {
         acc[fee.student_id] = {
           student_uid: fee.student_uid,
@@ -891,7 +914,7 @@ const FeeTrackerTab = () => {
           months: []
         };
       }
-      acc[fee.student_id].total_due += fee.amount;
+      acc[fee.student_id].total_due += (fee.amount - (fee.paid_amount || 0));
       acc[fee.student_id].months.push(formatMonth(fee.month));
     }
     return acc;
@@ -912,7 +935,7 @@ const FeeTrackerTab = () => {
 
   // Calculate total due for a student (from allFees)
   const getStudentDue = (studentId) => {
-    return allFees.filter(f => f.student_id === studentId && !f.is_paid).reduce((sum, f) => sum + f.amount, 0);
+    return allFees.filter(f => f.student_id === studentId && f.status !== 'Paid').reduce((sum, f) => sum + (f.amount - (f.paid_amount || 0)), 0);
   };
 
   return (
@@ -964,12 +987,6 @@ const FeeTrackerTab = () => {
               <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
                 placeholder="৫০০" />
-            </div>
-            <div className="flex items-center gap-3 mt-6">
-              <input type="checkbox" id="isPaid" checked={form.is_paid} onChange={e => setForm({ ...form, is_paid: e.target.checked })}
-                className="w-5 h-5 accent-primary cursor-pointer" />
-              <label htmlFor="isPaid" className="font-semibold text-gray-700 cursor-pointer">এখনই পরিশোধিত মার্ক করুন</label>
-            </div>
           </div>
           <div className="flex gap-3 mt-5">
             <button onClick={handleAddFee} disabled={saving}
@@ -1003,11 +1020,12 @@ const FeeTrackerTab = () => {
 
         {feeViewMode === 'all' && (
           <div className="flex flex-wrap gap-3">
-            <select value={filterPaid} onChange={e => setFilterPaid(e.target.value)}
+            <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
               className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
               <option value="">সব রেকর্ড</option>
-              <option value="false">বকেয়া</option>
-              <option value="true">পরিশোধিত</option>
+              <option value="Due">বকেয়া</option>
+              <option value="Partial">আংশিক</option>
+              <option value="Paid">পরিশোধিত</option>
             </select>
             <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
               className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
@@ -1034,6 +1052,36 @@ const FeeTrackerTab = () => {
         )}
       </div>
 
+      {/* Payment Modal */}
+      {paymentModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-[400px]">
+            <h3 className="font-bold text-lg mb-4">পেমেন্ট যোগ করুন</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">টাকার পরিমাণ</label>
+                <input type="number" value={paymentModal.amount} onChange={e => setPaymentModal({...paymentModal, amount: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="কত টাকা?" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">তারিখ</label>
+                <input type="date" value={paymentModal.date} onChange={e => setPaymentModal({...paymentModal, date: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button onClick={() => setPaymentModal({ show: false, fee: null, amount: '', date: '' })}
+                className="px-4 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors">বাতিল</button>
+              <button onClick={submitPayment} disabled={saving}
+                className="px-4 py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition-colors disabled:bg-gray-400">
+                {saving ? 'সেভ হচ্ছে...' : 'সেভ করুন'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── All Records View ── */}
       {feeViewMode === 'all' && (
         loading ? (
@@ -1055,7 +1103,26 @@ const FeeTrackerTab = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {displayedFees.map(f => (
+                {displayedFees.map(f => {
+                  let statusBadge = null;
+                  if (f.status === 'Paid') {
+                    statusBadge = <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">✓ সম্পূর্ণ</span>;
+                  } else if (f.status === 'Partial') {
+                    statusBadge = (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800" title={`বকেয়া: ৳${f.amount - (f.paid_amount || 0)}`}>
+                        ⚠ আংশিক (৳{f.paid_amount})
+                      </span>
+                    );
+                  } else {
+                    statusBadge = <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>;
+                  }
+
+                  let paymentHistoryList = [];
+                  try {
+                    paymentHistoryList = JSON.parse(f.payment_history || '[]');
+                  } catch (e) {}
+
+                  return (
                   <tr key={f.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4 text-sm font-medium text-gray-700">{f.month}</td>
                     <td className="p-4">
@@ -1071,31 +1138,36 @@ const FeeTrackerTab = () => {
                           <button onClick={() => setEditingFeeId(null)} className="text-red-500 font-bold hover:bg-red-50 p-1 rounded transition-colors">✗</button>
                         </div>
                       ) : (
-                        <div className="flex gap-2 items-center">
-                          <span>৳{f.amount}</span>
-                          {!f.is_paid && (
-                            <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="পরিমাণ এডিট করুন">
-                              ✎
-                            </button>
-                          )}
+                        <div className="flex flex-col">
+                          <div className="flex gap-2 items-center">
+                            <span>৳{f.amount}</span>
+                            {f.status !== 'Paid' && (
+                              <button onClick={() => { setEditingFeeId(f.id); setEditAmount(f.amount.toString()); }} className="text-gray-400 hover:text-blue-600 transition-colors" title="মোট পরিমাণ এডিট করুন">
+                                ✎
+                              </button>
+                            )}
+                          </div>
+                          {f.status === 'Partial' && <span className="text-xs text-red-500 font-medium">বকেয়া: ৳{f.amount - (f.paid_amount || 0)}</span>}
                         </div>
                       )}
                     </td>
                     <td className="p-4">
-                      {f.is_paid ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                          ✓ পরিশোধিত
-                          {f.payment_date && <span className="ml-1 opacity-70">({f.payment_date})</span>}
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
-                      )}
+                      <div className="flex flex-col items-start gap-1">
+                        {statusBadge}
+                        {paymentHistoryList.length > 0 && (
+                          <div className="text-[10px] text-gray-500 mt-1 space-y-0.5">
+                            {paymentHistoryList.map((p, i) => (
+                              <div key={i}>{p.date}: ৳{p.amount}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 flex gap-2 items-center h-full">
-                      {!f.is_paid && (
-                        <button onClick={() => handleMarkPaid(f.id)}
+                      {f.status !== 'Paid' && (
+                        <button onClick={() => setPaymentModal({ show: true, fee: f, amount: (f.amount - (f.paid_amount || 0)).toString(), date: new Date().toISOString().slice(0, 10) })}
                           className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors font-semibold">
-                          পরিশোধিত মার্ক করুন
+                          পরিশোধ করুন
                         </button>
                       )}
                       <button onClick={() => handleDeleteFee(f.id)}
@@ -1104,7 +1176,7 @@ const FeeTrackerTab = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -1141,6 +1213,85 @@ const FeeTrackerTab = () => {
                 ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {/* History View */}
+      {feeViewMode === 'history' && (
+        <div>
+          <div className="mb-6 relative w-full max-w-md">
+            <input type="text" placeholder="স্টুডেন্ট আইডি বা নাম দিয়ে খুঁজুন..." value={historySearch} onChange={e => setHistorySearch(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl p-3 px-4 focus:ring-2 focus:ring-primary outline-none bg-white shadow-sm" />
+            {historyFilteredStudents.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-60 overflow-auto">
+                {historyFilteredStudents.map(s => (
+                  <div key={s.id} onClick={() => { setHistoryStudent(s); setHistorySearch(''); }}
+                    className="p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition-colors">
+                    <div>
+                      <div className="font-bold text-gray-800">{s.name}</div>
+                      <div className="text-xs text-gray-500">{s.student_uid} | {s.branch}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {historyStudent ? (
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+              <div className="bg-gradient-to-r from-blue-50 to-white p-6 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">{historyStudent.name}</h3>
+                  <p className="text-gray-500 font-medium mt-1">আইডি: {historyStudent.student_uid} | শাখা: {historyStudent.branch}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500 font-semibold mb-1">মোট বকেয়া</p>
+                  <p className="text-2xl font-bold text-red-600">৳{getStudentDue(historyStudent.id)}</p>
+                </div>
+              </div>
+              <table className="w-full text-left">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="p-4 font-bold text-gray-600">মাস</th>
+                    <th className="p-4 font-bold text-gray-600">নির্ধারিত ফি</th>
+                    <th className="p-4 font-bold text-gray-600">স্ট্যাটাস</th>
+                    <th className="p-4 font-bold text-gray-600">পেমেন্ট হিস্ট্রি</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {historyStudentFees.length > 0 ? historyStudentFees.map(f => {
+                    let paymentHistoryList = [];
+                    try { paymentHistoryList = JSON.parse(f.payment_history || '[]'); } catch(e){}
+                    return (
+                    <tr key={f.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4 font-semibold text-gray-800">{f.month}</td>
+                      <td className="p-4 font-bold text-gray-800">৳{f.amount}</td>
+                      <td className="p-4">
+                        {f.status === 'Paid' ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">✓ সম্পূর্ণ</span>
+                        ) : f.status === 'Partial' ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">⚠ আংশিক</span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">✗ বকেয়া</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-sm text-gray-600 font-medium">
+                        {paymentHistoryList.length > 0 ? paymentHistoryList.map((p, idx) => (
+                           <div key={idx}>{p.date}: ৳{p.amount}</div>
+                        )) : '-'}
+                      </td>
+                    </tr>
+                  )}) : (
+                    <tr><td colSpan="4" className="text-center p-8 text-gray-500">কোনো ফি রেকর্ড নেই।</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-gray-50 text-gray-400 font-medium border border-dashed border-gray-200 rounded-xl">
+              ওপরের সার্চ বক্স থেকে একজন স্টুডেন্ট নির্বাচন করুন
+            </div>
           )}
         </div>
       )}
@@ -1405,9 +1556,13 @@ const ExamManagementTab = () => {
     try {
       const url = editingExamId ? `/api/dashboard/exams/${editingExamId}` : '/api/dashboard/exams';
       const method = editingExamId ? 'PUT' : 'POST';
+      const examData = {
+        ...newExam,
+        duration_minutes: parseInt(newExam.duration_minutes) || 30
+      };
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newExam)
+        body: JSON.stringify(examData)
       });
       if (res.ok) {
         setMsg(editingExamId ? 'পরীক্ষা আপডেট হয়েছে!' : 'পরীক্ষা তৈরি হয়েছে!');

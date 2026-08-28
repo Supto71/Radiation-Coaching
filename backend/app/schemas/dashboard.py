@@ -31,13 +31,16 @@ class Notice(NoticeBase):
 class FeeRecordBase(BaseModel):
     amount: float
     month: str
-    is_paid: bool = False
-    payment_date: Optional[date] = None
+    status: str = "Due"
+    paid_amount: float = 0.0
+    payment_history: str = "[]"
 
 class FeeRecordUpdate(BaseModel):
     amount: Optional[float] = None
     month: Optional[str] = None
-    is_paid: Optional[bool] = None
+    status: Optional[str] = None
+    paid_amount: Optional[float] = None
+    payment_history: Optional[str] = None
 
 class FeeRecordCreate(FeeRecordBase):
     student_id: int
@@ -59,6 +62,10 @@ class FeeRecordWithStudent(FeeRecordBase):
 
     class Config:
         from_attributes = True
+
+class FeePaymentCreate(BaseModel):
+    amount: float
+    date: str
 
 # Exam Schemas
 class QuestionBase(BaseModel):

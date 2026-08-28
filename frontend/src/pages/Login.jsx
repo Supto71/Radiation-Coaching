@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { FaUserGraduate, FaChalkboardTeacher, FaIdBadge, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -9,11 +9,53 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Auto-redirect if already logged in
+    const student = localStorage.getItem('student');
+    const staffRole = localStorage.getItem('staff_role');
+    
+    if (student) {
+      navigate('/student/dashboard');
+      return;
+    } else if (staffRole === 'admin') {
+      navigate('/admin/dashboard');
+      return;
+    } else if (staffRole === 'teacher') {
+      navigate('/teacher/dashboard');
+      return;
+    }
+
+    const savedUserId = localStorage.getItem('remembered_userId');
+    const savedPassword = localStorage.getItem('remembered_password');
+    const savedRole = localStorage.getItem('remembered_role');
+    if (savedUserId && savedPassword) {
+      setUserId(savedUserId);
+      setPassword(savedPassword);
+      setRememberMe(true);
+      if (savedRole) {
+        setRole(savedRole);
+      }
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    const saveCredentials = () => {
+      if (rememberMe) {
+        localStorage.setItem('remembered_userId', userId);
+        localStorage.setItem('remembered_password', password);
+        localStorage.setItem('remembered_role', role);
+      } else {
+        localStorage.removeItem('remembered_userId');
+        localStorage.removeItem('remembered_password');
+        localStorage.removeItem('remembered_role');
+      }
+    };
 
     if (role === 'student') {
       try {
@@ -23,6 +65,7 @@ const Login = () => {
         });
         if (res.data) {
           localStorage.setItem('student', JSON.stringify(res.data));
+          saveCredentials();
           navigate('/student/dashboard');
         }
       } catch (err) {
@@ -35,6 +78,7 @@ const Login = () => {
     } else {
       if (userId.trim() === 'admin' && password.trim() === 'admin123') {
         localStorage.setItem('staff_role', 'admin');
+        saveCredentials();
         navigate('/admin/dashboard');
       } else if (userId.trim().toUpperCase().startsWith('RC-')) {
         try {
@@ -47,6 +91,7 @@ const Login = () => {
             localStorage.setItem('teacher_name', res.data.name);
             localStorage.setItem('teacher_id', res.data.id);
             if (res.data.image) localStorage.setItem('teacher_image', res.data.image);
+            saveCredentials();
             navigate('/teacher/dashboard');
           }
         } catch (err) {
@@ -181,7 +226,12 @@ const Login = () => {
               {/* Remember Me */}
               <div className="flex items-center justify-between pt-1">
                 <label className="flex items-center gap-1.5 cursor-pointer group">
-                  <input type="checkbox" className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer" />
+                  <input 
+                    type="checkbox" 
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer" 
+                  />
                   <span className="text-[11px] font-medium text-gray-500 group-hover:text-gray-700 transition-colors">আমাকে মনে রাখুন</span>
                 </label>
               </div>
