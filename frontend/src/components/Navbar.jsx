@@ -1,9 +1,20 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('student');
+    localStorage.removeItem('staff_role');
+    localStorage.removeItem('teacher_name');
+    localStorage.removeItem('teacher_id');
+    localStorage.removeItem('teacher_image');
+    localStorage.removeItem('admin');
+    navigate('/login');
+  };
 
   const navLinks = [
     { name: 'হোম', path: '/' },
@@ -42,14 +53,21 @@ const Navbar = () => {
         </div>
 
         {/* Right Side: Red Login Button (Mobile only) */}
-        <div className="flex items-center lg:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <Link
             to="/login"
-            className="relative overflow-hidden group bg-red-600 text-white px-5 py-2 sm:px-6 sm:py-2.5 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)] font-bold text-[14px] sm:text-[15px]"
+            className="relative overflow-hidden group bg-red-600 text-white px-3 py-1.5 sm:px-5 sm:py-2 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)] font-bold text-[12px] sm:text-[14px]"
           >
             <span className="relative z-10">লগইন</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
           </Link>
+          <button
+            onClick={handleLogout}
+            className="relative overflow-hidden group bg-gray-700 text-white px-3 py-1.5 sm:px-5 sm:py-2 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(75,85,99,0.5)] font-bold text-[12px] sm:text-[14px]"
+          >
+            <span className="relative z-10">লগআউট</span>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+          </button>
         </div>
 
         {/* DESKTOP VIEW ELEMENTS (hidden on mobile, visible on lg) */}
@@ -67,7 +85,7 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
-          <div className="hidden lg:flex items-center pl-4">
+          <div className="hidden lg:flex items-center pl-4 gap-2">
             <Link
               to="/login"
               className="relative overflow-hidden group bg-gradient-to-r from-[#00b4d8] to-[#0096b4] text-white px-6 py-2.5 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(0,180,216,0.4)] font-bold text-[15px]"
@@ -75,6 +93,13 @@ const Navbar = () => {
               <span className="relative z-10">লগইন</span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
             </Link>
+            <button
+              onClick={handleLogout}
+              className="relative overflow-hidden group bg-gray-700 hover:bg-gray-600 text-white px-6 py-2.5 rounded-full shadow-lg transition-all transform hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(75,85,99,0.5)] font-bold text-[15px]"
+            >
+              <span className="relative z-10">লগআউট</span>
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            </button>
           </div>
         </div>
       </div>
