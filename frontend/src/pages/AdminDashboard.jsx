@@ -777,7 +777,7 @@ const FeeTrackerTab = () => {
   const [paymentModal, setPaymentModal] = useState({ show: false, fee: null, amount: '', date: new Date().toISOString().slice(0, 10) });
 
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth });
+  const [form, setForm] = useState({ student_id: '', amount: '500', month: currentMonth, paymentStatus: 'Due', paidAmount: '', paymentDate: new Date().toISOString().slice(0, 10) });
 
   const fetchFees = useCallback(async () => {
     setLoading(true);
@@ -810,12 +810,30 @@ const FeeTrackerTab = () => {
     if (!form.student_id || !form.amount || !form.month) {
       setMsg({ text: 'সকল ফিল্ড পূরণ করুন!', type: 'error' }); return;
     }
+    
+    let submitData = { ...form, student_id: parseInt(form.student_id), amount: parseFloat(form.amount) };
+    if (form.paymentStatus === 'Paid') {
+      submitData.paid_amount = submitData.amount;
+      submitData.payment_date = form.paymentDate;
+    } else if (form.paymentStatus === 'Partial') {
+      if (!form.paidAmount || isNaN(form.paidAmount) || parseFloat(form.paidAmount) <= 0) {
+        setMsg({ text: 'সঠিক জমাকৃত টাকার পরিমাণ দিন!', type: 'error' }); return;
+      }
+      submitData.paid_amount = parseFloat(form.paidAmount);
+      submitData.payment_date = form.paymentDate;
+    } else {
+      submitData.paid_amount = 0.0;
+    }
+    delete submitData.paymentStatus;
+    delete submitData.paidAmount;
+    delete submitData.paymentDate;
+
     setSaving(true);
     try {
       const res = await fetch('/api/dashboard/fees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, student_id: parseInt(form.student_id), amount: parseFloat(form.amount) })
+        body: JSON.stringify(submitData)
       });
       if (res.ok) {
         setMsg({ text: 'ফি রেকর্ড সফলভাবে যোগ হয়েছে!', type: 'success' });
@@ -903,20 +921,36 @@ const FeeTrackerTab = () => {
     return date.toLocaleString('bn-BD', { month: 'long', year: 'numeric' });
   };
 
-  const studentDues = Object.values(fees.reduce((acc, fee) => {
-    if (fee.status !== 'Paid') {
-      if (!acc[fee.student_id]) {
-        acc[fee.student_id] = {
-          student_uid: fee.student_uid,
-          student_name: fee.student_name,
-          student_branch: fee.student_branch,
-          total_due: 0,
-          months: []
-        };
-      }
-      acc[fee.student_id].total_due += (fee.amount - (fee.paid_amount || 0));
-      acc[fee.student_id].months.push(formatMonth(fee.month));
+  const studentFeeSummary = Object.values(fees.reduce((acc, fee) => {
+    if (!acc[fee.student_id]) {
+      acc[fee.student_id] = {
+        student_uid: fee.student_uid,
+        student_name: fee.student_name,
+        student_branch: fee.student_branch,
+        student_class: fee.student_class,
+        total_due: 0,
+        total_paid: 0,
+        last_payment_date: null
+      };
     }
+    
+    if (fee.status !== 'Paid') {
+      acc[fee.student_id].total_due += (fee.amount - (fee.paid_amount || 0));
+    }
+    acc[fee.student_id].total_paid += (fee.paid_amount || 0);
+    
+    let payments = [];
+    try {
+      payments = JSON.parse(fee.payment_history || '[]');
+    } catch(e) {}
+    
+    if (payments.length > 0) {
+      const latestPaymentDate = payments[payments.length - 1].date;
+      if (!acc[fee.student_id].last_payment_date || new Date(latestPaymentDate) > new Date(acc[fee.student_id].last_payment_date)) {
+        acc[fee.student_id].last_payment_date = latestPaymentDate;
+      }
+    }
+    
     return acc;
   }, {})).sort((a, b) => b.total_due - a.total_due);
 
@@ -988,6 +1022,43 @@ const FeeTrackerTab = () => {
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
                 placeholder="৫০০" />
             </div>
+            
+            <div className="col-span-1 md:col-span-2 mt-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">পেমেন্ট স্ট্যাটাস *</label>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="paymentStatus" value="Due" checked={form.paymentStatus === 'Due'} onChange={e => setForm({...form, paymentStatus: e.target.value})} className="accent-primary w-4 h-4" />
+                  <span className="text-gray-700">বকেয়া (Unpaid)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="paymentStatus" value="Partial" checked={form.paymentStatus === 'Partial'} onChange={e => setForm({...form, paymentStatus: e.target.value})} className="accent-primary w-4 h-4" />
+                  <span className="text-gray-700">আংশিক প্রদান (Partial)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="paymentStatus" value="Paid" checked={form.paymentStatus === 'Paid'} onChange={e => setForm({...form, paymentStatus: e.target.value})} className="accent-primary w-4 h-4" />
+                  <span className="text-gray-700">সম্পূর্ণ পরিশোধ (Full Paid)</span>
+                </label>
+              </div>
+            </div>
+            
+            {form.paymentStatus !== 'Due' && (
+              <>
+                {form.paymentStatus === 'Partial' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">জমাকৃত টাকা *</label>
+                    <input type="number" value={form.paidAmount} onChange={e => setForm({ ...form, paidAmount: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
+                      placeholder="কত টাকা জমা দিচ্ছে?" />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">পেমেন্টের তারিখ *</label>
+                  <input type="date" value={form.paymentDate} onChange={e => setForm({ ...form, paymentDate: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white" />
+                </div>
+              </>
+            )}
+            
           </div>
           <div className="flex gap-3 mt-5">
             <button onClick={handleAddFee} disabled={saving}
@@ -1011,7 +1082,7 @@ const FeeTrackerTab = () => {
           </button>
           <button onClick={() => setFeeViewMode('dues')}
             className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${feeViewMode === 'dues' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-            বকেয়া তালিকা
+            স্টুডেন্ট ফি স্ট্যাটাস
           </button>
           <button onClick={() => { setFeeViewMode('history'); setHistoryStudent(null); setHistorySearch(''); }}
             className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${feeViewMode === 'history' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -1187,28 +1258,36 @@ const FeeTrackerTab = () => {
       {/* Dues Summary View */}
       {feeViewMode === 'dues' && (
         <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
-          {studentDues.length === 0 ? (
+          {studentFeeSummary.length === 0 ? (
             <div className="text-center py-16 bg-gray-50 text-gray-500 font-medium">
-              কারো কোনো বকেয়া নেই! 🎉
+              কোনো স্টুডেন্ট ফি রেকর্ড নেই!
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse bg-white">
               <thead>
-                <tr className="bg-red-50 text-red-800 text-sm border-b border-red-100">
-                  <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
-                  <th className="p-4 font-bold">নাম</th>
-                  <th className="p-4 font-bold">শাখা</th>
-                  <th className="p-4 font-bold">বকেয়া মাস</th>
-                  <th className="p-4 font-bold text-right">মোট বকেয়া</th>
+                <tr className="bg-gray-50 text-gray-800 text-sm border-b border-gray-200">
+                  <th className="p-4 font-bold">স্টুডেন্ট আইডি ও নাম</th>
+                  <th className="p-4 font-bold">ক্লাস ও শাখা</th>
+                  <th className="p-4 font-bold text-center">সর্বশেষ পেমেন্ট তারিখ</th>
+                  <th className="p-4 font-bold text-right text-green-700">মোট প্রদান</th>
+                  <th className="p-4 font-bold text-right text-red-700">মোট বকেয়া</th>
                 </tr>
               </thead>
               <tbody>
-                {studentDues.map((due, idx) => (
-                  <tr key={idx} className="border-b border-gray-50 hover:bg-red-50/30 transition-colors">
-                    <td className="p-4"><span className="font-bold text-primary text-sm">{due.student_uid}</span></td>
-                    <td className="p-4 font-semibold text-gray-900">{due.student_name}</td>
-                    <td className="p-4 text-gray-600 text-sm">{due.student_branch}</td>
-                    <td className="p-4 text-gray-600 text-sm">{due.months.join(', ')}</td>
+                {studentFeeSummary.map((due, idx) => (
+                  <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-gray-900">{due.student_name}</div>
+                      <div className="text-xs text-gray-500 font-semibold">{due.student_uid}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="font-medium text-gray-800">{due.student_class}</div>
+                      <div className="text-xs text-gray-500">{due.student_branch}</div>
+                    </td>
+                    <td className="p-4 text-center text-sm font-medium text-gray-600">
+                      {due.last_payment_date ? new Date(due.last_payment_date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
+                    </td>
+                    <td className="p-4 font-bold text-green-600 text-right text-lg">৳{due.total_paid}</td>
                     <td className="p-4 font-bold text-red-600 text-right text-lg">৳{due.total_due}</td>
                   </tr>
                 ))}

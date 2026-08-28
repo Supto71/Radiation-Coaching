@@ -112,6 +112,26 @@ def get_my_fees(student_id: int, db: Session = Depends(get_db)):
 def create_fee_record(fee: schemas.FeeRecordCreate, db: Session = Depends(get_db)):
     try:
         data = fee.model_dump()
+        
+        payment_date = data.pop('payment_date', None)
+        paid_amount = data.get('paid_amount', 0.0)
+        amount = data.get('amount', 0.0)
+        
+        # Calculate status
+        if paid_amount >= amount:
+            data['status'] = "Paid"
+        elif paid_amount > 0:
+            data['status'] = "Partial"
+        else:
+            data['status'] = "Due"
+            
+        # Update payment_history
+        if paid_amount > 0 and payment_date:
+            import json
+            data['payment_history'] = json.dumps([{"date": payment_date, "amount": paid_amount}])
+        else:
+            data['payment_history'] = "[]"
+            
         db_fee = db_models.FeeRecord(**data)
         db.add(db_fee)
         db.commit()

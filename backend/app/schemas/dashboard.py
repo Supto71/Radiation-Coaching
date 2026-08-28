@@ -44,6 +44,8 @@ class FeeRecordUpdate(BaseModel):
 
 class FeeRecordCreate(FeeRecordBase):
     student_id: int
+    paid_amount: Optional[float] = 0.0
+    payment_date: Optional[str] = None
 
 class FeeRecord(FeeRecordBase):
     id: int

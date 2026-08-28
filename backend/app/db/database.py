@@ -1,9 +1,11 @@
 import os
+# pyrefly: ignore [missing-import]
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+load_dotenv(dotenv_path=env_path)
 
 # Use DATABASE_URL from environment if available (e.g., Supabase PostgreSQL)
 # Otherwise, fallback to local SQLite
