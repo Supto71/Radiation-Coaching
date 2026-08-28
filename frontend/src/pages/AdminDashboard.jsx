@@ -987,6 +987,7 @@ const FeeTrackerTab = () => {
               <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
                 placeholder="৫০০" />
+            </div>
           </div>
           <div className="flex gap-3 mt-5">
             <button onClick={handleAddFee} disabled={saving}
