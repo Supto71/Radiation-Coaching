@@ -17,6 +17,8 @@ const StudentDashboard = () => {
   const [feesLoading, setFeesLoading] = useState(true);
   const [exams, setExams] = useState([]);
   const [examsLoading, setExamsLoading] = useState(true);
+  const [allExams, setAllExams] = useState([]);
+  const [allExamsLoading, setAllExamsLoading] = useState(true);
   const [results, setResults] = useState([]);
   const [resultsLoading, setResultsLoading] = useState(true);
   const [notices, setNotices] = useState([]);
@@ -110,6 +112,21 @@ const StudentDashboard = () => {
       }
     };
 
+    // Fetch All Exams for Leaderboard
+    const fetchAllExams = async () => {
+      setAllExamsLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard/exams?class_level=${encodeURIComponent(student.class_level)}`);
+        if (res.ok) {
+          setAllExams(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch all exams", err);
+      } finally {
+        setAllExamsLoading(false);
+      }
+    };
+
     // Fetch Results
     const fetchResults = async () => {
       setResultsLoading(true);
@@ -159,6 +176,7 @@ const StudentDashboard = () => {
     fetchAttendance();
     fetchFees();
     fetchExams();
+    fetchAllExams();
     fetchResults();
     fetchNotices();
     fetchNotifications();
@@ -585,7 +603,7 @@ const StudentDashboard = () => {
                     className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50"
                   >
                     <option value="">-- পরীক্ষা নির্বাচন করুন --</option>
-                    {exams.map(ex => (
+                    {allExams.map(ex => (
                       <option key={ex.id} value={ex.id}>{ex.title} ({ex.subject})</option>
                     ))}
                   </select>
