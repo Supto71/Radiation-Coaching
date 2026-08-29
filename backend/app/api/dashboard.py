@@ -365,7 +365,17 @@ def submit_exam_result(result: schemas.ExamResultCreate, student_id: int, db: Se
 # --- ROUTINE ---
 @router.get("/routines", response_model=List[schemas.Routine])
 def get_routines(branch: str = None, class_level: str = None, db: Session = Depends(get_db)):
-    query = db.query(db_models.Routine)
+    from datetime import date
+    today = date.today().isoformat()
+    
+    # Auto-delete past routines (older than today)
+    past_routines = db.query(db_models.Routine).filter(db_models.Routine.date < today).all()
+    if past_routines:
+        for r in past_routines:
+            db.delete(r)
+        db.commit()
+
+    query = db.query(db_models.Routine).filter(db_models.Routine.date >= today)
     if branch:
         query = query.filter(db_models.Routine.branch == branch)
     if class_level:
