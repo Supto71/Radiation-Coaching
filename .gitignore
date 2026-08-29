@@ -1,15 +1,46 @@
+# === Environment & Secrets ===
 .env
 .env.*
-*.db
+.env.local
+.env.production
+*.secret
+
+# === Python ===
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 venv/
 env/
+*.db
+*.sqlite3
+backend/temp_sql_app.db
+backend/current_sql_app.db
+
+# === Temp / Scratch Scripts (never commit these) ===
+fix_*.py
+fix_*.js
+migrate.py
+backend/scratch_*.py
+backend/fix_*.py
+
+# === Node / Frontend ===
 node_modules/
 dist/
 build/
-backend/temp_sql_app.db
-backend/current_sql_app.db
-backend/scratch_check.py
-backend/scratch_check_fee.py
-backend/fix_history.py
+.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === OS Files ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Editor ===
+.vscode/
+.idea/
+*.swp
+*.swo
