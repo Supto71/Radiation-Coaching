@@ -2169,6 +2169,9 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
         </div>
       )}
     </div>
+  );
+};
+
 // ─── Leaderboard Tab ──────────────────────────────────────────────────────────
 const LeaderboardTab = () => {
   const [activeClass, setActiveClass] = useState('');

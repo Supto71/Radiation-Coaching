@@ -590,6 +590,7 @@ const StudentDashboard = () => {
                   </div>
                 )}
               </div>
+            )}
             {/* LEADERBOARD TAB */}
             {activeTab === 'leaderboard' && (
               <div className="space-y-6">
