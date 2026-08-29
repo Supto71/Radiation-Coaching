@@ -308,8 +308,8 @@ def get_exam_leaderboard(exam_id: int, db: Session = Depends(get_db)):
         
     results = db.query(
         db_models.ExamResult,
-        db_models.Student
-    ).join(db_models.Student, db_models.ExamResult.student_id == db_models.Student.id).filter(
+        StudentModel
+    ).join(StudentModel, db_models.ExamResult.student_id == StudentModel.id).filter(
         db_models.ExamResult.exam_id == exam_id
     ).order_by(db_models.ExamResult.score.desc(), db_models.ExamResult.taken_at.asc()).all()
     
