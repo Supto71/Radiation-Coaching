@@ -2171,7 +2171,7 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
     </div>
 // ─── Leaderboard Tab ──────────────────────────────────────────────────────────
 const LeaderboardTab = () => {
-  const [activeClass, setActiveClass] = useState('Class 1');
+  const [activeClass, setActiveClass] = useState('');
   const [exams, setExams] = useState([]);
   const [examsLoading, setExamsLoading] = useState(false);
   const [selectedExam, setSelectedExam] = useState('');
@@ -2183,7 +2183,8 @@ const LeaderboardTab = () => {
     const fetchExams = async () => {
       setExamsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/exams?class_level=${encodeURIComponent(activeClass)}`);
+        const url = activeClass ? `/api/dashboard/exams?class_level=${encodeURIComponent(activeClass)}` : '/api/dashboard/exams';
+        const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setExams(data);
@@ -2233,6 +2234,12 @@ const LeaderboardTab = () => {
       
       {/* Class Selection Tabs */}
       <div className="flex flex-wrap gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+        <button
+          onClick={() => setActiveClass('')}
+          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeClass === '' ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+        >
+          সকল ক্লাস
+        </button>
         {CLASS_LEVELS.map(cl => (
           <button
             key={cl.value}

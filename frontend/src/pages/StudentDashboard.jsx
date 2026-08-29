@@ -116,7 +116,7 @@ const StudentDashboard = () => {
     const fetchAllExams = async () => {
       setAllExamsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/exams?class_level=${encodeURIComponent(student.class_level)}`);
+        const res = await fetch('/api/dashboard/exams');
         if (res.ok) {
           setAllExams(await res.json());
         }
