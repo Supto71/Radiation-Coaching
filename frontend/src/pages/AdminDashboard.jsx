@@ -2169,6 +2169,141 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
         </div>
       )}
     </div>
+// ─── Leaderboard Tab ──────────────────────────────────────────────────────────
+const LeaderboardTab = () => {
+  const [activeClass, setActiveClass] = useState('Class 1');
+  const [exams, setExams] = useState([]);
+  const [examsLoading, setExamsLoading] = useState(false);
+  const [selectedExam, setSelectedExam] = useState('');
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
+  // Fetch exams when class changes
+  useEffect(() => {
+    const fetchExams = async () => {
+      setExamsLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard/exams?class_level=${encodeURIComponent(activeClass)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setExams(data);
+        } else {
+          setExams([]);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setExamsLoading(false);
+      }
+    };
+    fetchExams();
+    setSelectedExam('');
+    setLeaderboardData([]);
+  }, [activeClass]);
+
+  // Fetch leaderboard when exam changes
+  useEffect(() => {
+    if (!selectedExam) {
+      setLeaderboardData([]);
+      return;
+    }
+    const fetchLeaderboard = async () => {
+      setLeaderboardLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard/exams/${selectedExam}/leaderboard`);
+        if (res.ok) {
+          const data = await res.json();
+          setLeaderboardData(data);
+        } else {
+          setLeaderboardData([]);
+        }
+      } catch (e) {
+        console.error(e);
+        setLeaderboardData([]);
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+    fetchLeaderboard();
+  }, [selectedExam]);
+
+  return (
+    <div>
+      <h2 className="text-xl font-bold text-gray-900 mb-6">মেধাতালিকা (র‍্যাংক)</h2>
+      
+      {/* Class Selection Tabs */}
+      <div className="flex flex-wrap gap-2 mb-6 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+        {CLASS_LEVELS.map(cl => (
+          <button
+            key={cl.value}
+            onClick={() => setActiveClass(cl.value)}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${activeClass === cl.value ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            {cl.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+        <label className="block text-sm font-bold text-gray-700 mb-2">পরীক্ষা নির্বাচন করুন:</label>
+        {examsLoading ? (
+          <div className="text-sm text-gray-500 animate-pulse">পরীক্ষা লোড হচ্ছে...</div>
+        ) : (
+          <select 
+            value={selectedExam} 
+            onChange={e => setSelectedExam(e.target.value)} 
+            className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50"
+          >
+            <option value="">-- পরীক্ষা নির্বাচন করুন --</option>
+            {exams.map(ex => (
+              <option key={ex.id} value={ex.id}>{ex.title} ({ex.subject})</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {selectedExam && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {leaderboardLoading ? (
+            <div className="text-center py-12 text-gray-500 animate-pulse">মেধাতালিকা লোড হচ্ছে...</div>
+          ) : leaderboardData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-primary/10 text-primary text-sm border-b border-primary/20">
+                    <th className="p-4 font-bold text-center w-20">র‍্যাংক</th>
+                    <th className="p-4 font-bold">স্টুডেন্ট নাম</th>
+                    <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                    <th className="p-4 font-bold text-center">স্কোর</th>
+                    <th className="p-4 font-bold text-center hidden md:table-cell">সঠিক</th>
+                    <th className="p-4 font-bold text-center hidden md:table-cell">ভুল</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboardData.map((entry, idx) => (
+                    <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                      <td className="p-4 text-center">
+                        {entry.rank === 1 ? <span className="text-2xl" title="১ম স্থান">🥇</span> : 
+                         entry.rank === 2 ? <span className="text-2xl" title="২য় স্থান">🥈</span> : 
+                         entry.rank === 3 ? <span className="text-2xl" title="৩য় স্থান">🥉</span> : 
+                         <span className="font-bold text-gray-500">{entry.rank}</span>}
+                      </td>
+                      <td className="p-4 font-bold text-gray-800">{entry.student_name}</td>
+                      <td className="p-4 text-sm font-medium text-gray-500">{entry.student_uid}</td>
+                      <td className="p-4 text-center font-extrabold text-primary text-lg">{entry.score}</td>
+                      <td className="p-4 text-center font-bold text-green-600 hidden md:table-cell">{entry.total_correct}</td>
+                      <td className="p-4 text-center font-bold text-red-600 hidden md:table-cell">{entry.total_wrong}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500 font-medium">এই পরীক্ষার জন্য কোনো মেধাতালিকা পাওয়া যায়নি।</div>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -2466,7 +2601,8 @@ const AdminDashboard = () => {
     { id: 'routines', label: 'রুটিন আপডেট' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
-    { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' }
+    { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' },
+    { id: 'leaderboard', label: 'মেধাতালিকা' }
   ];
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -2611,6 +2747,7 @@ const AdminDashboard = () => {
             {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
             {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
             {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}
+            {activeTab === 'leaderboard' && <LeaderboardTab />}
           </div>
           </div>
         </div>
