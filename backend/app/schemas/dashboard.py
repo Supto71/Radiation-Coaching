@@ -88,6 +88,7 @@ class Question(QuestionBase):
 class ExamBase(BaseModel):
     title: str
     subject: str
+    class_level: Optional[str] = None
     duration_minutes: int
     is_active: bool = True
 
@@ -97,6 +98,7 @@ class ExamCreate(ExamBase):
 class ExamUpdate(BaseModel):
     title: Optional[str] = None
     subject: Optional[str] = None
+    class_level: Optional[str] = None
     duration_minutes: Optional[int] = None
     is_active: Optional[bool] = None
 

@@ -30,6 +30,7 @@ class Exam(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     subject = Column(String)
+    class_level = Column(String, nullable=True) # E.g., "Class 6", "Class 7"
     duration_minutes = Column(Integer, default=30)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)

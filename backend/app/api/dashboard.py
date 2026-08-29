@@ -199,10 +199,12 @@ def delete_fee_record(fee_id: int, db: Session = Depends(get_db)):
 
 # --- EXAMS ---
 @router.get("/exams", response_model=List[schemas.Exam])
-def get_all_exams(active_only: bool = False, db: Session = Depends(get_db)):
+def get_all_exams(active_only: bool = False, class_level: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(db_models.Exam)
     if active_only:
         query = query.filter(db_models.Exam.is_active == True)
+    if class_level:
+        query = query.filter(db_models.Exam.class_level == class_level)
     return query.order_by(db_models.Exam.created_at.desc()).all()
 
 @router.post("/exams", response_model=schemas.Exam)
@@ -214,10 +216,17 @@ def create_exam(exam: schemas.ExamCreate, db: Session = Depends(get_db)):
     return db_exam
 
 @router.get("/exams/{exam_id}", response_model=schemas.Exam)
-def get_exam(exam_id: int, student_id: Optional[int] = None, db: Session = Depends(get_db)):
+def get_exam(exam_id: int, student_id: Optional[int] = None, class_level: Optional[str] = None, db: Session = Depends(get_db)):
     exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
     if not exam:
         raise HTTPException(status_code=404, detail="Exam not found")
+
+    # If class_level is provided and the exam is restricted to a class_level, enforce it.
+    if class_level and exam.class_level and class_level != exam.class_level:
+        raise HTTPException(
+            status_code=403,
+            detail=f"এই পরীক্ষাটি শুধুমাত্র {exam.class_level} এর শিক্ষার্থীদের জন্য।"
+        )
 
     # One attempt per student ID: block reloading the exam after submission
     if student_id is not None:

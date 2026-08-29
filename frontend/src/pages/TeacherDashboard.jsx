@@ -27,6 +27,7 @@ const TeacherDashboard = () => {
   // Exam States
   const [examTitle, setExamTitle] = useState('');
   const [examSubject, setExamSubject] = useState('');
+  const [examClassLevel, setExamClassLevel] = useState('');
   const [examDuration, setExamDuration] = useState(30);
   const [selectedExamId, setSelectedExamId] = useState(null);
   const [selectedExamDetails, setSelectedExamDetails] = useState(null);
@@ -137,11 +138,12 @@ const TeacherDashboard = () => {
       await axios.post('/api/dashboard/exams', {
         title: examTitle,
         subject: examSubject,
+        class_level: examClassLevel,
         duration_minutes: examDuration,
         is_active: true
       });
       alert('পরীক্ষা তৈরি হয়েছে! এবার প্রশ্ন যোগ করুন।');
-      setExamTitle(''); setExamSubject('');
+      setExamTitle(''); setExamSubject(''); setExamClassLevel('');
       fetchExams();
     } catch (err) { alert('পরীক্ষা তৈরি করতে সমস্যা হয়েছে!'); }
   };
@@ -374,9 +376,24 @@ const TeacherDashboard = () => {
             {/* Create Exam */}
             <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100">
               <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2"><FaPlus className="text-primary"/> নতুন পরীক্ষা (MCQ) তৈরি করুন</h3>
-              <form onSubmit={createExam} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <form onSubmit={createExam} className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <input type="text" placeholder="পরীক্ষার নাম (যেমন: Physics Weekly)" required value={examTitle} onChange={e => setExamTitle(e.target.value)} className="border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary md:col-span-2 text-gray-700 bg-gray-50" />
                 <input type="text" placeholder="বিষয়" required value={examSubject} onChange={e => setExamSubject(e.target.value)} className="border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50" />
+                <select value={examClassLevel} onChange={e => setExamClassLevel(e.target.value)} className="border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50">
+                  <option value="">সব ক্লাস</option>
+                  <option value="Class 1">Class 1</option>
+                  <option value="Class 2">Class 2</option>
+                  <option value="Class 3">Class 3</option>
+                  <option value="Class 4">Class 4</option>
+                  <option value="Class 5">Class 5</option>
+                  <option value="Class 6">Class 6</option>
+                  <option value="Class 7">Class 7</option>
+                  <option value="Class 8">Class 8</option>
+                  <option value="Class 9">Class 9</option>
+                  <option value="Class 10">Class 10</option>
+                  <option value="HSC 1st Year">HSC 1st Year</option>
+                  <option value="HSC 2nd Year">HSC 2nd Year</option>
+                </select>
                 <button type="submit" className="bg-[#0f172a] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 py-3 shadow-md transition-all active:scale-95"><FaPlus /> তৈরি করুন</button>
               </form>
             </div>

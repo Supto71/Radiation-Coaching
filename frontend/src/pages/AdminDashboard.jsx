@@ -1615,7 +1615,7 @@ const RoutineTab = ({ role }) => {
 const ExamManagementTab = () => {
   const [exams, setExams] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [newExam, setNewExam] = useState({ title: '', subject: '', duration_minutes: 30 });
+  const [newExam, setNewExam] = useState({ title: '', subject: '', class_level: '', duration_minutes: 30 });
   const [editingExamId, setEditingExamId] = useState(null);
   const [msg, setMsg] = useState('');
   const [selectedExamId, setSelectedExamId] = useState(null);
@@ -1648,7 +1648,7 @@ const ExamManagementTab = () => {
         setMsg(editingExamId ? 'পরীক্ষা আপডেট হয়েছে!' : 'পরীক্ষা তৈরি হয়েছে!');
         setShowForm(false);
         setEditingExamId(null);
-        setNewExam({ title: '', subject: '', duration_minutes: 30 });
+        setNewExam({ title: '', subject: '', class_level: '', duration_minutes: 30 });
         fetchExams();
       }
     } catch (err) { console.error(err); setMsg('সমস্যা হয়েছে।'); }
@@ -1657,7 +1657,7 @@ const ExamManagementTab = () => {
 
   const handleEditExam = (exam, e) => {
     e.stopPropagation();
-    setNewExam({ title: exam.title, subject: exam.subject, duration_minutes: exam.duration_minutes });
+    setNewExam({ title: exam.title, subject: exam.subject, class_level: exam.class_level || '', duration_minutes: exam.duration_minutes });
     setEditingExamId(exam.id);
     setShowForm(true);
   };
@@ -1726,14 +1726,21 @@ const ExamManagementTab = () => {
       {msg && <div className="mb-4 text-green-700 bg-green-100 p-3 rounded">{msg}</div>}
       {showForm && (
         <div className="bg-blue-50 p-6 rounded-xl mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div><label className="block mb-1 font-bold">শিরোনাম</label><input type="text" value={newExam.title} onChange={e=>setNewExam({...newExam, title: e.target.value})} className="w-full p-2 border rounded" placeholder="মডেল টেস্ট ১" /></div>
             <div><label className="block mb-1 font-bold">বিষয়</label><input type="text" value={newExam.subject} onChange={e=>setNewExam({...newExam, subject: e.target.value})} className="w-full p-2 border rounded" placeholder="পদার্থবিজ্ঞান" /></div>
+            <div>
+              <label className="block mb-1 font-bold">ক্লাস</label>
+              <select value={newExam.class_level} onChange={e=>setNewExam({...newExam, class_level: e.target.value})} className="w-full p-2 border rounded bg-white">
+                <option value="">সব ক্লাস</option>
+                {CLASS_LEVELS.map(cl => <option key={cl.value} value={cl.value}>{cl.label}</option>)}
+              </select>
+            </div>
             <div><label className="block mb-1 font-bold">সময় (মিনিট)</label><input type="number" value={newExam.duration_minutes} onChange={e=>setNewExam({...newExam, duration_minutes: e.target.value})} className="w-full p-2 border rounded" /></div>
           </div>
           <div className="flex gap-2">
             <button onClick={handleSaveExam} className="bg-blue-600 text-white px-4 py-2 rounded font-bold">{editingExamId ? 'আপডেট করুন' : 'সেভ করুন'}</button>
-            <button onClick={() => { setShowForm(false); setEditingExamId(null); setNewExam({ title: '', subject: '', duration_minutes: 30 }); }} className="bg-gray-500 text-white px-4 py-2 rounded font-bold">বাতিল</button>
+            <button onClick={() => { setShowForm(false); setEditingExamId(null); setNewExam({ title: '', subject: '', class_level: '', duration_minutes: 30 }); }} className="bg-gray-500 text-white px-4 py-2 rounded font-bold">বাতিল</button>
           </div>
         </div>
       )}
@@ -1744,7 +1751,7 @@ const ExamManagementTab = () => {
             {exams.map(ex => (
               <div key={ex.id} className={`p-4 border-b cursor-pointer hover:bg-blue-50 ${selectedExamId === ex.id ? 'bg-blue-50 border-l-4 border-l-primary' : ''}`} onClick={() => loadExamDetails(ex.id)}>
                 <div className="font-bold">{ex.title}</div>
-                <div className="text-sm text-gray-500">{ex.subject} • {ex.duration_minutes} মিনিট</div>
+                <div className="text-sm text-gray-500">{ex.subject} {ex.class_level ? `• ${CLASS_LEVELS.find(c => c.value === ex.class_level)?.label || ex.class_level}` : ''} • {ex.duration_minutes} মিনিট</div>
                 <div className="mt-2 flex gap-2">
                   <button onClick={(e) => { e.stopPropagation(); handleToggleExam(ex.id); }} className={`text-xs px-2 py-1 rounded text-white ${ex.is_active ? 'bg-green-500' : 'bg-gray-400'}`}>{ex.is_active ? 'Active' : 'Inactive'}</button>
                   <button onClick={(e) => handleEditExam(ex, e)} className="text-xs px-2 py-1 rounded bg-blue-500 text-white">এডিট</button>

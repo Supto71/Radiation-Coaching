@@ -44,7 +44,8 @@ const Exam = () => {
 
     const fetchExam = async () => {
       try {
-        const res = await fetch(`/api/dashboard/exams/${examId}?student_id=${parsedStudent.id}`);
+        const classLevelQuery = parsedStudent.class_level ? `&class_level=${encodeURIComponent(parsedStudent.class_level)}` : '';
+        const res = await fetch(`/api/dashboard/exams/${examId}?student_id=${parsedStudent.id}${classLevelQuery}`);
         if (res.ok) {
           const data = await res.json();
           setExam(data);
