@@ -184,3 +184,13 @@ class TeacherAttendance(TeacherAttendanceBase):
 
     class Config:
         from_attributes = True
+
+class LeaderboardEntry(BaseModel):
+    rank: int
+    student_name: str
+    student_uid: str
+    score: float
+    total_correct: int
+    total_wrong: int
+    taken_at: datetime
+

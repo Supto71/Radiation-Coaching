@@ -23,6 +23,9 @@ const StudentDashboard = () => {
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [selectedLeaderboardExam, setSelectedLeaderboardExam] = useState('');
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
 
   useEffect(() => {
     // Load student from localStorage
@@ -161,6 +164,33 @@ const StudentDashboard = () => {
     fetchNotifications();
   }, [student]);
 
+  const fetchLeaderboard = async (examId) => {
+    if (!examId) return;
+    setLeaderboardLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/exams/${examId}/leaderboard`);
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboardData(data);
+      } else {
+        setLeaderboardData([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setLeaderboardData([]);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedLeaderboardExam) {
+      fetchLeaderboard(selectedLeaderboardExam);
+    } else {
+      setLeaderboardData([]);
+    }
+  }, [selectedLeaderboardExam]);
+
   const handleLogout = () => {
     localStorage.removeItem('student');
     navigate('/login');
@@ -179,6 +209,7 @@ const StudentDashboard = () => {
     { id: 'fees', label: 'পেমেন্ট হিস্ট্রি' },
     { id: 'exams', label: 'পরীক্ষা' },
     { id: 'results', label: 'ফলাফল' },
+    { id: 'leaderboard', label: 'মেধাতালিকা (র‍্যাংক)' },
     { id: 'notices', label: 'নোটিশ বোর্ড' },
     { id: 'notifications', label: 'নোটিফিকেশন' }
   ];
@@ -538,6 +569,72 @@ const StudentDashboard = () => {
                 ) : (
                   <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100 border-dashed text-gray-500">
                     আপনি এখনও কোনো পরীক্ষায় অংশগ্রহণ করেননি।
+                  </div>
+                )}
+              </div>
+            {/* LEADERBOARD TAB */}
+            {activeTab === 'leaderboard' && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold mb-5">মেধাতালিকা (র‍্যাংক)</h3>
+                
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">পরীক্ষা নির্বাচন করুন:</label>
+                  <select 
+                    value={selectedLeaderboardExam} 
+                    onChange={e => setSelectedLeaderboardExam(e.target.value)} 
+                    className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-gray-700 bg-gray-50"
+                  >
+                    <option value="">-- পরীক্ষা নির্বাচন করুন --</option>
+                    {exams.map(ex => (
+                      <option key={ex.id} value={ex.id}>{ex.title} ({ex.subject})</option>
+                    ))}
+                  </select>
+                </div>
+
+                {selectedLeaderboardExam && (
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    {leaderboardLoading ? (
+                      <div className="text-center py-12 text-gray-500 animate-pulse">মেধাতালিকা লোড হচ্ছে...</div>
+                    ) : leaderboardData.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-primary/10 text-primary text-sm border-b border-primary/20">
+                              <th className="p-4 font-bold text-center w-20">র‍্যাংক</th>
+                              <th className="p-4 font-bold">স্টুডেন্ট নাম</th>
+                              <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                              <th className="p-4 font-bold text-center">স্কোর</th>
+                              <th className="p-4 font-bold text-center hidden md:table-cell">সঠিক</th>
+                              <th className="p-4 font-bold text-center hidden md:table-cell">ভুল</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {leaderboardData.map((entry, idx) => (
+                              <tr key={idx} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${entry.student_uid === student.student_uid ? 'bg-yellow-50 hover:bg-yellow-100' : ''}`}>
+                                <td className="p-4 text-center">
+                                  {entry.rank === 1 ? <span className="text-2xl" title="১ম স্থান">🥇</span> : 
+                                   entry.rank === 2 ? <span className="text-2xl" title="২য় স্থান">🥈</span> : 
+                                   entry.rank === 3 ? <span className="text-2xl" title="৩য় স্থান">🥉</span> : 
+                                   <span className="font-bold text-gray-500">{entry.rank}</span>}
+                                </td>
+                                <td className="p-4 font-bold text-gray-800">
+                                  {entry.student_name}
+                                  {entry.student_uid === student.student_uid && <span className="ml-2 text-[10px] bg-primary text-white px-2 py-0.5 rounded-full">আপনি</span>}
+                                </td>
+                                <td className="p-4 text-sm font-medium text-gray-500">{entry.student_uid}</td>
+                                <td className="p-4 text-center font-extrabold text-primary text-lg">{entry.score}</td>
+                                <td className="p-4 text-center font-bold text-green-600 hidden md:table-cell">{entry.total_correct}</td>
+                                <td className="p-4 text-center font-bold text-red-600 hidden md:table-cell">{entry.total_wrong}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-gray-500">
+                        এই পরীক্ষার জন্য কোনো মেধাতালিকা পাওয়া যায়নি।
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

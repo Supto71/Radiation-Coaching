@@ -299,6 +299,35 @@ def delete_question(question_id: int, db: Session = Depends(get_db)):
     return {"message": "Question deleted"}
 
 # --- EXAM RESULTS (Performance) ---
+@router.get("/exams/{exam_id}/leaderboard", response_model=List[schemas.LeaderboardEntry])
+def get_exam_leaderboard(exam_id: int, db: Session = Depends(get_db)):
+    # Get the exam to ensure it exists
+    exam = db.query(db_models.Exam).filter(db_models.Exam.id == exam_id).first()
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+        
+    results = db.query(
+        db_models.ExamResult,
+        db_models.Student
+    ).join(db_models.Student, db_models.ExamResult.student_id == db_models.Student.id).filter(
+        db_models.ExamResult.exam_id == exam_id
+    ).order_by(db_models.ExamResult.score.desc(), db_models.ExamResult.taken_at.asc()).all()
+    
+    leaderboard = []
+    rank = 1
+    for r, s in results:
+        leaderboard.append(schemas.LeaderboardEntry(
+            rank=rank,
+            student_name=s.name,
+            student_uid=s.uid,
+            score=r.score,
+            total_correct=r.total_correct,
+            total_wrong=r.total_wrong,
+            taken_at=r.taken_at
+        ))
+        rank += 1
+    return leaderboard
+
 @router.get("/results/me", response_model=List[schemas.ExamResult])
 def get_my_results(student_id: int, db: Session = Depends(get_db)):
     return db.query(db_models.ExamResult).options(joinedload(db_models.ExamResult.exam)).filter(db_models.ExamResult.student_id == student_id).order_by(db_models.ExamResult.taken_at.desc()).all()
