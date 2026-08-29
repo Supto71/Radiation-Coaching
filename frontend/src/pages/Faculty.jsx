@@ -40,6 +40,15 @@ const Faculty = () => {
       image: '/ria.png'
     },
     {
+      id: 14,
+      name: 'মোঃ সাজ্জাদ হোসেন',
+      university: 'Asian University of Bangladesh (AUB)',
+      subject: 'BA Honours, MA English (AUB) | B.Ed (জগন্নাথ বিশ্ববিদ্যালয়)',
+      year: '-',
+      teaching: 'ইংরেজি',
+      image: '/sajjad.jpg'
+    },
+    {
       id: 2,
       name: 'রেহানা আক্তার তৃষা',
       university: 'ঢাকা সিটি কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
