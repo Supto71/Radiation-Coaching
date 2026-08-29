@@ -204,8 +204,8 @@ def get_all_exams(active_only: bool = False, class_level: Optional[str] = None, 
     if active_only:
         query = query.filter(db_models.Exam.is_active == True)
     if class_level:
-        query = query.filter(db_models.Exam.class_level == class_level)
-    return query.order_by(db_models.Exam.created_at.desc()).all()
+        query = query.filter((db_models.Exam.class_level == class_level) | (db_models.Exam.class_level == '') | (db_models.Exam.class_level.is_(None)))
+    return query.order_by(db_models.Exam.id.desc()).all()
 
 @router.post("/exams", response_model=schemas.Exam)
 def create_exam(exam: schemas.ExamCreate, db: Session = Depends(get_db)):
@@ -319,7 +319,7 @@ def get_exam_leaderboard(exam_id: int, db: Session = Depends(get_db)):
         leaderboard.append(schemas.LeaderboardEntry(
             rank=rank,
             student_name=s.name,
-            student_uid=s.uid,
+            student_uid=s.student_uid,
             score=r.score,
             total_correct=r.total_correct,
             total_wrong=r.total_wrong,
