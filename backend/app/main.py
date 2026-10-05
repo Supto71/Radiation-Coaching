@@ -79,6 +79,17 @@ try:
 except Exception as e:
     print("DB Schema Fix error:", e)
 
+# Add fee columns to students table if missing (sqlite + postgres safe)
+try:
+    from sqlalchemy import text, inspect as sa_inspect
+    _student_cols = [c["name"] for c in sa_inspect(engine).get_columns("students")]
+    for _col in ("monthly_fee", "admission_fee"):
+        if _col not in _student_cols:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE students ADD COLUMN {_col} FLOAT"))
+except Exception as e:
+    print("student fee columns migration error:", e)
+
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 app.include_router(students.router, prefix="/api/students", tags=["students"])

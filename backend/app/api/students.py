@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ..db.database import get_db
 from ..models.student import Student as StudentModel
-from ..schemas.student import Student, StudentCreate, StudentUpdate, StudentLogin
+from ..schemas.student import Student, StudentCreate, StudentUpdate, StudentLogin, StudentFeeUpdate, StudentFeeBulkUpdate
 
 router = APIRouter()
 
@@ -49,6 +49,33 @@ def create_student(student: StudentCreate, db: Session = Depends(get_db)):
     
     db_student = StudentModel(**student_data, student_uid=student_uid)
     db.add(db_student)
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+@router.patch("/fees/bulk")
+def bulk_update_monthly_fee(payload: StudentFeeBulkUpdate, db: Session = Depends(get_db)):
+    """Set the same monthly fee for every student in a class (optionally a branch)."""
+    if payload.monthly_fee < 0:
+        raise HTTPException(status_code=400, detail="বেতন ঋণাত্মক হতে পারে না")
+    query = db.query(StudentModel).filter(StudentModel.class_level == payload.class_level)
+    if payload.branch:
+        query = query.filter(StudentModel.branch == payload.branch)
+    if payload.only_unset:
+        query = query.filter(StudentModel.monthly_fee.is_(None))
+    updated = query.update({StudentModel.monthly_fee: payload.monthly_fee}, synchronize_session=False)
+    db.commit()
+    return {"updated": updated}
+
+@router.patch("/{student_id}/fee", response_model=Student)
+def update_monthly_fee(student_id: int, payload: StudentFeeUpdate, db: Session = Depends(get_db)):
+    """Set (or clear with null) a single student's fixed monthly fee."""
+    db_student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if payload.monthly_fee is not None and payload.monthly_fee < 0:
+        raise HTTPException(status_code=400, detail="বেতন ঋণাত্মক হতে পারে না")
+    db_student.monthly_fee = payload.monthly_fee
     db.commit()
     db.refresh(db_student)
     return db_student

@@ -60,7 +60,7 @@ const StudentDatabaseTab = ({ role }) => {
   const [editingStudentId, setEditingStudentId] = useState(null);
   const [msg, setMsg] = useState({ text: '', type: 'success' });
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', student_uid: '', class_level: '9th', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+  const [form, setForm] = useState({ name: '', student_uid: '', class_level: '9th', branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '', monthly_fee: '', admission_fee: '' });
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
@@ -89,6 +89,18 @@ const StudentDatabaseTab = ({ role }) => {
       setMsg({ text: 'নাম, ক্লাস, শাখা এবং অভিভাবকের নম্বর আবশ্যিক!', type: 'error' });
       return;
     }
+    const feeRaw = String(form.monthly_fee ?? '').trim();
+    const monthlyFee = feeRaw === '' ? null : parseFloat(feeRaw);
+    if (monthlyFee !== null && (isNaN(monthlyFee) || monthlyFee < 0)) {
+      setMsg({ text: 'মাসিক বেতনের সঠিক পরিমাণ দিন (অথবা ফাঁকা রাখুন)।', type: 'error' });
+      return;
+    }
+    const admRaw = String(form.admission_fee ?? '').trim();
+    const admissionFee = admRaw === '' ? null : parseFloat(admRaw);
+    if (admissionFee !== null && (isNaN(admissionFee) || admissionFee < 0)) {
+      setMsg({ text: 'ভর্তি ফি-এর সঠিক পরিমাণ দিন (অথবা ফাঁকা রাখুন)।', type: 'error' });
+      return;
+    }
     setSaving(true);
     try {
       const url = editingStudentId ? `/api/students/${editingStudentId}` : '/api/students/';
@@ -98,6 +110,8 @@ const StudentDatabaseTab = ({ role }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          monthly_fee: monthlyFee,
+          admission_fee: admissionFee,
           student_uid: form.student_uid.trim() === '' ? null : form.student_uid.trim()
         })
       });
@@ -105,7 +119,7 @@ const StudentDatabaseTab = ({ role }) => {
         setMsg({ text: `স্টুডেন্ট সফলভাবে ${editingStudentId ? 'আপডেট' : 'যোগ'} করা হয়েছে!`, type: 'success' });
         setShowForm(false);
         setEditingStudentId(null);
-        setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+        setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '', monthly_fee: '', admission_fee: '' });
         fetchStudents();
       } else {
         setMsg({ text: `${editingStudentId ? 'আপডেট' : 'যোগ'} করতে সমস্যা হয়েছে।`, type: 'error' });
@@ -145,7 +159,7 @@ const StudentDatabaseTab = ({ role }) => {
         <button
           onClick={() => {
             setEditingStudentId(null);
-            setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '' });
+            setForm({ name: '', student_uid: '', class_level: activeClass, branch: 'প্রধান শাখা', gender: 'ছেলে', phone: '', guardian_phone: '', father_name: '', mother_name: '', monthly_fee: '', admission_fee: '' });
             setShowForm(!showForm);
           }}
           className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-secondary transition-colors shadow-sm"
@@ -220,6 +234,24 @@ const StudentDatabaseTab = ({ role }) => {
               <input type="tel" value={form.guardian_phone} onChange={e => setForm({ ...form, guardian_phone: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-primary outline-none bg-white"
                 placeholder="০১XXXXXXXXX" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">মাসিক বেতন (৳) <span className="text-gray-400 font-normal">— ঐচ্ছিক</span></label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">৳</span>
+                <input id="student-form-monthly-fee" type="number" min="0" value={form.monthly_fee} onChange={e => setForm({ ...form, monthly_fee: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 pl-7 focus:ring-2 focus:ring-primary outline-none bg-white"
+                  placeholder="যেমন: ৮০০ (পরে ফি ডেটাবেজ থেকেও সেট করা যাবে)" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">ভর্তি ফি (৳) <span className="text-gray-400 font-normal">— ঐচ্ছিক</span></label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">৳</span>
+                <input id="student-form-admission-fee" type="number" min="0" value={form.admission_fee} onChange={e => setForm({ ...form, admission_fee: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg p-2.5 pl-7 focus:ring-2 focus:ring-primary outline-none bg-white"
+                  placeholder="যেমন: ১০০০" />
+              </div>
             </div>
           </div>
           <div className="flex gap-3 mt-5">
@@ -338,6 +370,8 @@ const StudentDatabaseTab = ({ role }) => {
                   <th className="p-4 font-bold">শাখা</th>
                   <th className="p-4 font-bold">মোবাইল</th>
                   <th className="p-4 font-bold">অভিভাবক</th>
+                  {role === 'admin' && <th className="p-4 font-bold">মাসিক বেতন</th>}
+                  {role === 'admin' && <th className="p-4 font-bold">ভর্তি ফি</th>}
                   <th className="p-4 font-bold">অ্যাকশন</th>
                 </tr>
               </thead>
@@ -354,6 +388,20 @@ const StudentDatabaseTab = ({ role }) => {
                     </td>
                     <td className="p-4 text-gray-600">{s.phone}</td>
                     <td className="p-4 text-gray-500 text-sm">{s.guardian_phone || '—'}</td>
+                    {role === 'admin' && (
+                      <td className="p-4 text-sm">
+                        {s.monthly_fee != null
+                          ? <span className="font-bold text-gray-800">৳{Number(s.monthly_fee).toLocaleString('bn-BD')}</span>
+                          : <span className="text-amber-600 text-xs font-semibold bg-amber-50 px-2 py-1 rounded-full">সেট করা নেই</span>}
+                      </td>
+                    )}
+                    {role === 'admin' && (
+                      <td className="p-4 text-sm">
+                        {s.admission_fee != null
+                          ? <span className="font-bold text-gray-800">৳{Number(s.admission_fee).toLocaleString('bn-BD')}</span>
+                          : <span className="text-gray-400">—</span>}
+                      </td>
+                    )}
                     <td className="p-4">
                       {role === 'admin' && (
                         <div className="flex gap-2">
@@ -368,7 +416,9 @@ const StudentDatabaseTab = ({ role }) => {
                               phone: s.phone || '', 
                               guardian_phone: s.guardian_phone || '', 
                               father_name: s.father_name || '', 
-                              mother_name: s.mother_name || '' 
+                              mother_name: s.mother_name || '',
+                              monthly_fee: s.monthly_fee != null ? String(s.monthly_fee) : '',
+                              admission_fee: s.admission_fee != null ? String(s.admission_fee) : ''
                             });
                             setShowForm(true);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -752,6 +802,318 @@ const SearchableStudentSelect = ({ students, fees, value, onChange }) => {
   );
 };
 
+// ─── Fee Database Tab (per-student monthly fee / বেতন) ───────────────────────
+const FeeDatabaseTab = () => {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeClass, setActiveClass] = useState('Class 1');
+  const [search, setSearch] = useState('');
+  const [filterBranch, setFilterBranch] = useState('');
+  const [drafts, setDrafts] = useState({}); // { [studentId]: string }
+  const [savingIds, setSavingIds] = useState({});
+  const [savingAll, setSavingAll] = useState(false);
+  const [bulkAmount, setBulkAmount] = useState('');
+  const [bulkOnlyUnset, setBulkOnlyUnset] = useState(true);
+  const [msg, setMsg] = useState({ text: '', type: 'success' });
+
+  const flash = (text, type = 'success') => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
+  };
+
+  const fetchStudents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/students/');
+      if (res.ok) setStudents(await res.json());
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchStudents(); }, [fetchStudents]);
+
+  const fmt = (n) => `৳${Number(n || 0).toLocaleString('bn-BD')}`;
+
+  const q = search.trim().toLowerCase();
+  const matches = (s) =>
+    (!filterBranch || s.branch === filterBranch) &&
+    (!q || s.name.toLowerCase().includes(q) || (s.student_uid || '').toLowerCase().includes(q) || (s.phone || '').includes(q));
+
+  const scoped = students.filter(matches);
+  const classStudents = scoped
+    .filter(s => s.class_level === activeClass)
+    .sort((a, b) => (a.student_uid || '').localeCompare(b.student_uid || '', undefined, { numeric: true }));
+
+  // Overall stats (respecting branch/search filter)
+  const withFee = scoped.filter(s => s.monthly_fee != null);
+  const totalMonthly = withFee.reduce((sum, s) => sum + s.monthly_fee, 0);
+  const totalAdmission = scoped.reduce((sum, s) => sum + (s.admission_fee || 0), 0);
+  const classWithFee = classStudents.filter(s => s.monthly_fee != null);
+  const classTotal = classWithFee.reduce((sum, s) => sum + s.monthly_fee, 0);
+
+  const isDirty = (s) => {
+    if (!(s.id in drafts)) return false;
+    const d = drafts[s.id].trim();
+    const cur = s.monthly_fee == null ? '' : String(s.monthly_fee);
+    return d !== cur;
+  };
+  const dirtyInClass = classStudents.filter(isDirty);
+
+  const saveOne = async (s) => {
+    const raw = (drafts[s.id] ?? '').trim();
+    const value = raw === '' ? null : parseFloat(raw);
+    if (value !== null && (isNaN(value) || value < 0)) {
+      flash(`${s.name}: সঠিক টাকার পরিমাণ দিন`, 'error');
+      return false;
+    }
+    setSavingIds(p => ({ ...p, [s.id]: true }));
+    try {
+      const res = await fetch(`/api/students/${s.id}/fee`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ monthly_fee: value }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setStudents(prev => prev.map(x => (x.id === s.id ? { ...x, monthly_fee: updated.monthly_fee } : x)));
+      setDrafts(prev => { const n = { ...prev }; delete n[s.id]; return n; });
+      return true;
+    } catch {
+      flash(`${s.name}: সেভ করতে সমস্যা হয়েছে`, 'error');
+      return false;
+    } finally {
+      setSavingIds(p => { const n = { ...p }; delete n[s.id]; return n; });
+    }
+  };
+
+  const saveAllDirty = async () => {
+    if (dirtyInClass.length === 0) return;
+    setSavingAll(true);
+    let ok = 0;
+    for (const s of dirtyInClass) { if (await saveOne(s)) ok++; }
+    setSavingAll(false);
+    if (ok) flash(`${ok} জনের বেতন সেভ হয়েছে!`);
+  };
+
+  const handleBulk = async () => {
+    const amount = parseFloat(bulkAmount);
+    if (isNaN(amount) || amount < 0) { flash('সঠিক টাকার পরিমাণ দিন!', 'error'); return; }
+    const label = CLASS_LEVELS.find(c => c.value === activeClass)?.label || activeClass;
+    const scopeText = `${label}${filterBranch ? ` (${filterBranch})` : ''}`;
+    const confirmText = bulkOnlyUnset
+      ? `${scopeText} এর যাদের বেতন সেট করা নেই, তাদের সবার বেতন ৳${amount} করা হবে। নিশ্চিত?`
+      : `${scopeText} এর সকল শিক্ষার্থীর বেতন ৳${amount} করা হবে (আগের বেতন পরিবর্তন হবে)। নিশ্চিত?`;
+    if (!window.confirm(confirmText)) return;
+    try {
+      const res = await fetch('/api/students/fees/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ class_level: activeClass, monthly_fee: amount, branch: filterBranch || null, only_unset: bulkOnlyUnset }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      flash(`${data.updated} জনের বেতন ৳${amount} সেট করা হয়েছে!`);
+      setBulkAmount('');
+      setDrafts({});
+      fetchStudents();
+    } catch { flash('বাল্ক আপডেট করতে সমস্যা হয়েছে।', 'error'); }
+  };
+
+  const activeLabel = CLASS_LEVELS.find(c => c.value === activeClass)?.label || activeClass;
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">ফি ডেটাবেজ (মাসিক বেতন)</h2>
+          <p className="text-sm text-gray-500 mt-1">প্রতিটি শিক্ষার্থীর নির্ধারিত মাসিক বেতন। ফি ট্র্যাকারে নতুন এন্ট্রি দিলে এই পরিমাণ অটো বসে যাবে।</p>
+        </div>
+      </div>
+
+      {/* Overall summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+          <p className="text-sm text-blue-600 font-semibold">মোট শিক্ষার্থী</p>
+          <p className="text-2xl font-bold text-blue-700 mt-1">{scoped.length.toLocaleString('bn-BD')} জন</p>
+        </div>
+        <div className="bg-green-50 border border-green-100 rounded-2xl p-4">
+          <p className="text-sm text-green-600 font-semibold">বেতন সেট করা</p>
+          <p className="text-2xl font-bold text-green-700 mt-1">{withFee.length.toLocaleString('bn-BD')} জন</p>
+        </div>
+        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+          <p className="text-sm text-amber-600 font-semibold">বেতন সেট করা নেই</p>
+          <p className="text-2xl font-bold text-amber-700 mt-1">{(scoped.length - withFee.length).toLocaleString('bn-BD')} জন</p>
+        </div>
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+          <p className="text-sm text-indigo-600 font-semibold">মোট প্রত্যাশিত মাসিক আয়</p>
+          <p className="text-2xl font-bold text-indigo-700 mt-1">{fmt(totalMonthly)}</p>
+        </div>
+        <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4">
+          <p className="text-sm text-purple-600 font-semibold">মোট ভর্তি ফি</p>
+          <p className="text-2xl font-bold text-purple-700 mt-1">{fmt(totalAdmission)}</p>
+        </div>
+      </div>
+
+      <Alert message={msg.text} type={msg.type} />
+
+      {/* Class tabs */}
+      <div className="flex overflow-x-auto gap-2 mb-5 pb-1">
+        {CLASS_LEVELS.map(cl => {
+          const list = scoped.filter(s => s.class_level === cl.value);
+          const missing = list.filter(s => s.monthly_fee == null).length;
+          return (
+            <button key={cl.value} onClick={() => setActiveClass(cl.value)}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${activeClass === cl.value ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              {cl.label}
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${activeClass === cl.value ? 'bg-white/30 text-white' : 'bg-gray-200 text-gray-700'}`}>{list.length}</span>
+              {missing > 0 && (
+                <span title="বেতন সেট করা নেই" className="ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-white">{missing}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search & branch */}
+      <div className="flex flex-col md:flex-row gap-3 mb-5">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><SearchIcon /></span>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary outline-none bg-white"
+            placeholder="নাম, আইডি বা মোবাইল দিয়ে খুঁজুন..." />
+        </div>
+        <select value={filterBranch} onChange={e => setFilterBranch(e.target.value)}
+          className="border border-gray-300 rounded-xl p-2.5 px-4 focus:ring-2 focus:ring-primary outline-none bg-white font-medium">
+          <option value="">সব শাখা</option>
+          <option value="প্রধান শাখা">প্রধান শাখা</option>
+          <option value="দ্বিতীয় শাখা">দ্বিতীয় শাখা</option>
+        </select>
+      </div>
+
+      {/* Bulk set for class */}
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-5 flex flex-col lg:flex-row lg:items-center gap-3">
+        <div className="font-semibold text-gray-800 text-sm lg:mr-2">
+          {activeLabel}{filterBranch ? ` (${filterBranch})` : ''} — সবার জন্য একসাথে বেতন সেট করুন:
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">৳</span>
+            <input type="number" min="0" value={bulkAmount} onChange={e => setBulkAmount(e.target.value)}
+              className="w-36 pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none bg-white"
+              placeholder="যেমন: ৮০০" />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" checked={bulkOnlyUnset} onChange={e => setBulkOnlyUnset(e.target.checked)} className="accent-primary w-4 h-4" />
+            শুধু যাদের বেতন সেট করা নেই
+          </label>
+          <button id="fee-db-bulk-apply" onClick={handleBulk} disabled={!bulkAmount}
+            className="bg-primary text-white px-5 py-2 rounded-lg font-semibold hover:bg-secondary transition-colors disabled:bg-gray-400">
+            প্রয়োগ করুন
+          </button>
+        </div>
+      </div>
+
+      {/* Class summary + save all */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-3">
+        <div className="flex flex-wrap gap-2 text-sm">
+          <span className="bg-gray-100 text-gray-700 font-bold px-3 py-1.5 rounded-xl">{activeLabel}: {classStudents.length} জন</span>
+          <span className="bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl">মাসিক মোট: {fmt(classTotal)}</span>
+          {classWithFee.length > 0 && (
+            <span className="bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-xl">গড়: {fmt(Math.round(classTotal / classWithFee.length))}</span>
+          )}
+        </div>
+        {dirtyInClass.length > 0 && (
+          <button id="fee-db-save-all" onClick={saveAllDirty} disabled={savingAll}
+            className="bg-green-600 text-white px-5 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 shadow-sm">
+            {savingAll ? 'সেভ হচ্ছে...' : `পরিবর্তন সেভ করুন (${dirtyInClass.length})`}
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-400 animate-pulse font-medium">লোড হচ্ছে...</div>
+      ) : classStudents.length === 0 ? (
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-gray-500 font-medium">
+          এই ক্লাসে কোনো শিক্ষার্থী পাওয়া যায়নি।
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm bg-white">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
+                <th className="p-4 font-bold">#</th>
+                <th className="p-4 font-bold">স্টুডেন্ট আইডি</th>
+                <th className="p-4 font-bold">নাম</th>
+                <th className="p-4 font-bold">শাখা</th>
+                <th className="p-4 font-bold">অভিভাবক</th>
+                <th className="p-4 font-bold">ভর্তি ফি</th>
+                <th className="p-4 font-bold">মাসিক বেতন (৳)</th>
+                <th className="p-4 font-bold"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {classStudents.map((s, idx) => {
+                const dirty = isDirty(s);
+                const value = s.id in drafts ? drafts[s.id] : (s.monthly_fee == null ? '' : String(s.monthly_fee));
+                return (
+                  <tr key={s.id} className={`border-b border-gray-50 transition-colors ${dirty ? 'bg-yellow-50' : 'hover:bg-blue-50/40'}`}>
+                    <td className="p-4 text-gray-400 font-medium">{idx + 1}</td>
+                    <td className="p-4"><span className="font-bold text-primary bg-primary/10 px-2 py-1 rounded-lg text-sm">{s.student_uid}</span></td>
+                    <td className="p-4 font-semibold text-gray-900">{s.name}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${s.branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{s.branch}</span>
+                    </td>
+                    <td className="p-4 text-gray-500 text-sm">{s.guardian_phone || '—'}</td>
+                    <td className="p-4 text-sm">
+                      {s.admission_fee != null
+                        ? <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-lg">{fmt(s.admission_fee)}</span>
+                        : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">৳</span>
+                          <input
+                            id={`fee-db-input-${s.id}`}
+                            type="number" min="0" value={value}
+                            onChange={e => setDrafts(p => ({ ...p, [s.id]: e.target.value }))}
+                            onKeyDown={e => { if (e.key === 'Enter' && dirty) saveOne(s).then(ok => ok && flash(`${s.name} এর বেতন সেভ হয়েছে!`)); }}
+                            placeholder="সেট করা নেই"
+                            className={`w-36 pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary outline-none ${dirty ? 'border-yellow-400 bg-white' : s.monthly_fee == null ? 'border-amber-300 bg-amber-50/50' : 'border-gray-300 bg-white'}`}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      {dirty && (
+                        <div className="flex gap-2">
+                          <button onClick={() => saveOne(s).then(ok => ok && flash(`${s.name} এর বেতন সেভ হয়েছে!`))} disabled={!!savingIds[s.id]}
+                            className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400">
+                            {savingIds[s.id] ? '...' : 'সেভ'}
+                          </button>
+                          <button onClick={() => setDrafts(p => { const n = { ...p }; delete n[s.id]; return n; })}
+                            className="text-gray-500 hover:bg-gray-100 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors">
+                            বাতিল
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-600 font-medium flex flex-wrap justify-between gap-2">
+            <span>মোট {classStudents.length} জন · বেতন সেট {classWithFee.length} জন</span>
+            <span className="font-bold text-gray-800">মাসিক মোট: {fmt(classTotal)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Fee Tracker Tab ──────────────────────────────────────────────────────────
 
 
@@ -1009,7 +1371,10 @@ const FeeTrackerTab = () => {
               students={students}
               fees={allFees}
               value={form.student_id}
-              onChange={val => setForm({ ...form, student_id: val })}
+              onChange={val => {
+                const st = students.find(s => s.id.toString() === val?.toString());
+                setForm({ ...form, student_id: val, amount: st?.monthly_fee != null ? String(st.monthly_fee) : form.amount });
+              }}
             />
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">মাস *</label>
@@ -2610,6 +2975,7 @@ const AdminDashboard = () => {
     { id: 'teachers', label: 'শিক্ষক ম্যানেজমেন্ট' },
     { id: 'routines', label: 'রুটিন আপডেট' },
     { id: 'fees', label: 'ফি ট্র্যাকার' },
+    { id: 'fee_db', label: 'ফি ডেটাবেজ (বেতন)', adminOnly: true },
     { id: 'students', label: 'শিক্ষার্থী ডেটাবেজ' },
     { id: 'exams', label: 'পরীক্ষা ম্যানেজমেন্ট' },
     { id: 'leaderboard', label: 'মেধাতালিকা' }
@@ -2647,7 +3013,7 @@ const AdminDashboard = () => {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {tabs.map(tab => (
+            {tabs.filter(tab => !tab.adminOnly || staffRole === 'admin').map(tab => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setIsSidebarOpen(false); }}
                 className={`w-full flex items-center px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === tab.id ? 'bg-[#00b4d8]/10 text-[#00b4d8] shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`}>
                 {tab.label}
@@ -2755,6 +3121,7 @@ const AdminDashboard = () => {
             {activeTab === 'teacher_att' && <TeacherAttendanceTab records={teacherAttendanceRecords} fetchRecords={fetchTeacherAttendance} />}
             {activeTab === 'teachers' && <TeacherManagementTab />}
             {activeTab === 'fees' && <FeeTrackerTab role={staffRole} />}
+            {activeTab === 'fee_db' && staffRole === 'admin' && <FeeDatabaseTab />}
             {activeTab === 'students' && <StudentDatabaseTab role={staffRole} />}
             {activeTab === 'exams' && <ExamManagementTab role={staffRole} />}
             {activeTab === 'leaderboard' && <LeaderboardTab />}
