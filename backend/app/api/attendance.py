@@ -1,32 +1,41 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date
+from datetime import date, datetime
 
 from ..db.database import get_db
 from ..models.attendance import Attendance as AttendanceModel
 from ..models.student import Student as StudentModel
 from ..models.notification import Notification as NotificationModel
 from ..schemas.attendance import (
-    AttendanceBulkCreate, AttendanceRecord, AttendanceWithStudent
+    AttendanceBulkCreate, AttendanceRecord, AttendanceWithStudent, SendAbsentSmsRequest
 )
+from ..services.sms import send_absent_sms_notification, send_sms_mram, format_bd_phone
 
 router = APIRouter()
 
 
 @router.post("/bulk", response_model=List[AttendanceRecord])
-def mark_attendance_bulk(payload: AttendanceBulkCreate, db: Session = Depends(get_db)):
-    """Mark attendance for all students in a class on a given date."""
-    from datetime import datetime
+def mark_attendance_bulk(
+    payload: AttendanceBulkCreate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Mark attendance for all students in a class on a given date and optionally send SMS."""
     att_date = datetime.strptime(payload.date, "%Y-%m-%d").date()
+    formatted_date = att_date.strftime("%d-%m-%Y")
 
     results = []
+    absent_students = []
+
     for entry in payload.entries:
         # Upsert: update if already exists, else create
         existing = db.query(AttendanceModel).filter(
             AttendanceModel.student_id == entry.student_id,
             AttendanceModel.date == att_date
         ).first()
+
+        student = db.query(StudentModel).filter(StudentModel.id == entry.student_id).first()
 
         if existing:
             was_present = existing.is_present
@@ -36,15 +45,17 @@ def mark_attendance_bulk(payload: AttendanceBulkCreate, db: Session = Depends(ge
             db.refresh(existing)
             results.append(existing)
             
-            # Notify if changed to absent
+            # Notify and SMS if changed to absent
             if was_present and not entry.is_present:
                 notif = NotificationModel(
                     student_id=entry.student_id,
                     title="অনুপস্থিতি এলার্ট",
-                    message=f"আপনি {att_date.strftime('%d-%m-%Y')} তারিখে ক্লাসে অনুপস্থিত ছিলেন। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।"
+                    message=f"আপনি {formatted_date} তারিখে ক্লাসে অনুপস্থিত ছিলেন। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।"
                 )
                 db.add(notif)
                 db.commit()
+                if student:
+                    absent_students.append(student)
         else:
             new_att = AttendanceModel(
                 student_id=entry.student_id,
@@ -59,17 +70,93 @@ def mark_attendance_bulk(payload: AttendanceBulkCreate, db: Session = Depends(ge
             db.refresh(new_att)
             results.append(new_att)
             
-            # Notify if absent initially
+            # Notify and SMS if absent initially
             if not entry.is_present:
                 notif = NotificationModel(
                     student_id=entry.student_id,
                     title="অনুপস্থিতি এলার্ট",
-                    message=f"আপনি {att_date.strftime('%d-%m-%Y')} তারিখে ক্লাসে অনুপস্থিত ছিলেন। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।"
+                    message=f"আপনি {formatted_date} তারিখে ক্লাসে অনুপস্থিত ছিলেন। অনুগ্রহ করে কর্তৃপক্ষের সাথে যোগাযোগ করুন।"
                 )
                 db.add(notif)
                 db.commit()
+                if student:
+                    absent_students.append(student)
+
+    # Trigger SMS in background if enabled in payload
+    if payload.send_sms and absent_students:
+        for s in absent_students:
+            phone_to_send = s.guardian_phone or s.phone
+            if phone_to_send:
+                background_tasks.add_task(
+                    send_absent_sms_notification,
+                    student_name=s.name,
+                    student_uid=s.student_uid or f"ID-{s.id}",
+                    date_str=formatted_date,
+                    phone=phone_to_send,
+                    class_level=s.class_level or payload.class_level
+                )
 
     return results
+
+
+@router.post("/send-absent-sms")
+def send_absent_sms_manual(
+    payload: SendAbsentSmsRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Manually send absent SMS to all students absent on a given date."""
+    try:
+        att_date = datetime.strptime(payload.date, "%Y-%m-%d").date()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    formatted_date = att_date.strftime("%d-%m-%Y")
+
+    query = db.query(AttendanceModel).filter(
+        AttendanceModel.date == att_date,
+        AttendanceModel.is_present == False
+    )
+    if payload.branch:
+        query = query.filter(AttendanceModel.branch == payload.branch)
+    if payload.class_level:
+        query = query.filter(AttendanceModel.class_level == payload.class_level)
+
+    absent_records = query.all()
+    count = 0
+
+    for r in absent_records:
+        student = db.query(StudentModel).filter(StudentModel.id == r.student_id).first()
+        if student:
+            phone_to_send = student.guardian_phone or student.phone
+            if phone_to_send:
+                count += 1
+                background_tasks.add_task(
+                    send_absent_sms_notification,
+                    student_name=student.name,
+                    student_uid=student.student_uid or f"ID-{student.id}",
+                    date_str=formatted_date,
+                    phone=phone_to_send,
+                    class_level=student.class_level or ""
+                )
+
+    return {
+        "status": "success",
+        "message": f"{count} জন অনুপস্থিত শিক্ষার্থীর অভিভাবকের কাছে SMS পাঠানোর নির্দেশ দেওয়া হয়েছে।",
+        "queued_count": count
+    }
+
+
+@router.post("/test-sms")
+def test_sms_endpoint(phone: str, message: Optional[str] = None):
+    """Test sending an SMS to a single number."""
+    cleaned = format_bd_phone(phone)
+    if not cleaned:
+        raise HTTPException(status_code=400, detail="Invalid Bangladeshi phone number")
+    
+    msg = message or "রেডিয়েশন কোচিং থেকে টেস্ট SMS। সিস্টেম সফলভাবে কানেক্ট হয়েছে।"
+    res = send_sms_mram([cleaned], msg)
+    return res
 
 
 @router.get("/", response_model=List[AttendanceWithStudent])
@@ -83,7 +170,6 @@ def get_attendance(
     query = db.query(AttendanceModel)
 
     if att_date:
-        from datetime import datetime
         parsed = datetime.strptime(att_date, "%Y-%m-%d").date()
         query = query.filter(AttendanceModel.date == parsed)
     if branch:

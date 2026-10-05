@@ -463,6 +463,9 @@ const AttendanceTab = () => {
   const [viewMode, setViewMode] = useState('mark'); // 'mark' | 'history'
   const [historyRecords, setHistoryRecords] = useState([]);
 
+  const [sendSms, setSendSms] = useState(true);
+  const [sendingSmsManual, setSendingSmsManual] = useState(false);
+
   const fetchStudents = async () => {
     setLoadingStudents(true);
     try {
@@ -507,15 +510,49 @@ const AttendanceTab = () => {
       const res = await fetch('/api/attendance/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: attDate, branch, class_level: classLevel, marked_by: markedBy, entries })
+        body: JSON.stringify({ 
+          date: attDate, 
+          branch, 
+          class_level: classLevel, 
+          marked_by: markedBy, 
+          send_sms: sendSms,
+          entries 
+        })
       });
       if (res.ok) {
-        setMsg({ text: 'উপস্থিতি সফলভাবে সেভ হয়েছে!', type: 'success' });
+        const smsNote = (sendSms && absentCount > 0) ? ` এবং ${absentCount} জন অনুপস্থিত শিক্ষার্থীকে SMS পাঠানো হয়েছে!` : '';
+        setMsg({ text: `উপস্থিতি সফলভাবে সেভ হয়েছে${smsNote}`, type: 'success' });
       } else {
         setMsg({ text: 'সেভ হয়নি। আবার চেষ্টা করুন।', type: 'error' });
       }
     } catch { setMsg({ text: 'সার্ভারে সংযোগ নেই।', type: 'error' }); }
     finally { setSaving(false); setTimeout(() => setMsg({ text: '', type: 'success' }), 4000); }
+  };
+
+  const handleSendManualSms = async () => {
+    if (absentCount === 0) {
+      setMsg({ text: 'কোনো অনুপস্থিত শিক্ষার্থী নেই!', type: 'error' });
+      return;
+    }
+    setSendingSmsManual(true);
+    try {
+      const res = await fetch('/api/attendance/send-absent-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: attDate, branch, class_level: classLevel })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ text: data.message || 'SMS সফলভাবে পাঠানো হয়েছে!', type: 'success' });
+      } else {
+        setMsg({ text: data.detail || 'SMS পাঠানো যায়নি।', type: 'error' });
+      }
+    } catch (err) {
+      setMsg({ text: 'সার্ভারে সংযোগ ব্যর্থ হয়েছে।', type: 'error' });
+    } finally {
+      setSendingSmsManual(false);
+      setTimeout(() => setMsg({ text: '', type: 'success' }), 4000);
+    }
   };
 
   const presentCount = students.filter(s => attendance[s.id]).length;
@@ -614,6 +651,31 @@ const AttendanceTab = () => {
                     সবাই অনুপস্থিত
                   </button>
                 </div>
+              </div>
+
+              {/* SMS Control Banner */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl mb-4 gap-3">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={sendSms} 
+                    onChange={e => setSendSms(e.target.checked)} 
+                    className="w-4 h-4 text-primary rounded focus:ring-primary accent-primary"
+                  />
+                  <span className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                    📱 অনুপস্থিত শিক্ষার্থীদের সিম/ফোনে স্বয়ংক্রিয় SMS পাঠান
+                  </span>
+                </label>
+                {absentCount > 0 && (
+                  <button
+                    type="button"
+                    disabled={sendingSmsManual}
+                    onClick={handleSendManualSms}
+                    className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 rounded-lg transition-colors shadow-sm disabled:bg-gray-400 flex items-center gap-1.5"
+                  >
+                    {sendingSmsManual ? 'SMS পাঠানো হচ্ছে...' : `📲 অনুপস্থিতদের (${absentCount}) এখনই SMS পাঠান`}
+                  </button>
+                )}
               </div>
 
               {/* Student List */}

@@ -11,6 +11,7 @@ class AttendanceBulkCreate(BaseModel):
     branch: str
     class_level: str
     marked_by: Optional[str] = "admin"
+    send_sms: Optional[bool] = True   # Automatically trigger SMS to absent students
     entries: List[AttendanceEntry]
 
 class AttendanceRecord(BaseModel):
@@ -39,3 +40,9 @@ class AttendanceWithStudent(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SendAbsentSmsRequest(BaseModel):
+    date: str          # "YYYY-MM-DD"
+    branch: Optional[str] = None
+    class_level: Optional[str] = None
+    custom_message: Optional[str] = None
