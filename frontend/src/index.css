@@ -12,11 +12,13 @@ body {
   font-family: 'Noto Sans Bengali', sans-serif;
   background-color: #F9FAFB; /* gray-50 */
   color: #111827; /* gray-900 */
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 500;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Bengali text - bolder & bigger for all elements */
+/* Bengali text typography */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Noto Sans Bengali', sans-serif;
   font-weight: 700;
@@ -27,40 +29,11 @@ p, span, label, td, th, li, a, button, select, option, textarea, input, div {
   font-family: 'Noto Sans Bengali', sans-serif;
 }
 
-p {
-  font-size: 1.15rem;
-  font-weight: 500;
-  line-height: 1.85;
-}
-
-/* Navbar & menu links */
-nav a, nav button {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-/* Buttons */
-button {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-/* Table body */
-td {
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-th {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
 /* Animations */
 @keyframes fade-in-up {
   0% {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;
@@ -69,8 +42,7 @@ th {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .delay-100 { animation-delay: 100ms; }
@@ -96,3 +68,12 @@ th {
   user-select: none !important;
 }
 
+/* Smooth horizontal scrollbars for tables on mobile */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 9999px;
+}

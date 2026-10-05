@@ -268,8 +268,7 @@ const TeacherDashboard = () => {
             <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold shadow-sm">
               টিচার প্যানেল
             </div>
-          </div>
-          <div className="p-4 md:p-8 overflow-y-auto bg-gray-50 h-[calc(100vh-100px)] md:h-auto">
+          <div className="p-4 md:p-8 bg-gray-50 min-h-screen md:min-h-0">
         
         {activeTab === 'routine' && (
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
