@@ -1,0 +1,48 @@
+﻿name: Daily Database Backup
+
+on:
+  schedule:
+    # Runs every day at 11:00 PM Bangladesh time (17:00 UTC)
+    - cron: "0 17 * * *"
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Run Database Backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Extract connection details from DATABASE_URL
+          export PGPASSWORD=$(echo $DATABASE_URL | sed 's/.*:\(.*\)@.*/\1/')
+          
+          # Create backup filename with date
+          BACKUP_FILE="backup_$(date +%Y-%m-%d).sql"
+          
+          # Run pg_dump
+          pg_dump "$DATABASE_URL" \
+            --no-owner \
+            --no-acl \
+            --format=plain \
+            --file="$BACKUP_FILE"
+          
+          echo "✅ Backup created: $BACKUP_FILE"
+          ls -lh "$BACKUP_FILE"
+
+      - name: Upload Backup as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_number }}-${{ github.run_id }}
+          path: backup_*.sql
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Backup Success Notification
+        run: echo "✅ Database backup completed successfully on $(date)"

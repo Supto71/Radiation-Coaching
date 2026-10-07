@@ -76,7 +76,7 @@ const Login = () => {
         }
       }
     } else {
-      if (userId.trim() === 'admin' && password.trim() === 'admin123') {
+      if (userId.trim() === 'Radiation' && password.trim() === '924816') {
         localStorage.setItem('staff_role', 'admin');
         saveCredentials();
         navigate('/admin/dashboard');
