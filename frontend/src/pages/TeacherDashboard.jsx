@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave, FaUserCog, FaTrash, FaBroom, FaEye } from 'react-icons/fa';
 import FormattedQuestion from '../components/FormattedQuestion';
+import MathToolbar from '../components/MathToolbar';
 import { stripHtml } from '../utils/textUtils';
 
 const TeacherDashboard = () => {
@@ -42,6 +43,10 @@ const TeacherDashboard = () => {
   const [profileImg, setProfileImg] = useState(teacherImage || '');
   const [newPassword, setNewPassword] = useState('');
   const [updatingProfile, setUpdatingProfile] = useState(false);
+
+  // Refs for math toolbar integration
+  const questionTextareaRef = useRef(null);
+  const optionTextareaRefs = useRef([React.createRef(), React.createRef(), React.createRef(), React.createRef()]);
 
   useEffect(() => {
     if (!teacherName) {
@@ -152,17 +157,17 @@ const TeacherDashboard = () => {
     e.preventDefault();
     if (!selectedExamId) return alert('আগে পরীক্ষা নির্বাচন করুন!');
     
-    // Automatically strip HTML tags and decode entities
-    const cleanText = stripHtml(qText).trim();
-    const cleanOpts = qOptions.map(opt => stripHtml(opt).trim());
+    // Preserve HTML tags (sub, sup) for math/science formatting
+    const finalText = qText.trim();
+    const finalOpts = qOptions.map(opt => opt.trim());
 
-    if (!cleanText) return alert('অনুগ্রহ করে প্রশ্নটি লিখুন!');
-    if (cleanOpts.some(opt => opt === '')) return alert('সবগুলো অপশন পূরণ করুন!');
+    if (!finalText) return alert('অনুগ্রহ করে প্রশ্নটি লিখুন!');
+    if (finalOpts.some(opt => opt === '')) return alert('সবগুলো অপশন পূরণ করুন!');
     
     try {
       await axios.post(`/api/dashboard/exams/${selectedExamId}/questions`, {
-        text: cleanText,
-        options: JSON.stringify(cleanOpts),
+        text: finalText,
+        options: JSON.stringify(finalOpts),
         correct_answer: qCorrect
       });
       alert('প্রশ্ন সফলভাবে যোগ হয়েছে!');
@@ -428,9 +433,9 @@ const TeacherDashboard = () => {
               {selectedExamId && (
                 <div className="space-y-8 animate-fade-in">
                   <form onSubmit={addQuestion} className="space-y-6 bg-gray-50 p-6 md:p-7 rounded-2xl border border-gray-200">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <label className="block text-sm font-bold text-gray-800 ml-1">
-                        প্রশ্ন লিখুন (বড় প্রশ্ন উপর-নিচে স্বাভাবিকভাবে সাজানো থাকবে):
+                        প্রশ্ন লিখুন (subscript, superscript ও math symbol সাপোর্ট আছে):
                       </label>
                       <button
                         type="button"
@@ -443,23 +448,18 @@ const TeacherDashboard = () => {
                     </div>
 
                     <div>
+                      <MathToolbar
+                        textareaRef={questionTextareaRef}
+                        value={qText}
+                        onChange={setQText}
+                      />
                       <textarea 
-                        placeholder="এখানে প্রশ্নটি লিখুন... (কোনো প্রকার HTML ট্যাগ ছাড়া স্বাভাবিক টেক্সট)" 
+                        ref={questionTextareaRef}
+                        placeholder="এখানে প্রশ্নটি লিখুন... (H₂O, x², <sub>, <sup> ব্যবহার করতে পারেন)" 
                         required 
                         rows={4}
                         value={qText} 
                         onChange={e => setQText(e.target.value)}
-                        onPaste={e => {
-                          const pasted = e.clipboardData?.getData('text/plain') || '';
-                          if (pasted.includes('<') && pasted.includes('>')) {
-                            e.preventDefault();
-                            const cleaned = stripHtml(pasted);
-                            const start = e.target.selectionStart;
-                            const end = e.target.selectionEnd;
-                            const next = qText.substring(0, start) + cleaned + qText.substring(end);
-                            setQText(next);
-                          }
-                        }}
                         className="w-full border border-gray-200 rounded-xl p-4 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[100px] text-gray-800 bg-white leading-relaxed break-words whitespace-pre-wrap resize-y" 
                       />
                     </div>
@@ -478,28 +478,30 @@ const TeacherDashboard = () => {
                               onChange={() => setQCorrect(i)} 
                               className="w-5 h-5 mt-1 accent-green-600 cursor-pointer flex-shrink-0" 
                             />
-                            <textarea
-                              rows={2}
-                              placeholder={`অপশন ${i + 1}`} 
-                              value={opt} 
-                              onChange={e => { 
-                                const newOpts = [...qOptions]; 
-                                newOpts[i] = e.target.value; 
-                                setQOptions(newOpts); 
-                              }} 
-                              onPaste={e => {
-                                const pasted = e.clipboardData?.getData('text/plain') || '';
-                                if (pasted.includes('<') && pasted.includes('>')) {
-                                  e.preventDefault();
-                                  const cleaned = stripHtml(pasted);
+                            <div className="flex-1 min-w-0">
+                              <MathToolbar
+                                textareaRef={optionTextareaRefs.current[i]}
+                                value={opt}
+                                onChange={(newVal) => {
                                   const newOpts = [...qOptions];
-                                  newOpts[i] = cleaned;
+                                  newOpts[i] = newVal;
                                   setQOptions(newOpts);
-                                }
-                              }}
-                              className="w-full bg-transparent outline-none p-1 text-gray-800 font-medium leading-relaxed break-words resize-none" 
-                              required 
-                            />
+                                }}
+                              />
+                              <textarea
+                                ref={optionTextareaRefs.current[i]}
+                                rows={2}
+                                placeholder={`অপশন ${i + 1} (যেমন: H₂O, x², <sub>2</sub>)`} 
+                                value={opt} 
+                                onChange={e => { 
+                                  const newOpts = [...qOptions]; 
+                                  newOpts[i] = e.target.value; 
+                                  setQOptions(newOpts); 
+                                }} 
+                                className="w-full bg-transparent outline-none p-1 text-gray-800 font-medium leading-relaxed break-words resize-none" 
+                                required 
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>
