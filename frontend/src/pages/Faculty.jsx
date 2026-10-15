@@ -1,14 +1,21 @@
-
-
-import React from 'react';
+import React, { useState } from 'react';
+import { 
+  FaUniversity, 
+  FaSearch, 
+  FaChalkboardTeacher,
+  FaAward
+} from 'react-icons/fa';
 
 const Faculty = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
   const founder = {
     id: 1,
     name: 'রাকিব হাসান ফাহাদ',
     role: 'পরিচালক',
-    institute: 'রেডিয়েশন কোচিং',
-    image: '/fahad-sir.png'
+    institute: 'রেডিয়েশন কোচিং সেন্টার',
+    image: '/fahad-sir.png',
+    message: 'শিক্ষার্থীদের স্বপ্নপূরণে সঠিক পরিকল্পনা ও নিয়মানুবর্তিতাই আমাদের মূল শক্তি।'
   };
 
   const facultyMembers = [
@@ -19,7 +26,7 @@ const Faculty = () => {
       subject: 'বিবিএ, এমবিএ (ফার্স্টক্লাস) হিসাববিজ্ঞান',
       year: '-',
       teaching: 'ইংরেজি',
-      image: '/fahim.png?v=2'
+      image: '/fahim.png'
     },
     {
       id: 10,
@@ -28,7 +35,7 @@ const Faculty = () => {
       subject: 'Department of C.S.E',
       year: 'প্রথম বর্ষ',
       teaching: 'বিজ্ঞান, গণিত, তথ্য ও যোগাযোগ প্রযুক্তি',
-      image: '/supto.png?v=2'
+      image: '/supto.png'
     },
     {
       id: 11,
@@ -53,17 +60,17 @@ const Faculty = () => {
       name: 'রেহানা আক্তার তৃষা',
       university: 'ঢাকা সিটি কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
       subject: 'B.B.A (Department of Accounting)',
-      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
+      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার্থী)',
       teaching: 'ইংরেজি, বাণিজ্য বিভাগের সকল বিষয় এবং বাংলা',
       image: '/Tr.png'
     },
     {
       id: 4,
       name: 'উম্মে হানি লুনা',
-      university: 'নারায়ণগঞ্জ সরকারি তোলারাম কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
+      university: 'নারায়ণগঞ্জ সরকারি তোলারাম কলেজ',
       subject: 'B.A',
       year: 'দ্বিতীয় বর্ষ',
-      teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইসলাম, ফিন্যান্স, ব্যবসায় উদ্যোগ',
+      teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইসলাম শিক্ষা, ফিন্যান্স, ব্যবসায় উদ্যোগ',
       image: '/Luna.png'
     },
     {
@@ -96,7 +103,7 @@ const Faculty = () => {
     {
       id: 9,
       name: 'লামিয়া',
-      university: 'Central Women\'s College',
+      university: "Central Women's College",
       subject: 'Department of English',
       year: '৩য় বর্ষ',
       teaching: 'বাংলা, বাংলাদেশ ও বিশ্বপরিচয়, ইংরেজি, বিজ্ঞান',
@@ -105,10 +112,10 @@ const Faculty = () => {
     {
       id: 16,
       name: 'হাফেজ মাওলানা আমির মোহাম্মদ ওসমান গনি',
-      university: '-',
-      subject: 'দাওরায় হাদিস (মাস্টার্স), বিএ (অনার্স) আলকুরআন এন্ড ইসলামিক স্টাডিজ',
+      university: 'ইসলামিক স্টাডিজ অনুষদ',
+      subject: 'দাওরায়ে হাদিস (মাস্টার্স), বিএ (অনার্স) আলকুরআন এন্ড ইসলামিক স্টাডিজ',
       year: '-',
-      teaching: 'নির্ধারিত হয়নি',
+      teaching: 'ইসলাম ও নৈতিক শিক্ষা',
       image: '/Osman_Goni.png'
     },
     {
@@ -123,10 +130,10 @@ const Faculty = () => {
     {
       id: 26,
       name: 'শামীম মাহমুদ অন্তু',
-      university: '-',
+      university: 'জাতীয় বিশ্ববিদ্যালয়',
       subject: 'বিএ (অনার্স) ইংরেজি',
       year: '-',
-      teaching: 'নির্ধারিত হয়নি',
+      teaching: 'উচ্চতর গণিত ও ইংরেজি',
       image: '/Shamim.png'
     },
     {
@@ -135,71 +142,8 @@ const Faculty = () => {
       university: 'ইডেন মহিলা কলেজ',
       subject: 'Hons, Masters (Department of Bangla)',
       year: '-',
-      teaching: 'বাংলা, পৌরনীতি, সমাজকর্ম, গার্হস্থ্য, ইতিহাস, ভূগোল',
-      image: 'https://ui-avatars.com/api/?name=Ayesha+Akter+Priyanka&background=3B82F6&color=fff&size=200'
-    },
-    {
-      id: 3,
-      name: 'নাবিলা বাশার ঐশী',
-      university: 'নারায়ণগঞ্জ কলেজ (জাতীয় বিশ্ববিদ্যালয়)',
-      subject: 'B.Sc (Department of Economics)',
-      year: 'প্রথম বর্ষ (চূড়ান্ত পরীক্ষার পরীক্ষার্থী)',
-      teaching: 'ইংরেজি, মানবিক বিভাগের সকল বিষয় এবং বিজ্ঞান',
-      image: 'https://ui-avatars.com/api/?name=Nabila+Basher+Oyshe&background=8B5CF6&color=fff&size=200'
-    },
-    {
-      id: 12,
-      name: 'ইমাম হাসান বাঁধন',
-      university: '-',
-      subject: 'বিবিএ (অনার্স), ব্যবস্থাপনা বিভাগ, এলএলবি (অনার্স)',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Imam+Hasan+Badhon&background=3B82F6&color=fff&size=200'
-    },
-    {
-      id: 14,
-      name: 'মো: ইরফান',
-      university: '-',
-      subject: 'বিএসসি (অনার্স), এমএসসি (রসায়ন)',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Md+Irfan&background=F59E0B&color=fff&size=200'
-    },
-    {
-      id: 15,
-      name: 'রিয়াজউদ্দিন রাকিব',
-      university: '-',
-      subject: 'বিবিএ (অনার্স), এমবিএ ফিন্যান্স বিভাগ',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Riazuddin+Rakib&background=6366F1&color=fff&size=200'
-    },
-    {
-      id: 17,
-      name: 'সুমাইয়া আক্তার',
-      university: '-',
-      subject: 'বিএ (অনার্স) রাষ্ট্রবিজ্ঞান',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Sumaiya+Akter&background=EC4899&color=fff&size=200'
-    },
-    {
-      id: 18,
-      name: 'জান্নাতুন নাঈমা জাহান',
-      university: '-',
-      subject: 'বিএসএস (সমাজবিজ্ঞান)',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Jannatun+Naima+Jahan&background=14B8A6&color=fff&size=200'
-    },
-    {
-      id: 19,
-      name: 'সাদিয়া আক্তার',
-      university: '-',
-      subject: 'বিএসসি (অনার্স), গণিত',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Sadia+Akter&background=F43F5E&color=fff&size=200'
+      teaching: 'বাংলা, পৌরনীতি, সমাজকর্ম, ইতিহাস, ভূগোল',
+      image: 'https://ui-avatars.com/api/?name=Ayesha+Priyanka&background=0284C7&color=fff&size=200'
     },
     {
       id: 20,
@@ -207,7 +151,7 @@ const Faculty = () => {
       university: 'ঢাকা বিশ্ববিদ্যালয় (ঢাবি)',
       subject: 'বিএ (অনার্স), এমএ ইংরেজি বিভাগ',
       year: '-',
-      teaching: 'নির্ধারিত হয়নি',
+      teaching: 'ইংরেজি ব্যাকরণ ও সাহিত্য',
       image: 'https://ui-avatars.com/api/?name=Arafat+Sagor&background=0EA5E9&color=fff&size=200'
     },
     {
@@ -216,142 +160,152 @@ const Faculty = () => {
       university: 'বাংলাদেশ টেক্সটাইল বিশ্ববিদ্যালয় (বুটেক্স)',
       subject: 'বিএসসি (টেক্সটাইল ইঞ্জিনিয়ারিং)',
       year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Omar+Faruk+Farhan&background=84CC16&color=fff&size=200'
-    },
-    {
-      id: 22,
-      name: 'সাজ্জাতুল সজীব',
-      university: '-',
-      subject: 'বিএসসি (অনার্স), এমএসসি (গণিত)',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Sajjatul+Sajib&background=6366F1&color=fff&size=200'
-    },
-    {
-      id: 23,
-      name: 'মো: সাইফুর রহমান মুনিম',
-      university: '-',
-      subject: 'বিএসসি (অনার্স), এমএসসি (প্রাণিবিজ্ঞান)',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Md+Saifur+Rahman+Munim&background=3B82F6&color=fff&size=200'
-    },
-    {
-      id: 24,
-      name: 'ইমাম হাসান',
-      university: '-',
-      subject: 'বিএ অনার্স (ইংরেজি বিভাগ) এম. এ. (অধ্যয়নরত)',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Imam+Hasan&background=10B981&color=fff&size=200'
-    },
-    {
-      id: 25,
-      name: 'মো. রিয়াদ',
-      university: '-',
-      subject: 'বিএসসি (অনার্স), উদ্ভিদ বিজ্ঞান বিভাগ',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Md+Riad&background=F59E0B&color=fff&size=200'
-    },
-    {
-      id: 27,
-      name: 'মো. রাশেদুল ইসলাম',
-      university: '-',
-      subject: 'বিএ (অনার্স) রাষ্ট্রবিজ্ঞান বিভাগ',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Md+Rashedul+Islam&background=EC4899&color=fff&size=200'
-    },
-    {
-      id: 28,
-      name: 'এঞ্জেলী আক্তার',
-      university: '-',
-      subject: 'বিএ (অনার্স) ভূগোল',
-      year: '-',
-      teaching: 'নির্ধারিত হয়নি',
-      image: 'https://ui-avatars.com/api/?name=Anjely+Akter&background=14B8A6&color=fff&size=200'
+      teaching: 'পদার্থবিজ্ঞান ও সাধারণ গণিত',
+      image: 'https://ui-avatars.com/api/?name=Omar+Faruk&background=10B981&color=fff&size=200'
     }
   ];
 
+  const filteredTeachers = facultyMembers.filter(t => 
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.teaching.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.university.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="py-12 bg-gray-50 min-h-screen">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">আমাদের <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">শিক্ষকমণ্ডলী</span></h1>
-          <p className="text-gray-500 max-w-2xl mx-auto text-lg">আমাদের দক্ষ ও অভিজ্ঞ শিক্ষকমণ্ডলীর সাথে পরিচিত হোন।</p>
-        </div>
+    <div className="relative min-h-screen bg-[#f8fafc] text-slate-800 py-16 sm:py-24 overflow-hidden">
+      
+      {/* Soft Ambient Background Lights */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-sky-200/50 to-cyan-200/40 rounded-full blur-[140px] pointer-events-none" />
 
-        {/* Founder Section Highlighted */}
-        <div className="flex justify-center mb-20">
-          <div className="group text-center bg-white p-10 rounded-3xl border border-primary/20 w-full max-w-lg shadow-xl hover:shadow-2xl hover:shadow-primary/30 transition-all transform hover:-translate-y-1 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-primary to-secondary opacity-10"></div>
-            <div className="relative mb-6 inline-block mt-4">
-              <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-xl relative z-10 group-hover:scale-105 transition-transform duration-300">
-                <img src={founder.image} alt={founder.name} className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary to-accent rounded-full blur-2xl opacity-20 group-hover:opacity-50 transition-opacity duration-300 transform scale-110"></div>
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl relative z-10">
+
+        {/* Header Section */}
+        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-sky-200 text-sky-700 text-xs sm:text-sm font-semibold shadow-xs">
+            <FaChalkboardTeacher />
+            <span>আমাদের শিক্ষক প্যানেল</span>
+          </div>
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            অভিজ্ঞ ও নিবেদিতপ্রাণ{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600">
+              শিক্ষকমণ্ডলী
+            </span>
+          </h1>
+          <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+            দেশের শীর্ষ বিশ্ববিদ্যালয় ও কলেজ থেকে আগত বিষয়ভিত্তিক বিশেষজ্ঞ শিক্ষকরা প্রস্তুত আপনার সন্তানের সর্বোচ্চ ফলাফল নিশ্চিত করতে।
+          </p>
+
+          {/* Teacher Search Input */}
+          <div className="pt-4 max-w-md mx-auto">
+            <div className="relative">
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+              <input
+                type="text"
+                placeholder="শিক্ষক বা বিষয়ের নাম দিয়ে খুঁজুন..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 text-slate-800 text-sm placeholder-slate-400 shadow-sm outline-none transition-all"
+              />
             </div>
-
-            <h3 className="text-3xl font-bold text-gray-900 mb-2 relative z-10">{founder.name}</h3>
-            <p className="text-primary font-bold text-xl mb-1 relative z-10">{founder.role}</p>
-            <p className="text-gray-600 font-medium text-lg relative z-10">{founder.institute}</p>
           </div>
         </div>
 
-        {/* Other Faculty Members Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
-          {facultyMembers.map((teacher) => (
-            <div key={teacher.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 transform hover:-translate-y-1 group">
-              <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-100 shadow-md flex-shrink-0 group-hover:border-primary/50 transition-colors">
+        {/* FOUNDER / DIRECTOR SPOTLIGHT */}
+        <div className="max-w-2xl mx-auto mb-20">
+          <div className="relative rounded-[2.5rem] p-8 sm:p-10 bg-white border border-sky-200 shadow-[0_20px_50px_rgba(2,132,199,0.12)] text-center overflow-hidden">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-sky-100/60 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative mb-6 inline-block">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full p-1.5 bg-gradient-to-tr from-sky-600 via-cyan-500 to-teal-400 shadow-xl mx-auto">
+                <img
+                  src={founder.image}
+                  alt={founder.name}
+                  className="w-full h-full object-cover rounded-full bg-slate-100"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/logo.png";
+                  }}
+                />
+              </div>
+              <div className="absolute bottom-1 right-2 w-9 h-9 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-bold text-sm shadow-md">
+                <FaAward />
+              </div>
+            </div>
+
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-1">{founder.name}</h3>
+            <p className="text-sky-600 font-bold text-base mb-1">{founder.role}</p>
+            <p className="text-slate-500 text-xs sm:text-sm mb-4 font-medium">{founder.institute}</p>
+
+            <blockquote className="italic text-xs sm:text-sm text-slate-600 max-w-lg mx-auto bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              "{founder.message}"
+            </blockquote>
+          </div>
+        </div>
+
+        {/* FACULTY MEMBERS GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredTeachers.map((teacher) => (
+            <div
+              key={teacher.id}
+              className="rounded-3xl p-6 bg-white border border-slate-200/90 hover:border-sky-400 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between group"
+            >
+              <div className="space-y-4">
+                
+                {/* Teacher Avatar */}
+                <div className="relative w-28 h-28 mx-auto rounded-2xl p-1 bg-gradient-to-tr from-sky-500 to-cyan-400 shadow-sm">
                   <img
                     src={teacher.image}
                     alt={teacher.name}
-                    className={`w-full h-full object-cover ${teacher.id === 10 ? 'scale-[1.4] object-[center_10%] origin-top' : ''}`}
+                    className="w-full h-full object-cover rounded-xl bg-slate-50"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(teacher.name)}&background=0284C7&color=fff&size=200`;
+                    }}
                   />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1 group-hover:text-primary transition-colors">{teacher.name}</h3>
+
+                {/* Name & Academic info */}
+                <div className="text-center space-y-1">
+                  <h4 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
+                    {teacher.name}
+                  </h4>
+                  <p className="text-xs text-sky-600 font-medium flex items-center justify-center gap-1.5">
+                    <FaUniversity className="text-[11px] shrink-0" />
+                    <span className="truncate max-w-[200px]" title={teacher.university}>
+                      {teacher.university !== '-' ? teacher.university : 'রেডিয়েশন ফ্যাকাল্টি'}
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed" title={teacher.subject}>
+                    {teacher.subject}
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Teaching Subject Box */}
+              <div className="pt-4 mt-4 border-t border-slate-100">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
+                    পাঠদানের বিষয়
+                  </span>
+                  <p className="text-xs font-semibold text-slate-700">
+                    {teacher.teaching}
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-4 text-sm">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 text-primary">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 font-medium text-xs uppercase tracking-wider mb-0.5">বিশ্ববিদ্যালয়</p>
-                    <p className="text-gray-800 font-medium leading-snug">{teacher.university}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 text-secondary">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 font-medium text-xs uppercase tracking-wider mb-0.5">অধ্যয়নরত বিষয়</p>
-                    <p className="text-gray-800 leading-snug">{teacher.subject}</p>
-                    {teacher.year !== '-' && <p className="text-gray-600 text-xs mt-0.5">({teacher.year})</p>}
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 text-green-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 font-medium text-xs uppercase tracking-wider mb-0.5">দায়িত্বপ্রাপ্ত বিষয়</p>
-                    <p className="text-gray-800 font-medium leading-snug">{teacher.teaching}</p>
-                  </div>
-                </div>
-              </div>
             </div>
           ))}
         </div>
+
+        {filteredTeachers.length === 0 && (
+          <div className="text-center py-16 text-slate-500 space-y-2">
+            <p className="text-lg font-semibold">কোনো শিক্ষক পাওয়া যায়নি</p>
+            <p className="text-xs">অনুগ্রহ করে ভিন্ন কোনো নাম বা বিষয়ের নাম দিয়ে অনুসন্ধান করুন।</p>
+          </div>
+        )}
+
       </div>
     </div>
   );

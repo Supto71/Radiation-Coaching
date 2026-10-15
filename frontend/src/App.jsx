@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import InstallPWA from './components/InstallPWA';
 import Home from './pages/Home';
 import Courses from './pages/Courses';
 import Faculty from './pages/Faculty';
@@ -12,7 +14,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col font-bengali">
+      <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-800 selection:bg-sky-500 selection:text-white">
         <Navbar />
         
         <main className="flex-grow">
@@ -27,16 +29,9 @@ function App() {
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
           </Routes>
         </main>
-        
-        <footer className="bg-gray-900 text-gray-400 py-8 border-t border-gray-800">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-xl font-bold text-white mb-2">রেডিয়েশন কোচিং</h2>
-            <p className="mb-4">আপনার সাফল্যের যাত্রায় আমরা আছি পাশে</p>
-            <div className="border-t border-gray-800 pt-4 mt-4">
-              <p>&copy; {new Date().getFullYear()} রেডিয়েশন কোচিং. সর্বস্বত্ব সংরক্ষিত।</p>
-            </div>
-          </div>
-        </footer>
+
+        <Footer />
+        <InstallPWA />
       </div>
     </Router>
   );
