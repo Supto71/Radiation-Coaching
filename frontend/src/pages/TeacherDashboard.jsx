@@ -205,32 +205,34 @@ const TeacherDashboard = () => {
 
   // Save ALL bulk-parsed questions sequentially
   const saveBulkQuestions = async () => {
-    if (!bulkParsed.length || !selectedExamId) return;
+    if (!bulkParsed.length) return alert('কোনো প্রশ্ন সনাক্ত করা হয়নি!');
+    if (!selectedExamId) return alert('আগে একটি পরীক্ষা নির্বাচন করুন!');
+
     setBulkSaving(true);
     let savedCount = 0;
     for (const q of bulkParsed) {
       try {
-        await axios.post('/api/dashboard/questions', {
-          exam_id: parseInt(selectedExamId),
+        await axios.post(`/api/dashboard/exams/${selectedExamId}/questions`, {
           text: q.text,
-          option_a: q.options[0],
-          option_b: q.options[1],
-          option_c: q.options[2],
-          option_d: q.options[3],
-          correct_option: q.correct,
+          options: JSON.stringify(q.options),
+          correct_answer: q.correct,
         });
         savedCount++;
       } catch (err) {
-        console.error('Bulk save error', err);
+        console.error('Bulk save error for question:', q.text, err);
       }
     }
     setBulkSaving(false);
-    setShowBulk(false);
-    setBulkText('');
-    setBulkParsed([]);
-    await loadExamQuestions(selectedExamId);
-    await fetchExams();
-    alert(`${savedCount}টি প্রশ্ন সফলভাবে সেভ হয়েছে!`);
+    if (savedCount > 0) {
+      setShowBulk(false);
+      setBulkText('');
+      setBulkParsed([]);
+      await loadExamQuestions(selectedExamId);
+      await fetchExams();
+      alert(`${savedCount}টি প্রশ্ন সফলভাবে সেভ হয়েছে!`);
+    } else {
+      alert('প্রশ্ন সেভ করা সম্ভব হয়নি। সার্ভার কানেকশন অথবা ফর্ম চেক করুন।');
+    }
   };
 
   const handleLogout = () => {
