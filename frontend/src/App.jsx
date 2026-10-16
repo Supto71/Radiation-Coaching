@@ -8,10 +8,13 @@ import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
+import ServerWakeupToast from './components/ServerWakeup';
 
 function App() {
   return (
     <Router>
+      {/* Render ঘুমালে non-blocking toast দেখায় — পেজ block হয় না */}
+      <ServerWakeupToast />
       <div className="min-h-screen flex flex-col font-bengali">
         <Navbar />
         

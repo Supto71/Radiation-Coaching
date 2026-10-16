@@ -6,6 +6,23 @@ import FormattedQuestion from '../components/FormattedQuestion';
 import MathToolbar from '../components/MathToolbar';
 import { stripHtml } from '../utils/textUtils';
 
+// Render cold-start retry: Backend ঘুমালে auto-retry করে
+async function retryAxios(method, url, data, maxRetries = 20, delay = 5000) {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await axios({ method, url, data });
+    } catch (err) {
+      // Network error (ECONNREFUSED / timeout) = ঘুমাচ্ছে
+      if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        if (i < maxRetries) await new Promise(r => setTimeout(r, delay));
+        else throw err;
+      } else {
+        throw err; // 4xx/5xx — retry করার দরকার নেই
+      }
+    }
+  }
+}
+
 const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState('routine');
   const navigate = useNavigate();
@@ -59,21 +76,21 @@ const TeacherDashboard = () => {
 
   const fetchNotices = async () => {
     try {
-      const res = await axios.get('/api/dashboard/notices');
+      const res = await retryAxios('get', '/api/dashboard/notices');
       setNotices(res.data);
     } catch (err) { console.error(err); }
   };
 
   const fetchRoutines = async () => {
     try {
-      const res = await axios.get('/api/dashboard/routines');
+      const res = await retryAxios('get', '/api/dashboard/routines');
       setRoutines(res.data);
     } catch (err) { console.error(err); }
   };
 
   const fetchExams = async () => {
     try {
-      const res = await axios.get('/api/dashboard/exams?active_only=false');
+      const res = await retryAxios('get', '/api/dashboard/exams?active_only=false');
       setExams(res.data);
     } catch (err) { console.error(err); }
   };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { retryFetch } from '../utils/retryFetch';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const StudentDashboard = () => {
     const fetchRoutines = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`/api/dashboard/routines?branch=${encodeURIComponent(student.branch)}&class_level=${encodeURIComponent(student.class_level)}`);
+        const response = await retryFetch(`/api/dashboard/routines?branch=${encodeURIComponent(student.branch)}&class_level=${encodeURIComponent(student.class_level)}`);
         if (response.ok) {
           const data = await response.json();
           const grouped = data.reduce((acc, routine) => {
@@ -71,7 +72,7 @@ const StudentDashboard = () => {
     const fetchAttendance = async () => {
       setAttLoading(true);
       try {
-        const res = await fetch(`/api/attendance/by-uid/${encodeURIComponent(student.student_uid)}`);
+        const res = await retryFetch(`/api/attendance/by-uid/${encodeURIComponent(student.student_uid)}`);
         if (res.ok) {
           setMyAttendance(await res.json());
         }
@@ -86,7 +87,7 @@ const StudentDashboard = () => {
     const fetchFees = async () => {
       setFeesLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/fees/me?student_id=${student.id}`);
+        const res = await retryFetch(`/api/dashboard/fees/me?student_id=${student.id}`);
         if (res.ok) {
           setFees(await res.json());
         }
@@ -101,7 +102,7 @@ const StudentDashboard = () => {
     const fetchExams = async () => {
       setExamsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/exams?active_only=true&class_level=${encodeURIComponent(student.class_level)}`);
+        const res = await retryFetch(`/api/dashboard/exams?active_only=true&class_level=${encodeURIComponent(student.class_level)}`);
         if (res.ok) {
           setExams(await res.json());
         }
@@ -116,7 +117,7 @@ const StudentDashboard = () => {
     const fetchAllExams = async () => {
       setAllExamsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/exams?class_level=${encodeURIComponent(student.class_level)}`);
+        const res = await retryFetch(`/api/dashboard/exams?class_level=${encodeURIComponent(student.class_level)}`);
         if (res.ok) {
           setAllExams(await res.json());
         }
@@ -131,7 +132,7 @@ const StudentDashboard = () => {
     const fetchResults = async () => {
       setResultsLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/results/me?student_id=${student.id}`);
+        const res = await retryFetch(`/api/dashboard/results/me?student_id=${student.id}`);
         if (res.ok) {
           setResults(await res.json());
         }
@@ -146,7 +147,7 @@ const StudentDashboard = () => {
     const fetchNotices = async () => {
       setNoticesLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/notices`);
+        const res = await retryFetch(`/api/dashboard/notices`);
         if (res.ok) {
           setNotices(await res.json());
         }
@@ -161,7 +162,7 @@ const StudentDashboard = () => {
     const fetchNotifications = async () => {
       setNotificationsLoading(true);
       try {
-        const res = await fetch(`/api/notifications/${encodeURIComponent(student.student_uid)}`);
+        const res = await retryFetch(`/api/notifications/${encodeURIComponent(student.student_uid)}`);
         if (res.ok) {
           setNotifications(await res.json());
         }
