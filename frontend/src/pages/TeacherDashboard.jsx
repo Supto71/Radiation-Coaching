@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave, FaUserCog, FaTrash, FaBroom, FaEye } from 'react-icons/fa';
+import { FaCalendarAlt, FaUserCheck, FaClipboardList, FaQuestionCircle, FaSignOutAlt, FaPlus, FaSave, FaUserCog, FaTrash, FaBroom, FaEye, FaCamera, FaLayerGroup } from 'react-icons/fa';
 import FormattedQuestion from '../components/FormattedQuestion';
 import MathToolbar from '../components/MathToolbar';
+import OcrUploader from '../components/OcrUploader';
 import { stripHtml } from '../utils/textUtils';
+import { parseBulkQuestions } from '../utils/parseBulkQuestions';
 
 // Render cold-start retry: Backend ঘুমালে auto-retry করে
 async function retryAxios(method, url, data, maxRetries = 20, delay = 5000) {
@@ -55,6 +57,13 @@ const TeacherDashboard = () => {
   const [qText, setQText] = useState('');
   const [qOptions, setQOptions] = useState(['', '', '', '']);
   const [qCorrect, setQCorrect] = useState(0);
+
+  // OCR & Bulk states
+  const [showOcr, setShowOcr]   = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkParsed, setBulkParsed] = useState([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   // Profile
   const [profileImg, setProfileImg] = useState(teacherImage || '');
@@ -192,6 +201,36 @@ const TeacherDashboard = () => {
       loadExamQuestions(selectedExamId);
       fetchExams();
     } catch (err) { alert('প্রশ্ন যোগ করতে সমস্যা হয়েছে!'); }
+  };
+
+  // Save ALL bulk-parsed questions sequentially
+  const saveBulkQuestions = async () => {
+    if (!bulkParsed.length || !selectedExamId) return;
+    setBulkSaving(true);
+    let savedCount = 0;
+    for (const q of bulkParsed) {
+      try {
+        await axios.post('/api/dashboard/questions', {
+          exam_id: parseInt(selectedExamId),
+          text: q.text,
+          option_a: q.options[0],
+          option_b: q.options[1],
+          option_c: q.options[2],
+          option_d: q.options[3],
+          correct_option: q.correct,
+        });
+        savedCount++;
+      } catch (err) {
+        console.error('Bulk save error', err);
+      }
+    }
+    setBulkSaving(false);
+    setShowBulk(false);
+    setBulkText('');
+    setBulkParsed([]);
+    await loadExamQuestions(selectedExamId);
+    await fetchExams();
+    alert(`${savedCount}টি প্রশ্ন সফলভাবে সেভ হয়েছে!`);
   };
 
   const handleLogout = () => {
@@ -454,15 +493,106 @@ const TeacherDashboard = () => {
                       <label className="block text-sm font-bold text-gray-800 ml-1">
                         প্রশ্ন লিখুন (subscript, superscript ও math symbol সাপোর্ট আছে):
                       </label>
-                      <button
-                        type="button"
-                        onClick={handleCleanAllHtml}
-                        className="text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
-                        title="HTML কোড বা ট্যাগ থাকলে সাধারণ টেক্সটে রূপান্তর করুন"
-                      >
-                        <FaBroom className="text-amber-600" /> HTML ট্যাগ মুছুন
-                      </button>
+                      <div className="flex gap-2 flex-wrap">
+                        {/* OCR button */}
+                        <button
+                          type="button"
+                          onClick={() => { setShowOcr(v => !v); setShowBulk(false); }}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                            showOcr ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          }`}
+                          title="ছবি থেকে টেক্সট বের করুন"
+                        >
+                          <FaCamera /> OCR (ছবি থেকে)
+                        </button>
+                        {/* Bulk paste button */}
+                        <button
+                          type="button"
+                          onClick={() => { setShowBulk(v => !v); setShowOcr(false); }}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors ${
+                            showBulk ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                          }`}
+                          title="একসাথে অনেক প্রশ্ন paste করুন"
+                        >
+                          <FaLayerGroup /> Bulk Paste
+                        </button>
+                        {/* Clean HTML button */}
+                        <button
+                          type="button"
+                          onClick={handleCleanAllHtml}
+                          className="text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                          title="HTML কোড বা ট্যাগ থাকলে সাধারণ টেক্সটে রূপান্তর করুন"
+                        >
+                          <FaBroom className="text-amber-600" /> HTML ট্যাগ মুছুন
+                        </button>
+                      </div>
                     </div>
+
+                    {/* OCR Panel */}
+                    {showOcr && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+                        <p className="text-xs font-bold text-blue-700 flex items-center gap-1.5">
+                          <FaCamera /> ছবি আপলোড করুন — text স্বয়ংক্রিয়ভাবে প্রশ্ন ফিল্ডে চলে যাবে
+                        </p>
+                        <OcrUploader
+                          onText={(t) => {
+                            setQText(prev => prev ? prev + '\n' + t : t);
+                            setShowOcr(false);
+                          }}
+                        />
+                        <p className="text-[11px] text-blue-500">💡 টিপস: ক্লিয়ার/স্ক্যান করা ছবি ব্যবহার করুন। ছবিতে অনেক প্রশ্ন থাকলে OCR এর পরে Bulk Paste ব্যবহার করুন।</p>
+                      </div>
+                    )}
+
+                    {/* Bulk Paste Panel */}
+                    {showBulk && (
+                      <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
+                        <p className="text-xs font-bold text-purple-700 flex items-center gap-1.5">
+                          <FaLayerGroup /> একসাথে অনেক MCQ প্রশ্ন paste করুন — auto-parse হয়ে সেভ হবে
+                        </p>
+                        <p className="text-[11px] text-purple-500">
+                          ফরম্যাট: <code className="bg-purple-100 px-1 rounded">1. প্রশ্ন? A. অপশন B. অপশন C. অপশন D. অপশন Answer: A</code>
+                        </p>
+                        <textarea
+                          rows={8}
+                          className="w-full border border-purple-300 rounded-xl p-3 text-sm outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-300 bg-white font-mono"
+                          placeholder={`1. পানির রাসায়নিক সংকেত কী?\nA. H2O2  B. H2O  C. CO2  D. O2\nAnswer: B\n\n2. আলোকসংশ্লেষণ কোথায় হয়?\nA. মূলে  B. ফুলে  C. পাতায়  D. কাণ্ডে\nAnswer: C`}
+                          value={bulkText}
+                          onChange={e => {
+                            setBulkText(e.target.value);
+                            setBulkParsed(parseBulkQuestions(e.target.value));
+                          }}
+                        />
+                        {bulkParsed.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold text-green-700">✓ {bulkParsed.length}টি প্রশ্ন সনাক্ত হয়েছে:</p>
+                            <div className="max-h-40 overflow-y-auto space-y-1">
+                              {bulkParsed.map((q, idx) => (
+                                <div key={idx} className="text-xs bg-white border border-green-200 rounded-lg px-3 py-1.5 text-gray-700">
+                                  <span className="font-bold text-green-700">{idx + 1}.</span> {q.text.slice(0, 80)}{q.text.length > 80 ? '…' : ''}
+                                  <span className="ml-2 text-green-600 font-semibold">(সঠিক: {['A','B','C','D'][q.correct]})</span>
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              disabled={bulkSaving}
+                              onClick={saveBulkQuestions}
+                              className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all"
+                            >
+                              {bulkSaving ? (
+                                <><span className="ocr-spinner-sm" /> সেভ হচ্ছে...</>
+                              ) : (
+                                <><FaSave /> সব {bulkParsed.length}টি প্রশ্ন একসাথে সেভ করুন</>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                        {bulkText && bulkParsed.length === 0 && (
+                          <p className="text-xs text-red-500 font-semibold">⚠ কোনো প্রশ্ন সনাক্ত করা যায়নি। উপরের ফরম্যাট অনুসরণ করুন।</p>
+                        )}
+                      </div>
+                    )}
 
                     <div>
                       <MathToolbar
