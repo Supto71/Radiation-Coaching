@@ -1,0 +1,44 @@
+{
+  "name": "রেডিয়েশন কোচিং সেন্টার | Radiation Coaching",
+  "short_name": "Radiation",
+  "description": "রেডিয়েশন কোচিং সেন্টারের অফিসিয়াল মোবাইল ও ওয়েব অ্যাপ্লিকেশন",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b132b",
+  "theme_color": "#0284c7",
+  "lang": "bn",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "কোর্সসমূহ",
+      "url": "/courses",
+      "description": "আমাদের কোর্স তালিকা দেখুন"
+    },
+    {
+      "name": "লগইন",
+      "url": "/login",
+      "description": "স্টুডেন্ট বা টিচার পোর্টালে লগইন করুন"
+    }
+  ]
+}

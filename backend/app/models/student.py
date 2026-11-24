@@ -17,4 +17,5 @@ class Student(Base):
     guardian_phone = Column(String, nullable=True) # Make this required conceptually but keep DB backward compatible if needed
     monthly_fee = Column(Float, nullable=True)      # Fixed monthly tuition fee (বেতন) in BDT
     admission_fee = Column(Float, nullable=True)    # One-time admission fee (ভর্তি ফি) in BDT
+    image = Column(String, nullable=True)           # Profile picture URL or base64 data
     created_at = Column(DateTime, default=datetime.utcnow)

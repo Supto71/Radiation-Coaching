@@ -1,5 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  FaCamera, 
+  FaTrashAlt, 
+  FaCheck, 
+  FaTimes, 
+  FaSpinner, 
+  FaImage,
+  FaUserGraduate
+} from 'react-icons/fa';
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -7,6 +16,13 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Profile Picture states
+  const fileInputRef = useRef(null);
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewImg, setPreviewImg] = useState(null);
+  const [imgFeedback, setImgFeedback] = useState({ text: '', type: 'success' });
 
   // Data states
   const [routines, setRoutines] = useState({});
@@ -33,12 +49,149 @@ const StudentDashboard = () => {
     // Load student from localStorage
     const studentData = localStorage.getItem('student');
     if (studentData) {
-      setStudent(JSON.parse(studentData));
+      try {
+        const parsed = JSON.parse(studentData);
+        setStudent(parsed);
+        // Refresh with latest data from backend if student ID is present
+        if (parsed?.id) {
+          fetch(`/api/students/${parsed.id}`)
+            .then(res => res.ok ? res.json() : null)
+            .then(fresh => {
+              if (fresh) {
+                const merged = { ...parsed, ...fresh, profilePic: fresh.image || fresh.profilePic };
+                setStudent(merged);
+                localStorage.setItem('student', JSON.stringify(merged));
+              }
+            })
+            .catch(e => console.error("Could not sync student data:", e));
+        }
+      } catch (e) {
+        console.error("Invalid student json in storage:", e);
+        navigate('/login');
+      }
     } else {
       // If no student session, go back to login
       navigate('/login');
     }
   }, [navigate]);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setImgFeedback({ text: 'অনুগ্রহ করে একটি সঠিক ছবি (JPG, PNG, WebP) নির্বাচন করুন!', type: 'error' });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setImgFeedback({ text: 'ছবির সাইজ অনেক বড় (সর্বোচ্চ ১০MB হতে পারবে)।', type: 'error' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const TARGET_SIZE = 400; // Optimal 400x400 square for round avatar
+          canvas.width = TARGET_SIZE;
+          canvas.height = TARGET_SIZE;
+          const ctx = canvas.getContext('2d');
+
+          // Center-crop to square
+          const minDim = Math.min(img.width, img.height);
+          const startX = (img.width - minDim) / 2;
+          const startY = (img.height - minDim) / 2;
+
+          ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, TARGET_SIZE, TARGET_SIZE);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.88);
+
+          setPreviewImg(compressedBase64);
+          setIsPreviewModalOpen(true);
+        } catch (err) {
+          console.error('Image crop/compress error:', err);
+          setImgFeedback({ text: 'ছবি প্রসেস করতে সমস্যা হয়েছে। অন্য ছবি চেষ্টা করুন।', type: 'error' });
+        }
+      };
+      img.onerror = () => {
+        setImgFeedback({ text: 'ছবি লোড করা যায়নি। অনুগ্রহ করে অন্য ছবি নির্বাচন করুন।', type: 'error' });
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleSaveProfilePic = async () => {
+    if (!previewImg || !student?.id) return;
+    setUploadingImg(true);
+    setImgFeedback({ text: '', type: 'success' });
+    try {
+      const res = await fetch(`/api/students/${student.id}/image`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: previewImg })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        const newStudentData = {
+          ...student,
+          ...updated,
+          image: updated.image || previewImg,
+          profilePic: updated.image || previewImg
+        };
+        setStudent(newStudentData);
+        localStorage.setItem('student', JSON.stringify(newStudentData));
+        setIsPreviewModalOpen(false);
+        setPreviewImg(null);
+        setImgFeedback({ text: 'প্রোফাইল ছবি সফলভাবে আপডেট করা হয়েছে!', type: 'success' });
+        setTimeout(() => setImgFeedback({ text: '', type: 'success' }), 4500);
+      } else {
+        setImgFeedback({ text: 'ছবি সেভ করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।', type: 'error' });
+      }
+    } catch (err) {
+      console.error(err);
+      setImgFeedback({ text: 'সার্ভারে সংযোগ করতে সমস্যা হয়েছে।', type: 'error' });
+    } finally {
+      setUploadingImg(false);
+    }
+  };
+
+  const handleRemoveProfilePic = async () => {
+    if (!student?.id) return;
+    if (!window.confirm('আপনি কি নিশ্চিত যে আপনার বর্তমান প্রোফাইল ছবি মুছে ফেলতে চান?')) return;
+    setUploadingImg(true);
+    setImgFeedback({ text: '', type: 'success' });
+    try {
+      const res = await fetch(`/api/students/${student.id}/image`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: null })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        const newStudentData = {
+          ...student,
+          ...updated,
+          image: null,
+          profilePic: null
+        };
+        setStudent(newStudentData);
+        localStorage.setItem('student', JSON.stringify(newStudentData));
+        setImgFeedback({ text: 'প্রোফাইল ছবি সফলভাবে মুছে ফেলা হয়েছে!', type: 'success' });
+        setTimeout(() => setImgFeedback({ text: '', type: 'success' }), 4500);
+      } else {
+        setImgFeedback({ text: 'ছবি মুছতে সমস্যা হয়েছে।', type: 'error' });
+      }
+    } catch (err) {
+      console.error(err);
+      setImgFeedback({ text: 'সার্ভারে সংযোগ করতে সমস্যা হয়েছে।', type: 'error' });
+    } finally {
+      setUploadingImg(false);
+    }
+  };
 
   useEffect(() => {
     if (!student) return;
@@ -216,6 +369,7 @@ const StudentDashboard = () => {
 
   if (!student) return <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-500">লোড হচ্ছে...</div>;
 
+  const currentAvatar = student.image || student.profilePic;
   const presentDays = myAttendance.filter(a => a.is_present).length;
   const totalDays = myAttendance.length;
   const pct = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
@@ -237,7 +391,7 @@ const StudentDashboard = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Universal Header */}
-      <div className="bg-white shadow-sm border-b border-gray-100 px-4 py-4 flex items-center justify-between sticky top-0 z-30">
+      <div className="bg-white shadow-sm border-b border-gray-100 px-4 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-gray-600 hover:text-primary transition-colors">
             {/* Hamburger / Three lines icon */}
@@ -247,8 +401,22 @@ const StudentDashboard = () => {
           </button>
           <h1 className="text-xl font-bold text-gray-900">স্টুডেন্ট ড্যাশবোর্ড</h1>
         </div>
-        <div className="flex items-center gap-4">
-          <button onClick={() => { setActiveTab('notifications'); setIsSidebarOpen(false); }} className="relative text-gray-600 hover:text-primary transition-colors">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button 
+            onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }}
+            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
+            title="আমার প্রোফাইল"
+          >
+            {currentAvatar ? (
+              <img src={currentAvatar} alt="avatar" className="w-8 h-8 rounded-full object-cover border-2 border-[#00b4d8]" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#00b4d8]/15 text-[#00b4d8] font-bold flex items-center justify-center text-xs">
+                {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
+              </div>
+            )}
+            <span className="hidden sm:inline font-bold text-sm text-gray-800">{student.name}</span>
+          </button>
+          <button onClick={() => { setActiveTab('notifications'); setIsSidebarOpen(false); }} className="relative text-gray-600 hover:text-primary transition-colors p-1">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
@@ -269,11 +437,20 @@ const StudentDashboard = () => {
         {/* Sidebar */}
         <div className={`fixed inset-y-0 left-0 w-64 md:w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col`}>
           <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-[#0f172a]">
-            <div>
-              <h2 className="text-xl font-bold text-white">স্টুডেন্ট প্যানেল</h2>
-              <p className="text-xs text-[#00b4d8] mt-1 font-medium">{student.student_uid}</p>
+            <div className="flex items-center gap-3 overflow-hidden">
+              {currentAvatar ? (
+                <img src={currentAvatar} alt="avatar" className="w-12 h-12 rounded-full object-cover border-2 border-[#00b4d8] shadow-md flex-shrink-0" />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-white/10 text-white font-bold flex items-center justify-center text-lg border border-white/20 shadow-md flex-shrink-0">
+                  {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
+                </div>
+              )}
+              <div className="truncate">
+                <h2 className="text-base font-bold text-white truncate leading-tight">{student.name}</h2>
+                <p className="text-xs text-[#00b4d8] font-medium mt-0.5">{student.student_uid}</p>
+              </div>
             </div>
-            <button onClick={() => setIsSidebarOpen(false)} className="text-white/70 hover:text-white p-1">
+            <button onClick={() => setIsSidebarOpen(false)} className="text-white/70 hover:text-white p-1 ml-2 flex-shrink-0">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -300,41 +477,129 @@ const StudentDashboard = () => {
             {/* PROFILE TAB */}
             {activeTab === 'profile' && (
               <div>
-                <h2 className="text-2xl font-bold mb-6 text-gray-800">আমার প্রোফাইল</h2>
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden max-w-2xl">
-                  <div className="bg-[#0f172a] p-6 text-center md:text-left md:flex items-center gap-6">
-                    <div className="relative w-24 h-24 mx-auto md:mx-0 mb-4 md:mb-0 flex-shrink-0">
-                      {student.profilePic ? (
-                        <img src={student.profilePic} alt="profile" className="w-24 h-24 rounded-full object-cover border-4 border-[#00b4d8]/40" />
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+                  <h2 className="text-2xl font-bold text-gray-800">আমার প্রোফাইল</h2>
+                  {imgFeedback.text && (
+                    <div className={`text-sm px-4 py-2 rounded-xl flex items-center gap-2 font-medium shadow-sm transition-all ${
+                      imgFeedback.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      {imgFeedback.type === 'error' ? <FaTimes /> : <FaCheck />}
+                      {imgFeedback.text}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden max-w-2xl">
+                  {/* Banner & Avatar section */}
+                  <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] p-6 sm:p-8 text-center md:text-left md:flex items-center gap-6 relative">
+                    {/* Avatar with Camera badge */}
+                    <div className="relative w-28 h-28 mx-auto md:mx-0 mb-4 md:mb-0 flex-shrink-0 group">
+                      {currentAvatar ? (
+                        <img 
+                          src={currentAvatar} 
+                          alt="profile" 
+                          className="w-28 h-28 rounded-full object-cover border-4 border-[#00b4d8]/40 shadow-xl" 
+                        />
                       ) : (
-                        <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-4xl border-4 border-[#00b4d8]/30 text-white font-bold">
-                          {student.name.charAt(0).toUpperCase()}
+                        <div className="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center text-4xl border-4 border-[#00b4d8]/30 text-white font-bold shadow-xl">
+                          {student.name ? student.name.charAt(0).toUpperCase() : 'S'}
                         </div>
                       )}
 
+                      {/* Camera Button Badge */}
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImg}
+                        className="absolute bottom-0 right-0 bg-[#00b4d8] hover:bg-[#0096c7] text-white p-2.5 rounded-full shadow-lg border-2 border-[#0f172a] transition-all transform hover:scale-110 active:scale-95 disabled:opacity-50 cursor-pointer"
+                        title="ছবি পরিবর্তন করুন"
+                      >
+                        {uploadingImg ? (
+                          <FaSpinner className="animate-spin text-sm" />
+                        ) : (
+                          <FaCamera className="text-sm" />
+                        )}
+                      </button>
                     </div>
-                    <div>
+
+                    <div className="flex-1">
                       <h3 className="text-2xl font-bold text-white mb-1">{student.name}</h3>
-                      <p className="text-[#00b4d8] font-medium text-sm">স্টুডেন্ট আইডি: {student.student_uid}</p>
+                      <p className="text-[#00b4d8] font-medium text-sm flex items-center justify-center md:justify-start gap-1">
+                        <span>স্টুডেন্ট আইডি:</span>
+                        <span className="font-bold tracking-wide">{student.student_uid}</span>
+                      </p>
+
+                      {/* Photo Actions */}
+                      <div className="mt-4 flex items-center justify-center md:justify-start gap-2.5 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImg}
+                          className="inline-flex items-center gap-2 text-xs font-bold bg-[#00b4d8] hover:bg-[#0096c7] text-white px-3.5 py-2 rounded-xl transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50 cursor-pointer"
+                        >
+                          <FaCamera />
+                          {uploadingImg ? 'ছবি লোড হচ্ছে...' : 'ছবি পরিবর্তন'}
+                        </button>
+
+                        {currentAvatar && (
+                          <button
+                            type="button"
+                            onClick={handleRemoveProfilePic}
+                            disabled={uploadingImg}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold bg-white/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-400/30 px-3 py-2 rounded-xl transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                          >
+                            <FaTrashAlt />
+                            ছবি মুছুন
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-500 mb-1">শাখা</p>
-                      <p className="text-gray-900 font-bold">{student.branch}</p>
+
+                  {/* Hidden File Input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+
+                  {/* Student Details Grid */}
+                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6 bg-white">
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">শাখা</p>
+                      <p className="text-gray-900 font-bold">{student.branch || '—'}</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-500 mb-1">ক্লাস/স্তর</p>
-                      <p className="text-gray-900 font-bold">{student.class_level}</p>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">ক্লাস / স্তর</p>
+                      <p className="text-gray-900 font-bold">{student.class_level || '—'}</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-500 mb-1">লিঙ্গ</p>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">লিঙ্গ</p>
                       <p className="text-gray-900 font-bold">{student.gender || 'দেওয়া নেই'}</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">শিক্ষার্থীর ফোন</p>
+                      <p className="text-gray-900 font-bold">{student.phone || 'দেওয়া নেই'}</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">অভিভাবকের ফোন</p>
+                      <p className="text-gray-900 font-bold">{student.guardian_phone || 'দেওয়া নেই'}</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">পিতার নাম</p>
+                      <p className="text-gray-900 font-bold">{student.father_name || 'দেওয়া নেই'}</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">মাতার নাম</p>
+                      <p className="text-gray-900 font-bold">{student.mother_name || 'দেওয়া নেই'}</p>
                     </div>
                   </div>
                 </div>
               </div>
             )}
+
 
             {/* ROUTINE TAB */}
             {activeTab === 'routine' && (
@@ -729,6 +994,84 @@ const StudentDashboard = () => {
 
         </div>
       </div>
+
+      {/* Profile Picture Preview & Confirmation Modal */}
+      {isPreviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100">
+            <div className="bg-[#0f172a] px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-white">
+                <FaCamera className="text-[#00b4d8]" />
+                <h3 className="font-bold text-lg">নতুন প্রোফাইল ছবি</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => { setIsPreviewModalOpen(false); setPreviewImg(null); }}
+                className="text-white/60 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <p className="text-xs text-gray-500 mb-5">
+                ছবিটি আপনার অ্যাকাউন্ট ও ড্যাশবোর্ডে গোলাকারভাবে প্রদর্শিত হবে।
+              </p>
+
+              <div className="relative w-44 h-44 mx-auto mb-6">
+                <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-[#00b4d8] shadow-xl mx-auto bg-gray-100 flex items-center justify-center">
+                  <img 
+                    src={previewImg} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover" 
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <button
+                  type="button"
+                  disabled={uploadingImg}
+                  onClick={handleSaveProfilePic}
+                  className="flex-1 min-w-[130px] inline-flex items-center justify-center gap-2 bg-[#00b4d8] hover:bg-[#0096c7] text-white font-bold py-2.5 px-4 rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {uploadingImg ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      সেভ হচ্ছে...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheck />
+                      সংরক্ষণ করুন
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={uploadingImg}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl transition-all cursor-pointer"
+                >
+                  <FaImage />
+                  অন্য ছবি
+                </button>
+
+                <button
+                  type="button"
+                  disabled={uploadingImg}
+                  onClick={() => { setIsPreviewModalOpen(false); setPreviewImg(null); }}
+                  className="inline-flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2.5 px-3 rounded-xl transition-all cursor-pointer"
+                >
+                  <FaTimes />
+                  বাতিল
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

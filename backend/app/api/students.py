@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ..db.database import get_db
 from ..models.student import Student as StudentModel
-from ..schemas.student import Student, StudentCreate, StudentUpdate, StudentLogin, StudentFeeUpdate, StudentFeeBulkUpdate
+from ..schemas.student import Student, StudentCreate, StudentUpdate, StudentLogin, StudentFeeUpdate, StudentFeeBulkUpdate, StudentImageUpdate
 
 router = APIRouter()
 
@@ -78,6 +78,25 @@ def update_monthly_fee(student_id: int, payload: StudentFeeUpdate, db: Session =
     db_student.monthly_fee = payload.monthly_fee
     db.commit()
     db.refresh(db_student)
+    return db_student
+
+@router.patch("/{student_id}/image", response_model=Student)
+def update_student_image(student_id: int, payload: StudentImageUpdate, db: Session = Depends(get_db)):
+    """Update or remove a student's profile picture"""
+    db_student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    db_student.image = payload.image
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+@router.get("/{student_id}", response_model=Student)
+def get_student(student_id: int, db: Session = Depends(get_db)):
+    """Get single student details by ID"""
+    db_student = db.query(StudentModel).filter(StudentModel.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student not found")
     return db_student
 
 @router.put("/{student_id}", response_model=Student)

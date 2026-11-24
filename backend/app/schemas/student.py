@@ -13,12 +13,27 @@ class StudentBase(BaseModel):
     guardian_phone: Optional[str] = None
     monthly_fee: Optional[float] = None
     admission_fee: Optional[float] = None
+    image: Optional[str] = None
 
 class StudentCreate(StudentBase):
     student_uid: Optional[str] = None
 
-class StudentUpdate(StudentBase):
+class StudentUpdate(BaseModel):
+    name: Optional[str] = None
+    class_level: Optional[str] = None
+    branch: Optional[str] = None
+    phone: Optional[str] = None
+    gender: Optional[str] = None
+    father_name: Optional[str] = None
+    mother_name: Optional[str] = None
+    guardian_phone: Optional[str] = None
+    monthly_fee: Optional[float] = None
+    admission_fee: Optional[float] = None
     student_uid: Optional[str] = None
+    image: Optional[str] = None
+
+class StudentImageUpdate(BaseModel):
+    image: Optional[str] = None
 
 class Student(StudentBase):
     id: int
