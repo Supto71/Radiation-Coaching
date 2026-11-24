@@ -361,7 +361,81 @@ const StudentDatabaseTab = ({ role }) => {
             <span className="text-sm">উপরে "নতুন স্টুডেন্ট যোগ করুন" চাপ দিন।</span>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {filteredStudents.map((s, idx) => (
+                <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-400 font-semibold">#{idx + 1}</span>
+                        <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg text-xs">{s.student_uid}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${s.branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                          {s.branch}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-base mt-1 break-words">{s.name}</h4>
+                    </div>
+                    {role === 'admin' && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={() => {
+                          setEditingStudentId(s.id);
+                          setForm({ 
+                            name: s.name, 
+                            student_uid: s.student_uid, 
+                            class_level: s.class_level, 
+                            branch: s.branch, 
+                            gender: s.gender || 'ছেলে', 
+                            phone: s.phone || '', 
+                            guardian_phone: s.guardian_phone || '', 
+                            father_name: s.father_name || '', 
+                            mother_name: s.mother_name || '',
+                            monthly_fee: s.monthly_fee != null ? String(s.monthly_fee) : '',
+                            admission_fee: s.admission_fee != null ? String(s.admission_fee) : ''
+                          });
+                          setShowForm(true);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                          এডিট
+                        </button>
+                        <button
+                          onClick={() => handleDelete(s.id, s.name, s.student_uid)}
+                          title="শিক্ষার্থী সম্পূর্ণ রিমুভ করুন"
+                          className="text-red-500 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 pt-2 border-t border-gray-100">
+                    <div><span className="text-gray-400">মোবাইল:</span> <span className="font-semibold text-gray-800">{s.phone || '—'}</span></div>
+                    <div><span className="text-gray-400">অভিভাবক:</span> <span className="font-semibold text-gray-800">{s.guardian_phone || '—'}</span></div>
+                    {role === 'admin' && (
+                      <div>
+                        <span className="text-gray-400">মাসিক বেতন:</span>{' '}
+                        {s.monthly_fee != null
+                          ? <span className="font-bold text-gray-800">৳{Number(s.monthly_fee).toLocaleString('bn-BD')}</span>
+                          : <span className="text-amber-600 font-semibold">সেট নেই</span>}
+                      </div>
+                    )}
+                    {role === 'admin' && (
+                      <div>
+                        <span className="text-gray-400">ভর্তি ফি:</span>{' '}
+                        <span className="font-bold text-gray-800">{s.admission_fee != null ? `৳${Number(s.admission_fee).toLocaleString('bn-BD')}` : '—'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm text-gray-500 font-medium text-center">
+                মোট {filteredStudents.length} জন শিক্ষার্থী
+              </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
@@ -444,6 +518,7 @@ const StudentDatabaseTab = ({ role }) => {
               মোট {filteredStudents.length} জন শিক্ষার্থী
             </div>
           </div>
+          </>
         );
       })()}
     </div>
@@ -1101,7 +1176,68 @@ const FeeDatabaseTab = () => {
           এই ক্লাসে কোনো শিক্ষার্থী পাওয়া যায়নি।
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm bg-white">
+        <>
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {classStudents.map((s, idx) => {
+              const dirty = isDirty(s);
+              const value = s.id in drafts ? drafts[s.id] : (s.monthly_fee == null ? '' : String(s.monthly_fee));
+              return (
+                <div key={s.id} className={`rounded-xl border p-4 shadow-sm space-y-3 ${dirty ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-400 font-semibold">#{idx + 1}</span>
+                        <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg text-xs">{s.student_uid}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${s.branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{s.branch}</span>
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-base mt-1 break-words">{s.name}</h4>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div><span className="text-gray-400">অভিভাবক:</span> <span className="font-semibold text-gray-800">{s.guardian_phone || '—'}</span></div>
+                    <div>
+                      <span className="text-gray-400">ভর্তি ফি:</span>{' '}
+                      {s.admission_fee != null
+                        ? <span className="font-semibold text-purple-700">{fmt(s.admission_fee)}</span>
+                        : <span className="text-gray-400">—</span>}
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-2">
+                    <div className="relative flex-1 min-w-[140px]">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">৳</span>
+                      <input
+                        type="number" min="0" value={value}
+                        onChange={e => setDrafts(p => ({ ...p, [s.id]: e.target.value }))}
+                        onKeyDown={e => { if (e.key === 'Enter' && dirty) saveOne(s).then(ok => ok && flash(`${s.name} এর বেতন সেভ হয়েছে!`)); }}
+                        placeholder="সেট করা নেই"
+                        className={`w-full pl-7 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none ${dirty ? 'border-yellow-400 bg-white' : s.monthly_fee == null ? 'border-amber-300 bg-amber-50/50' : 'border-gray-300 bg-white'}`}
+                      />
+                    </div>
+                    {dirty && (
+                      <div className="flex gap-1.5">
+                        <button onClick={() => saveOne(s).then(ok => ok && flash(`${s.name} এর বেতন সেভ হয়েছে!`))} disabled={!!savingIds[s.id]}
+                          className="bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-green-700 disabled:bg-gray-400">
+                          {savingIds[s.id] ? '...' : 'সেভ'}
+                        </button>
+                        <button onClick={() => setDrafts(p => { const n = { ...p }; delete n[s.id]; return n; })}
+                          className="text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-xs font-semibold">
+                          বাতিল
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-600 font-medium flex flex-wrap justify-between gap-2">
+              <span>মোট {classStudents.length} জন · বেতন সেট {classWithFee.length} জন</span>
+              <span className="font-bold text-gray-800">মাসিক মোট: {fmt(classTotal)}</span>
+            </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm bg-white">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-100">
@@ -1172,6 +1308,7 @@ const FeeDatabaseTab = () => {
             <span className="font-bold text-gray-800">মাসিক মোট: {fmt(classTotal)}</span>
           </div>
         </div>
+        </>
       )}
     </div>
   );
@@ -1591,7 +1728,81 @@ const FeeTrackerTab = () => {
             কোনো ফি সংক্রান্ত তথ্য পাওয়া যায়নি।
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {filteredStudents.map((s, idx) => (
+                <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-400 font-semibold">#{idx + 1}</span>
+                        <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg text-xs">{s.student_uid}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${s.branch === 'প্রধান শাখা' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                          {s.branch}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-base mt-1 break-words">{s.name}</h4>
+                    </div>
+                    {role === 'admin' && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button onClick={() => {
+                          setEditingStudentId(s.id);
+                          setForm({ 
+                            name: s.name, 
+                            student_uid: s.student_uid, 
+                            class_level: s.class_level, 
+                            branch: s.branch, 
+                            gender: s.gender || 'ছেলে', 
+                            phone: s.phone || '', 
+                            guardian_phone: s.guardian_phone || '', 
+                            father_name: s.father_name || '', 
+                            mother_name: s.mother_name || '',
+                            monthly_fee: s.monthly_fee != null ? String(s.monthly_fee) : '',
+                            admission_fee: s.admission_fee != null ? String(s.admission_fee) : ''
+                          });
+                          setShowForm(true);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                          এডিট
+                        </button>
+                        <button
+                          onClick={() => handleDelete(s.id, s.name, s.student_uid)}
+                          title="শিক্ষার্থী সম্পূর্ণ রিমুভ করুন"
+                          className="text-red-500 bg-red-50 hover:bg-red-100 p-1.5 rounded-lg"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 pt-2 border-t border-gray-100">
+                    <div><span className="text-gray-400">মোবাইল:</span> <span className="font-semibold text-gray-800">{s.phone || '—'}</span></div>
+                    <div><span className="text-gray-400">অভিভাবক:</span> <span className="font-semibold text-gray-800">{s.guardian_phone || '—'}</span></div>
+                    {role === 'admin' && (
+                      <div>
+                        <span className="text-gray-400">মাসিক বেতন:</span>{' '}
+                        {s.monthly_fee != null
+                          ? <span className="font-bold text-gray-800">৳{Number(s.monthly_fee).toLocaleString('bn-BD')}</span>
+                          : <span className="text-amber-600 font-semibold">সেট নেই</span>}
+                      </div>
+                    )}
+                    {role === 'admin' && (
+                      <div>
+                        <span className="text-gray-400">ভর্তি ফি:</span>{' '}
+                        <span className="font-bold text-gray-800">{s.admission_fee != null ? `৳${Number(s.admission_fee).toLocaleString('bn-BD')}` : '—'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div className="px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm text-gray-500 font-medium text-center">
+                মোট {filteredStudents.length} জন শিক্ষার্থী
+              </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 text-gray-600 text-sm border-b">
@@ -1680,6 +1891,7 @@ const FeeTrackerTab = () => {
               </tbody>
             </table>
           </div>
+          </>
         )
       )}
 
