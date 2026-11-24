@@ -37,7 +37,7 @@ export default function ServerWakeupToast() {
       try {
         const ctrl = new AbortController();
         const tid  = setTimeout(() => ctrl.abort(), 5000);
-        const res  = await fetch('/api/students/', { signal: ctrl.signal });
+        const res  = await fetch('/api/health', { signal: ctrl.signal });
         clearTimeout(tid);
         if (!cancelled && res && res.status < 500) { markAwake(); return; }
       } catch (_) { /* sleeping */ }
@@ -50,7 +50,7 @@ export default function ServerWakeupToast() {
       try {
         const ctrl = new AbortController();
         const tid  = setTimeout(() => ctrl.abort(), 4000);
-        const res  = await fetch('/api/students/', { signal: ctrl.signal });
+        const res  = await fetch('/api/health', { signal: ctrl.signal });
         clearTimeout(tid);
         if (!cancelled && res && res.status < 500) { setPhase(null); return; }
       } catch (_) { /* sleeping */ }

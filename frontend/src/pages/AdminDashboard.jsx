@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import FormattedQuestion from '../components/FormattedQuestion';
 import { stripHtml } from '../utils/textUtils';
+import { retryFetch } from '../utils/retryFetch';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 const SearchIcon = () => (
@@ -68,7 +69,7 @@ const StudentDatabaseTab = ({ role }) => {
       let url = '/api/students/?';
       if (search) url += `search=${encodeURIComponent(search)}&`;
       if (filterBranch) url += `branch=${encodeURIComponent(filterBranch)}&`;
-      const res = await fetch(url);
+      const res = await retryFetch(url);
       if (res.ok) setAllStudents(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -105,7 +106,7 @@ const StudentDatabaseTab = ({ role }) => {
     try {
       const url = editingStudentId ? `/api/students/${editingStudentId}` : '/api/students/';
       const method = editingStudentId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await retryFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,7 +137,7 @@ const StudentDatabaseTab = ({ role }) => {
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/students/${id}`, { method: 'DELETE' });
+      const res = await retryFetch(`/api/students/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setMsg({ text: `"${name}" (${studentUid}) সফলভাবে রিমুভ করা হয়েছে।`, type: 'success' });
         fetchStudents();
@@ -469,12 +470,12 @@ const AttendanceTab = () => {
   const fetchStudents = async () => {
     setLoadingStudents(true);
     try {
-      const res = await fetch(`/api/students/?branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
+      const res = await retryFetch(`/api/students/?branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
       if (res.ok) {
         const data = await res.json();
         setStudents(data);
         // Load existing attendance for that date if any
-        const attRes = await fetch(`/api/attendance/?att_date=${attDate}&branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
+        const attRes = await retryFetch(`/api/attendance/?att_date=${attDate}&branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
         const existing = attRes.ok ? await attRes.json() : [];
         const map = {};
         data.forEach(s => { map[s.id] = true; }); // default: present
@@ -487,7 +488,7 @@ const AttendanceTab = () => {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch(`/api/attendance/?branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
+      const res = await retryFetch(`/api/attendance/?branch=${encodeURIComponent(branch)}&class_level=${encodeURIComponent(classLevel)}`);
       if (res.ok) setHistoryRecords(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -507,7 +508,7 @@ const AttendanceTab = () => {
     setSaving(true);
     try {
       const entries = students.map(s => ({ student_id: s.id, is_present: attendance[s.id] ?? true }));
-      const res = await fetch('/api/attendance/bulk', {
+      const res = await retryFetch('/api/attendance/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -536,7 +537,7 @@ const AttendanceTab = () => {
     }
     setSendingSmsManual(true);
     try {
-      const res = await fetch('/api/attendance/send-absent-sms', {
+      const res = await retryFetch('/api/attendance/send-absent-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: attDate, branch, class_level: classLevel })
@@ -886,7 +887,7 @@ const FeeDatabaseTab = () => {
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/students/');
+      const res = await retryFetch('/api/students/');
       if (res.ok) setStudents(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -930,7 +931,7 @@ const FeeDatabaseTab = () => {
     }
     setSavingIds(p => ({ ...p, [s.id]: true }));
     try {
-      const res = await fetch(`/api/students/${s.id}/fee`, {
+      const res = await retryFetch(`/api/students/${s.id}/fee`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ monthly_fee: value }),
@@ -967,7 +968,7 @@ const FeeDatabaseTab = () => {
       : `${scopeText} এর সকল শিক্ষার্থীর বেতন ৳${amount} করা হবে (আগের বেতন পরিবর্তন হবে)। নিশ্চিত?`;
     if (!window.confirm(confirmText)) return;
     try {
-      const res = await fetch('/api/students/fees/bulk', {
+      const res = await retryFetch('/api/students/fees/bulk', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ class_level: activeClass, monthly_fee: amount, branch: filterBranch || null, only_unset: bulkOnlyUnset }),
@@ -1210,7 +1211,7 @@ const FeeTrackerTab = () => {
       if (filterStatus !== '') url += `status=${filterStatus}&`;
       if (filterBranch) url += `branch=${encodeURIComponent(filterBranch)}&`;
       if (filterMonth) url += `month=${encodeURIComponent(filterMonth)}&`;
-      const res = await fetch(url);
+      const res = await retryFetch(url);
       if (res.ok) setFees(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -1218,13 +1219,13 @@ const FeeTrackerTab = () => {
 
   const fetchAllFees = useCallback(async () => {
     try {
-      const res = await fetch('/api/dashboard/fees');
+      const res = await retryFetch('/api/dashboard/fees');
       if (res.ok) setAllFees(await res.json());
     } catch (e) { console.error(e); }
   }, []);
 
   const fetchStudents = async () => {
-    const res = await fetch('/api/students/');
+    const res = await retryFetch('/api/students/');
     if (res.ok) setStudents(await res.json());
   };
 
@@ -1254,7 +1255,7 @@ const FeeTrackerTab = () => {
 
     setSaving(true);
     try {
-      const res = await fetch('/api/dashboard/fees', {
+      const res = await retryFetch('/api/dashboard/fees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData)
@@ -1277,7 +1278,7 @@ const FeeTrackerTab = () => {
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/dashboard/fees/${paymentModal.fee.id}/pay`, {
+      const res = await retryFetch(`/api/dashboard/fees/${paymentModal.fee.id}/pay`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: parseFloat(paymentModal.amount), date: paymentModal.date })
@@ -1299,7 +1300,7 @@ const FeeTrackerTab = () => {
   const handleEditFeeAmount = async (feeId) => {
     if (!editAmount || isNaN(editAmount)) return;
     try {
-      const res = await fetch(`/api/dashboard/fees/${feeId}`, {
+      const res = await retryFetch(`/api/dashboard/fees/${feeId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: parseFloat(editAmount) })
@@ -1320,7 +1321,7 @@ const FeeTrackerTab = () => {
   const handleDeleteFee = async (feeId) => {
     if (!window.confirm("আপনি কি নিশ্চিত যে এই ফি রেকর্ডটি ডিলিট করতে চান?")) return;
     try {
-      const res = await fetch(`/api/dashboard/fees/${feeId}`, { method: 'DELETE' });
+      const res = await retryFetch(`/api/dashboard/fees/${feeId}`, { method: 'DELETE' });
       if (res.ok) {
         setMsg({ text: 'ফি রেকর্ডটি সফলভাবে ডিলিট করা হয়েছে!', type: 'success' });
         fetchFees(); fetchAllFees();
@@ -1824,7 +1825,7 @@ const RoutineTab = ({ role }) => {
   useEffect(() => {
     const fetchRoutines = async () => {
       try {
-        const res = await fetch(`/api/dashboard/routines?branch=${encodeURIComponent(filterBranch)}`);
+        const res = await retryFetch(`/api/dashboard/routines?branch=${encodeURIComponent(filterBranch)}`);
         if (res.ok) setExistingRoutines(await res.json());
       } catch (e) { console.error(e); }
     };
@@ -1843,7 +1844,7 @@ const RoutineTab = ({ role }) => {
   const handleDeleteRoutine = async (id) => {
     if (!window.confirm('আপনি কি নিশ্চিত যে এই রুটিনটি মুছতে চান?')) return;
     try {
-      const res = await fetch(`/api/dashboard/routines/${id}`, { method: 'DELETE' });
+      const res = await retryFetch(`/api/dashboard/routines/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setExistingRoutines(prev => prev.filter(r => r.id !== id));
         setRoutineMessage('রুটিন মোছা হয়েছে!');
@@ -1855,7 +1856,7 @@ const RoutineTab = ({ role }) => {
   const handleDeletePastRoutines = async () => {
     if (!window.confirm('আপনি কি নিশ্চিত যে সমস্ত পুরনো রুটিন মুছতে চান?')) return;
     try {
-      const res = await fetch(`/api/dashboard/routines/past`, { method: 'DELETE' });
+      const res = await retryFetch(`/api/dashboard/routines/past`, { method: 'DELETE' });
       if (res.ok) {
         const data = await res.json();
         const today = new Date().toISOString().split('T')[0];
@@ -1886,7 +1887,7 @@ const RoutineTab = ({ role }) => {
     try {
       const url = editingRoutineId ? `/api/dashboard/routines/${editingRoutineId}` : '/api/dashboard/routines';
       const method = editingRoutineId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await retryFetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ branch: routineBranch, date: routineDate, start_time: routineStartTime, end_time: routineEndTime, class_level: routineLevel, class_name: routineClass, teacher_name: routineTeacher })
       });
@@ -2053,7 +2054,7 @@ const ExamManagementTab = () => {
 
   const fetchExams = async () => {
     try {
-      const res = await fetch('/api/dashboard/exams');
+      const res = await retryFetch('/api/dashboard/exams');
       if (res.ok) setExams(await res.json());
     } catch (err) { console.error(err); }
   };
@@ -2067,7 +2068,7 @@ const ExamManagementTab = () => {
         ...newExam,
         duration_minutes: parseInt(newExam.duration_minutes) || 30
       };
-      const res = await fetch(url, {
+      const res = await retryFetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(examData)
       });
@@ -2090,20 +2091,20 @@ const ExamManagementTab = () => {
   };
 
   const handleToggleExam = async (id) => {
-    await fetch(`/api/dashboard/exams/${id}/toggle`, { method: 'PATCH' });
+    await retryFetch(`/api/dashboard/exams/${id}/toggle`, { method: 'PATCH' });
     fetchExams();
   };
 
   const handleDeleteExam = async (id) => {
     if(!window.confirm('পরীক্ষাটি মুছতে চান?')) return;
-    await fetch(`/api/dashboard/exams/${id}`, { method: 'DELETE' });
+    await retryFetch(`/api/dashboard/exams/${id}`, { method: 'DELETE' });
     if(selectedExamId === id) setSelectedExamId(null);
     fetchExams();
   };
 
   const loadExamDetails = async (id) => {
     try {
-      const res = await fetch(`/api/dashboard/exams/${id}`);
+      const res = await retryFetch(`/api/dashboard/exams/${id}`);
       if (res.ok) {
         setSelectedExam(await res.json());
         setSelectedExamId(id);
@@ -2121,7 +2122,7 @@ const ExamManagementTab = () => {
     if (!cleanedText || !opt1 || !opt2) return alert('প্রশ্ন ও অন্তত দুটি অপশন দিন।');
     try {
       const optionsArray = [opt1, opt2, opt3, opt4].filter(o => o);
-      const res = await fetch(`/api/dashboard/exams/${selectedExamId}/questions`, {
+      const res = await retryFetch(`/api/dashboard/exams/${selectedExamId}/questions`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: cleanedText,
@@ -2138,7 +2139,7 @@ const ExamManagementTab = () => {
 
   const handleDeleteQuestion = async (qId) => {
     if(!window.confirm('প্রশ্নটি মুছতে চান?')) return;
-    await fetch(`/api/dashboard/questions/${qId}`, { method: 'DELETE' });
+    await retryFetch(`/api/dashboard/questions/${qId}`, { method: 'DELETE' });
     loadExamDetails(selectedExamId);
   };
 
@@ -2374,7 +2375,7 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
       const url = editingId
         ? `/api/dashboard/teacher-attendance/${editingId}`
         : '/api/dashboard/teacher-attendance';
-      const res = await fetch(url, {
+      const res = await retryFetch(url, {
         method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, classes_taken: parseInt(form.classes_taken) })
@@ -2405,7 +2406,7 @@ const TeacherAttendanceTab = ({ records, fetchRecords }) => {
   const handleAttDelete = async (id) => {
     if (!window.confirm('এই রেকর্ডটি মুছতে চান?')) return;
     try {
-      const res = await fetch(`/api/dashboard/teacher-attendance/${id}`, { method: 'DELETE' });
+      const res = await retryFetch(`/api/dashboard/teacher-attendance/${id}`, { method: 'DELETE' });
       if (res.ok || res.status === 204) { showAttMsg('রেকর্ড মুছে গেছে!'); fetchRecords(); }
       else showAttMsg('ডিলিট করতে সমস্যা হয়েছে।', 'error');
     } catch { showAttMsg('সার্ভার এরর!', 'error'); }
@@ -2614,7 +2615,7 @@ const LeaderboardTab = () => {
       setExamsLoading(true);
       try {
         const url = activeClass ? `/api/dashboard/exams?class_level=${encodeURIComponent(activeClass)}` : '/api/dashboard/exams';
-        const res = await fetch(url);
+        const res = await retryFetch(url);
         if (res.ok) {
           const data = await res.json();
           setExams(data);
@@ -2641,7 +2642,7 @@ const LeaderboardTab = () => {
     const fetchLeaderboard = async () => {
       setLeaderboardLoading(true);
       try {
-        const res = await fetch(`/api/dashboard/exams/${selectedExam}/leaderboard`);
+        const res = await retryFetch(`/api/dashboard/exams/${selectedExam}/leaderboard`);
         if (res.ok) {
           const data = await res.json();
           setLeaderboardData(data);
@@ -2759,7 +2760,7 @@ const AdminDashboard = () => {
   const fetchNotices = useCallback(async () => {
     setLoadingNotices(true);
     try {
-      const res = await fetch('/api/dashboard/notices');
+      const res = await retryFetch('/api/dashboard/notices');
       if (res.ok) {
         setNotices(await res.json());
       }
@@ -2775,7 +2776,7 @@ const AdminDashboard = () => {
   const fetchTeacherAttendance = useCallback(async () => {
     setLoadingTeacherAtt(true);
     try {
-      const res = await fetch('/api/dashboard/teacher-attendance');
+      const res = await retryFetch('/api/dashboard/teacher-attendance');
       if (res.ok) {
         setTeacherAttendanceRecords(await res.json());
       }
@@ -2822,7 +2823,7 @@ const AdminDashboard = () => {
     try {
       const url = editingNoticeId ? `/api/dashboard/notices/${editingNoticeId}` : '/api/dashboard/notices';
       const method = editingNoticeId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const res = await retryFetch(url, {
         method, headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: noticeTitle, content: noticeContent, image: noticeImage || null, is_active: true })
       });
@@ -2850,7 +2851,7 @@ const AdminDashboard = () => {
   const handleDeleteNotice = async (id) => {
     if (!window.confirm('আপনি কি নিশ্চিত যে এই নোটিশটি মুছতে চান?')) return;
     try {
-      await fetch(`/api/dashboard/notices/${id}`, { method: 'DELETE' });
+      await retryFetch(`/api/dashboard/notices/${id}`, { method: 'DELETE' });
       fetchNotices();
     } catch (err) {
       console.error('Failed to delete notice', err);
@@ -2869,7 +2870,7 @@ const AdminDashboard = () => {
     const fetchTeachers = useCallback(async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/teachers/');
+        const res = await retryFetch('/api/teachers/');
         if (res.ok) setTeachers(await res.json());
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
@@ -2917,7 +2918,7 @@ const AdminDashboard = () => {
       try {
         const url = editingId ? `/api/teachers/${editingId}` : '/api/teachers/';
         const method = editingId ? 'PUT' : 'POST';
-        const res = await fetch(url, {
+        const res = await retryFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form)
@@ -2938,7 +2939,7 @@ const AdminDashboard = () => {
 
     const handleDelete = async (id) => {
       if (!window.confirm('শিক্ষক মুছতে চান?')) return;
-      await fetch(`/api/teachers/${id}`, { method: 'DELETE' });
+      await retryFetch(`/api/teachers/${id}`, { method: 'DELETE' });
       fetchTeachers();
     };
 

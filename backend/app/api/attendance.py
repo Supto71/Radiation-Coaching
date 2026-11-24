@@ -178,10 +178,18 @@ def get_attendance(
         query = query.filter(AttendanceModel.class_level == class_level)
 
     records = query.order_by(AttendanceModel.date.desc()).all()
+    if not records:
+        return []
+
+    student_ids = {r.student_id for r in records}
+    students_map = {
+        s.id: s
+        for s in db.query(StudentModel).filter(StudentModel.id.in_(student_ids)).all()
+    }
 
     result = []
     for r in records:
-        student = db.query(StudentModel).filter(StudentModel.id == r.student_id).first()
+        student = students_map.get(r.student_id)
         result.append(AttendanceWithStudent(
             id=r.id,
             student_id=r.student_id,

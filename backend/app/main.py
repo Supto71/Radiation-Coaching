@@ -97,6 +97,10 @@ app.include_router(attendance.router, prefix="/api/attendance", tags=["attendanc
 app.include_router(teachers.router, prefix="/api/teachers", tags=["teachers"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
+
 import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
